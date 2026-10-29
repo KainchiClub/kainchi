@@ -5,15 +5,32 @@ import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
 import { initialProducts, type CatalogProduct } from './catalog'
 import { HeroShowcase } from './hero-showcase'
-import { PackagingShowcase } from './packaging-showcase'
 import { ProductCollection } from './product-collection'
 import { ProductCustomizer } from './product-customizer'
+import { OrderCart } from './order-cart'
+import { openWhatsAppOrder, type CartLineDetails, type CartLineItem } from './order'
+import { PackagingShowcase } from './packaging-showcase'
 import { SiteHeader } from './site-header'
 
 const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg'
 
+function createCartLine(details: CartLineDetails): CartLineItem {
+  return { ...details, cartId: crypto.randomUUID() }
+}
+
 export function StorefrontClient() {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null)
+  const [cartItems, setCartItems] = useState<CartLineItem[]>([])
+  const [isCartOpen, setIsCartOpen] = useState(false)
+
+  function addToCart(details: CartLineDetails) {
+    setCartItems((current) => [...current, createCartLine(details)])
+    setIsCartOpen(true)
+  }
+
+  function orderCurrentProduct(details: CartLineDetails) {
+    openWhatsAppOrder([...cartItems, createCartLine(details)])
+  }
 
   return (
     <>
@@ -32,7 +49,21 @@ export function StorefrontClient() {
         <PackagingShowcase />
       </main>
       <footer className="site-footer"><a className="wordmark footer-wordmark" href="#top" aria-label="Kainchi Club home"><img className="wordmark-logo" src={brandLogo} alt="" /><span>KAINCHI <span className="wordmark-light">CLUB</span></span></a><p>Wear your own art. © 2026 Kainchi Club</p><div className="footer-links"><a href="https://wa.me/91XXXXXXXXXX?text=Hi%20Kainchi%20Club" aria-label="Contact Kainchi Club on WhatsApp">WhatsApp <ArrowUpRight aria-hidden="true" /></a><a href="#top" aria-label="Back to top">Back to top <ArrowUpRight aria-hidden="true" /></a><a href="/admin">Admin Portal <ArrowUpRight aria-hidden="true" /></a></div></footer>
-      {selectedProduct && <ProductCustomizer product={selectedProduct} onClose={() => setSelectedProduct(null)} />}
+      <OrderCart
+        items={cartItems}
+        isOpen={isCartOpen}
+        onOpenChange={setIsCartOpen}
+        onQuantityChange={(cartId, quantity) => setCartItems((current) => current.map((item) => item.cartId === cartId ? { ...item, quantity } : item))}
+        onGiftBoxChange={(cartId, includesGiftBox) => setCartItems((current) => current.map((item) => item.cartId === cartId ? { ...item, includesGiftBox } : item))}
+        onRemove={(cartId) => setCartItems((current) => current.filter((item) => item.cartId !== cartId))}
+        onCheckout={() => openWhatsAppOrder(cartItems)}
+      />
+      {selectedProduct && <ProductCustomizer
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onAddToCart={(details) => { addToCart(details); setSelectedProduct(null) }}
+        onOrderNow={orderCurrentProduct}
+      />}
     </>
   )
 }
