@@ -18,7 +18,7 @@ export function ProductCollection({ products, onCustomize, onBulkUpload }: { pro
         {products.map((product, index) => (
           <article className="product-card" key={product.id}>
             <button className="product-image-link" type="button" onClick={() => onCustomize(product)} aria-label={`Customize ${product.title}`}>
-              <span className="product-image"><img src={product.image} alt={`${product.title}, a ${product.garment} in the ${product.theme} theme`} loading={index > 5 ? 'lazy' : 'eager'} /><span className="product-number">{String(index + 1).padStart(2, '0')}</span><span className="product-image-arrow"><MoveUpRight aria-hidden="true" /></span>{product.uploaded && <span className="uploaded-ribbon">NEW IN</span>}</span>
+              <span className="product-image"><img src={product.image} alt={`${product.title} — ${product.garment}, ${product.theme} artwork`} loading={index > 5 ? 'lazy' : 'eager'} /><span className="product-number">{String(index + 1).padStart(2, '0')}</span><span className="product-image-arrow"><MoveUpRight aria-hidden="true" /></span>{product.uploaded && <span className="uploaded-ribbon">NEW IN</span>}</span>
             </button>
             <div className="product-meta"><p className="product-theme">{product.theme}</p><h3>{product.title}</h3><p className="product-garment">{product.garment}</p><span className="product-price">{formatRupees(product.price)}</span></div>
             <button className="product-order" type="button" onClick={() => onCustomize(product)}>Order on WhatsApp <ArrowUpRight aria-hidden="true" /></button>

@@ -42,15 +42,33 @@ export function BulkUploadModal({ onClose, onPublish }: BulkUploadModalProps) {
   const [error, setError] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
   const previewUrls = useRef(new Set<string>())
 
   useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+    closeButtonRef.current?.focus()
+    const keepFocusInDialog = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const dialog = document.querySelector('.bulk-upload-modal')
+      const focusable = dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]):not(.visually-hidden), select:not([disabled]), [tabindex]:not([tabindex="-1"])')
+      if (!focusable?.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
-    window.addEventListener('keydown', closeOnEscape)
+    window.addEventListener('keydown', keepFocusInDialog)
     return () => {
-      window.removeEventListener('keydown', closeOnEscape)
+      window.removeEventListener('keydown', keepFocusInDialog)
       previewUrls.current.forEach((url) => URL.revokeObjectURL(url))
     }
   }, [onClose])
@@ -140,7 +158,7 @@ export function BulkUploadModal({ onClose, onPublish }: BulkUploadModalProps) {
   return (
     <div className="upload-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <section className="upload-modal bulk-upload-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-upload-title" aria-describedby="bulk-upload-description">
-        <div className="modal-topline"><span className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Kainchi studio / catalog manager</span><button className="icon-button" type="button" onClick={onClose} aria-label="Close bulk upload"><X /></button></div>
+        <div className="modal-topline"><span className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Kainchi studio / catalog manager</span><button ref={closeButtonRef} className="icon-button" type="button" onClick={onClose} aria-label="Close bulk upload"><X /></button></div>
         <div className="modal-heading"><p className="eyebrow eyebrow-dark">BULK UPLOAD ARTWORKS / PRODUCTS</p><h2 id="bulk-upload-title">A whole new <em>collection.</em></h2><p id="bulk-upload-description">Drop in a batch of artwork photos. Each one becomes its own product and artwork card.</p></div>
         <form className="bulk-upload-form" onSubmit={submit}>
           <input ref={fileInput} className="visually-hidden" type="file" accept="image/*" multiple onChange={onFilesSelected} aria-label="Choose multiple artwork and product photos" />

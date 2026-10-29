@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { ArrowUpRight, Check, Shirt, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowUpRight, Check, X } from 'lucide-react'
 import { formatRupees, type CatalogProduct } from './catalog'
 
 const sizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL']
@@ -37,20 +37,38 @@ export function ProductCustomizer({ product, onClose }: { product: CatalogProduc
   const [size, setSize] = useState('M')
   const [color, setColor] = useState(colors[0])
   const [includesGiftBox, setIncludesGiftBox] = useState(false)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
   const total = product.price + (includesGiftBox ? giftBoxPrice : 0)
 
   useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+    closeButtonRef.current?.focus()
+    const keepFocusInDialog = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const dialog = document.querySelector('.customizer-dialog')
+      const focusable = dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')
+      if (!focusable?.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
-    window.addEventListener('keydown', closeOnEscape)
-    return () => window.removeEventListener('keydown', closeOnEscape)
+    window.addEventListener('keydown', keepFocusInDialog)
+    return () => window.removeEventListener('keydown', keepFocusInDialog)
   }, [onClose])
 
   return (
     <div className="customizer-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <section className="customizer-dialog" role="dialog" aria-modal="true" aria-labelledby="customizer-title">
-        <div className="customizer-topline"><span className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Make it yours</span><button type="button" className="icon-button" onClick={onClose} aria-label="Close customization"><X /></button></div>
+        <div className="customizer-topline"><span className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Make it yours</span><button ref={closeButtonRef} type="button" className="icon-button" onClick={onClose} aria-label="Close customization"><X /></button></div>
         <div className="customizer-layout">
           <div className="customizer-product-visual">
             <img src={product.image} alt={`${product.title} custom ${product.garment}`} />
@@ -63,7 +81,7 @@ export function ProductCustomizer({ product, onClose }: { product: CatalogProduc
             <p className="customizer-category">{product.garment} <span>·</span> {product.theme}</p>
 
             <fieldset className="option-group">
-              <legend>Choose your size <span>Size guide</span></legend>
+              <legend>Choose your size <span>S — 3XL</span></legend>
               <div className="size-options">{sizes.map((option) => <button type="button" key={option} className={`size-pill${size === option ? ' active' : ''}`} aria-pressed={size === option} onClick={() => setSize(option)}>{option}</button>)}</div>
             </fieldset>
 
