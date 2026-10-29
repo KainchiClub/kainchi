@@ -1,6 +1,6 @@
 import { formatRupees, type CatalogProduct } from './catalog'
 
-export const WHATSAPP_PHONE = '919876543210'
+export const WHATSAPP_PHONE = '918863075356'
 export const GIFT_BOX_PRICE = 99
 export const MAX_ORDER_QUANTITY = 99
 
