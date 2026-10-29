@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
-import { initialProducts, type CatalogProduct } from './catalog'
+import { type CatalogProduct } from './catalog'
+import { useCatalogProducts } from './catalog-store'
 import { HeroShowcase } from './hero-showcase'
 import { ProductCollection } from './product-collection'
 import { ProductCustomizer } from './product-customizer'
@@ -19,6 +20,7 @@ function createCartLine(details: CartLineDetails): CartLineItem {
 }
 
 export function StorefrontClient() {
+  const [products] = useCatalogProducts()
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null)
   const [cartItems, setCartItems] = useState<CartLineItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
@@ -38,8 +40,8 @@ export function StorefrontClient() {
       <main>
         <HeroShowcase />
         <div className="canvas-band" aria-label="Made with care, worn with feeling"><span>MADE WITH CARE</span><span className="canvas-band-mark"><Scissors aria-hidden="true" /></span><span>WORN WITH FEELING</span></div>
-        <ProductCollection products={initialProducts} onCustomize={setSelectedProduct} />
-        <ArtworkLibrary products={initialProducts} onCustomize={setSelectedProduct} />
+        <ProductCollection products={products} onCustomize={setSelectedProduct} />
+        <ArtworkLibrary products={products} onCustomize={setSelectedProduct} />
         <section className="story-section" id="story" aria-labelledby="story-title">
           <div className="story-number">K—C<br />2026</div>
           <div className="story-copy"><p className="eyebrow"><span className="eyebrow-dot" /> A small studio with a big heart</p><h2 id="story-title">Not just what<br />you <em>wear.</em><br />What you <em>carry.</em></h2></div>

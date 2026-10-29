@@ -20,6 +20,8 @@ export const ARTWORK_THEMES = [
 export type GarmentType = (typeof GARMENT_TYPES)[number]
 export type ArtworkTheme = (typeof ARTWORK_THEMES)[number]
 
+export type StockStatus = 'in-stock' | 'sold-out'
+
 export type CatalogProduct = {
   id: string
   title: string
@@ -27,6 +29,7 @@ export type CatalogProduct = {
   theme: ArtworkTheme
   price: number
   image: string
+  stockStatus?: StockStatus
   uploaded?: boolean
 }
 
