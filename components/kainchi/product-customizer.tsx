@@ -9,15 +9,14 @@ const giftBoxPrice = 99
 
 const colors = [
   { name: 'Jet Black', sample: '#181715' },
-  { name: 'Off-White / Natural Canvas', sample: '#e6dccb' },
-  { name: 'Dark Charcoal Grey', sample: '#454340' },
-  { name: 'Deep Crimson Red', sample: '#792333' },
+  { name: 'Off-White', sample: '#e6dccb' },
+  { name: 'Charcoal', sample: '#454340' },
+  { name: 'Crimson Red', sample: '#792333' },
   { name: 'Forest Green', sample: '#29483b' },
   { name: 'Chocolate Brown', sample: '#4b2d22' },
   { name: 'Navy Blue', sample: '#26364a' },
-  { name: 'Black & Crimson Red split', sample: 'linear-gradient(90deg, #181715 50%, #792333 50%)' },
-  { name: 'Off-White & Chocolate Brown split', sample: 'linear-gradient(90deg, #e6dccb 50%, #4b2d22 50%)' },
-  { name: 'Charcoal & Vintage White split', sample: 'linear-gradient(90deg, #454340 50%, #f2e9d9 50%)' },
+  { name: 'Black & Red', sample: 'linear-gradient(90deg, #181715 50%, #792333 50%)' },
+  { name: 'Off-White & Chocolate', sample: 'linear-gradient(90deg, #e6dccb 50%, #4b2d22 50%)' },
 ]
 
 function createWhatsAppUrl(product: CatalogProduct, size: string, color: string, includesGiftBox: boolean, total: number) {
@@ -88,6 +87,7 @@ export function ProductCustomizer({ product, onClose }: { product: CatalogProduc
             <fieldset className="option-group color-group">
               <legend>Choose a color <span>{colors.length} premium options</span></legend>
               <div className="color-options">{colors.map((option) => <button type="button" key={option.name} className={`color-option${color.name === option.name ? ' active' : ''}`} aria-label={option.name} aria-pressed={color.name === option.name} title={option.name} onClick={() => setColor(option)}><span className="color-swatch" style={{ background: option.sample }}>{color.name === option.name && <Check aria-hidden="true" />}</span><span>{option.name}</span></button>)}</div>
+              <p className="fabric-base-tag" aria-live="polite">Fabric Base Color: <strong>{color.name}</strong> (Art Print Remains Original)</p>
             </fieldset>
 
             <label className="giftbox-option"><input type="checkbox" checked={includesGiftBox} onChange={(event) => setIncludesGiftBox(event.target.checked)} /><span className="giftbox-check" aria-hidden="true"><Check /></span><span><strong>Add Premium Custom Gift Box &amp; Unboxing Packaging</strong><small>Hand-finished, ready to gift <b>(+₹99)</b></small></span></label>

@@ -140,8 +140,8 @@ button { color: inherit; }
 .art-card { min-width: 0; }
 .art-image-link { display: block; }
 .art-image-wrap { aspect-ratio: .9; overflow: hidden; position: relative; background: #cec0ae; }
-.art-image { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .45s cubic-bezier(.2,.7,.3,1); }
-.art-image-link:hover .art-image { transform: scale(1.04); }
+.art-image { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.art-image-link:hover .art-image { transform: none; }
 .art-card-sticker { position: absolute; left: 11px; top: 11px; padding: 7px 8px; color: #442c24; background: #eee5d8; font-size: 7px; font-weight: 700; letter-spacing: .12em; }
 .art-image-arrow { position: absolute; right: 11px; bottom: 11px; }
 .art-card-meta { display: flex; align-items: end; justify-content: space-between; gap: 10px; padding: 15px 0 12px; }
@@ -317,8 +317,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .product-card, .art-card { display: flex; min-width: 0; flex-direction: column; align-items: stretch; text-align: center; }
 .product-image-link, .art-image-link { display: block; width: 100%; border: 0; padding: 0; background: transparent; text-align: inherit; cursor: pointer; }
 .product-image { display: block; aspect-ratio: 4 / 5; background: #33231d; }
-.product-image img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .45s cubic-bezier(.2,.7,.3,1); }
-.product-image-link:hover .product-image img { transform: scale(1.04); }
+.product-image img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.product-image-link:hover .product-image img { transform: none; }
 .product-meta { min-height: 125px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 7px; margin: 16px 0 12px; text-align: center; }
 .product-meta .product-theme, .art-theme { margin: 0; color: #92724d; font-size: 8px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .product-meta h3, .art-card-meta h3 { margin: 0; font: 500 19px/1.2 var(--font-display); }
@@ -396,7 +396,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .customizer-topline { display: flex; align-items: center; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid #dfd2c3; }
 .customizer-layout { display: grid; grid-template-columns: .78fr 1.22fr; gap: clamp(22px, 4vw, 42px); padding-top: 20px; }
 .customizer-product-visual { min-height: 420px; position: relative; overflow: hidden; background: #33231d; }
-.customizer-product-visual > img { width: 100%; height: 100%; min-height: 420px; display: block; object-fit: cover; }
+.customizer-product-visual > img { width: 100%; height: 100%; min-height: 420px; display: block; object-fit: contain; object-position: center; }
 .customizer-image-label { position: absolute; top: 13px; left: 13px; padding: 7px 9px; color: #4c392f; background: #eee5d8; font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .selected-color-tag { position: absolute; right: 12px; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 9px; padding: 9px; color: #f7eee3; background: rgb(37 22 17 / 84%); font-size: 7px; letter-spacing: .1em; }
 .selected-color-tag .color-swatch { width: 31px; height: 31px; flex: 0 0 auto; border: 1px solid rgb(255 255 255 / 70%); }
@@ -417,6 +417,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .color-option.active { border-color: #ad9178; background: rgb(230 221 207 / 55%); }
 .color-swatch { width: 23px; height: 23px; display: grid; place-items: center; border: 1px solid rgb(48 35 27 / 24%); border-radius: 50%; }
 .color-option .color-swatch svg { width: 12px; height: 12px; color: white; filter: drop-shadow(0 1px 1px rgb(0 0 0 / 45%)); }
+.fabric-base-tag { margin: 8px 0 0; border-left: 2px solid var(--crimson); padding: 8px 10px; color: #6e5848; background: rgb(230 221 207 / 40%); font-size: 9px; line-height: 1.45; }
+.fabric-base-tag strong { color: var(--crimson); }
 .giftbox-option { position: relative; display: flex; align-items: center; gap: 11px; border: 1px solid #d8c8b6; padding: 11px; background: rgb(236 225 211 / 55%); cursor: pointer; }
 .giftbox-option > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .giftbox-check { width: 19px; height: 19px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid #ae9b87; color: transparent; background: #fbf7f1; }
