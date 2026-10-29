@@ -1,9 +1,9 @@
 'use client'
 
-import { ArrowUpRight, MoveUpRight, Upload } from 'lucide-react'
+import { ArrowUpRight, MoveUpRight } from 'lucide-react'
 import { formatRupees, type CatalogProduct } from './catalog'
 
-export function ProductCollection({ products, onCustomize, onBulkUpload }: { products: CatalogProduct[]; onCustomize: (product: CatalogProduct) => void; onBulkUpload: () => void }) {
+export function ProductCollection({ products, onCustomize }: { products: CatalogProduct[]; onCustomize: (product: CatalogProduct) => void }) {
   return (
     <section className="collection-section section-wrap" id="collection" aria-labelledby="collection-title">
       <div className="section-heading">
@@ -12,13 +12,12 @@ export function ProductCollection({ products, onCustomize, onBulkUpload }: { pro
           <h2 id="collection-title">Your next <em>favourite.</em></h2>
           <p className="section-intro">Good fabric is just the beginning. Pick your piece, then make it yours.</p>
         </div>
-        <button className="button button-outline-dark bulk-trigger" type="button" onClick={onBulkUpload}><Upload aria-hidden="true" /> Bulk upload</button>
       </div>
       <div className="product-grid">
         {products.map((product, index) => (
           <article className="product-card" key={product.id}>
             <button className="product-image-link" type="button" onClick={() => onCustomize(product)} aria-label={`Customize ${product.title}`}>
-              <span className="product-image"><img src={product.image} alt={`${product.title} — ${product.garment}, ${product.theme} artwork`} loading={index > 5 ? 'lazy' : 'eager'} /><span className="product-number">{String(index + 1).padStart(2, '0')}</span><span className="product-image-arrow"><MoveUpRight aria-hidden="true" /></span>{product.uploaded && <span className="uploaded-ribbon">NEW IN</span>}</span>
+              <span className="product-image"><img src={product.image} alt={`${product.title} — ${product.garment}, ${product.theme} artwork`} loading={index > 5 ? 'lazy' : 'eager'} /><span className="product-number">{String(index + 1).padStart(2, '0')}</span><span className="product-image-arrow"><MoveUpRight aria-hidden="true" /></span></span>
             </button>
             <div className="product-meta"><p className="product-theme">{product.theme}</p><h3>{product.title}</h3><p className="product-garment">{product.garment}</p><span className="product-price">{formatRupees(product.price)}</span></div>
             <button className="product-order" type="button" onClick={() => onCustomize(product)}>Order on WhatsApp <ArrowUpRight aria-hidden="true" /></button>
