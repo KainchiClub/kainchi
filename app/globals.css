@@ -1178,3 +1178,109 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .fit-size-guide-tab { min-height: 44px; padding: 6px; font-size: 7px; }
   .admin-product-code-field { width: 120px; }
 }
+
+.studio-alliance {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-block: 1px solid rgb(211 179 123 / 42%);
+  padding: clamp(64px, 8vw, 108px) clamp(22px, 7.2vw, 112px);
+  color: #f1e8da;
+  background: radial-gradient(ellipse at 50% 0%, rgb(153 106 57 / 20%), transparent 50%), linear-gradient(135deg, #261b17, #171311 62%, #241914);
+}
+.studio-alliance::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  content: '';
+  opacity: .3;
+  background-image: repeating-linear-gradient(0deg, rgb(255 241 218 / 2.2%) 0, rgb(255 241 218 / 2.2%) 1px, transparent 1px, transparent 4px), repeating-linear-gradient(90deg, rgb(255 241 218 / 1.6%) 0, rgb(255 241 218 / 1.6%) 1px, transparent 1px, transparent 5px);
+}
+.studio-alliance::after {
+  position: absolute;
+  inset: 14px;
+  z-index: -1;
+  pointer-events: none;
+  border: 1px solid rgb(210 174 113 / 17%);
+  content: '';
+}
+.studio-alliance-inner { position: relative; width: min(100%, 1120px); margin-inline: auto; }
+.studio-alliance-badge {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto;
+  border: 1px solid rgb(210 174 113 / 55%);
+  padding: 9px 15px;
+  color: #d8bb83;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  line-height: 1.4;
+  text-align: center;
+  text-transform: uppercase;
+}
+.studio-alliance-badge svg { width: 14px; height: 14px; stroke-width: 1.5; }
+.studio-alliance-inner > h2 {
+  max-width: 920px;
+  margin: 29px auto 0;
+  color: #f4eadb;
+  font: 500 clamp(34px, 4.5vw, 58px)/1.04 var(--font-display);
+  letter-spacing: -.045em;
+  text-align: center;
+  text-wrap: balance;
+}
+.studio-alliance-subtitle { max-width: 660px; margin: 17px auto 0; color: #cbbba8; font: italic 15px/1.7 var(--font-display); text-align: center; }
+.studio-alliance-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-top: 48px; }
+.studio-alliance-card {
+  min-width: 0;
+  position: relative;
+  border: 1px solid rgb(205 175 125 / 34%);
+  padding: 28px 24px 25px;
+  background: linear-gradient(145deg, rgb(255 245 225 / 4%), rgb(255 245 225 / 1%));
+  box-shadow: inset 0 0 0 4px rgb(210 174 113 / 3%);
+}
+.studio-alliance-card-featured { border-color: rgb(210 174 113 / 62%); background: linear-gradient(145deg, rgb(153 106 57 / 15%), rgb(255 245 225 / 2%)); }
+.studio-alliance-number { display: block; margin-bottom: 17px; color: #c7a66f; font: italic 16px/1 var(--font-display); }
+.studio-alliance-card h3 { min-height: 48px; margin: 0 0 23px; color: #f2e5d0; font: 500 20px/1.2 var(--font-display); letter-spacing: -.02em; }
+.studio-alliance-label { margin: 19px 0 6px; color: #d3ae72; font-size: 8px; font-weight: 700; letter-spacing: .17em; text-transform: uppercase; }
+.studio-alliance-copy { margin: 0; color: #d4c5b4; font-size: 11px; line-height: 1.75; }
+.studio-alliance-milestones { display: grid; gap: 7px; }
+.studio-alliance-milestones span { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid rgb(205 175 125 / 18%); padding: 5px 0 8px; color: #d4c5b4; font-size: 10px; }
+.studio-alliance-milestones strong { color: #dfc38e; font: 600 12px var(--font-display); }
+.studio-alliance-priority { margin: 13px 0 0; color: #dfc38e; font: italic 13px var(--font-display); }
+.studio-alliance-form { max-width: 760px; margin: 42px auto 0; border: 1px solid rgb(210 174 113 / 36%); padding: 22px; background: rgb(15 12 10 / 34%); }
+.studio-alliance-form > label { display: block; margin-bottom: 10px; color: #e1cfb4; font-size: 10px; font-weight: 600; letter-spacing: .04em; }
+.studio-alliance-form-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.studio-alliance-form-row input { min-width: 0; min-height: 48px; border: 1px solid rgb(214 192 159 / 37%); border-radius: 0; padding: 0 14px; color: #f7eee2; background: #211a16; font: inherit; font-size: 12px; }
+.studio-alliance-form-row input::placeholder { color: #998675; }
+.studio-alliance-form-row input:focus-visible { border-color: #d7b77c; outline: 2px solid rgb(215 183 124 / 26%); outline-offset: 2px; }
+.studio-alliance-form-row button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid #d5b67b; padding: 0 17px; color: #261b14; background: #d5b67b; font-size: 10px; font-weight: 700; letter-spacing: .03em; cursor: pointer; transition: color .18s ease, background .18s ease; }
+.studio-alliance-form-row button:hover { color: #f6ecdd; background: transparent; }
+.studio-alliance-form-row button:focus-visible { outline: 2px solid #f2d79e; outline-offset: 3px; }
+.studio-alliance-form-note { margin: 10px 0 0; color: #ac9a87; font-size: 9px; line-height: 1.5; }
+.studio-intake-partner-field { margin-top: 16px; }
+.studio-intake-partner-input { width: 100%; min-height: 44px; border: 1px solid #d1c2af; padding: 0 12px; color: #403027; background: #fbf7f0; font: inherit; font-size: 11px; }
+.studio-intake-partner-input:focus-visible { border-color: var(--crimson); outline: 2px solid rgb(121 35 51 / 12%); outline-offset: 1px; }
+@media (max-width: 760px) {
+  .studio-alliance { padding: 62px 22px; }
+  .studio-alliance-steps { grid-template-columns: 1fr; gap: 11px; margin-top: 34px; }
+  .studio-alliance-card { padding: 23px 20px; }
+  .studio-alliance-card h3 { min-height: 0; margin-bottom: 18px; }
+  .studio-alliance-form { margin-top: 30px; padding: 17px; }
+}
+@media (max-width: 560px) {
+  .studio-alliance { padding: 54px 20px; }
+  .studio-alliance::after { inset: 9px; }
+  .studio-alliance-badge { gap: 8px; padding: 8px 10px; font-size: 7px; letter-spacing: .13em; }
+  .studio-alliance-inner > h2 { margin-top: 23px; font-size: clamp(31px, 9vw, 42px); }
+  .studio-alliance-subtitle { font-size: 13px; }
+  .studio-alliance-form-row { grid-template-columns: 1fr; }
+  .studio-alliance-form-row button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-alliance-form-row button { transition: none; }
+}

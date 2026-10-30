@@ -44,6 +44,7 @@ type IntakeFields = {
   customColor: string
   sizes: string[]
   budget: string
+  partnerCode: string
 }
 
 type ReferencePhoto = {
@@ -52,7 +53,7 @@ type ReferencePhoto = {
   previewUrl: string
 }
 
-const emptyFields: IntakeFields = { productCodeOrName: '', garments: [], colors: [], customColor: '', sizes: [], budget: '' }
+const emptyFields: IntakeFields = { productCodeOrName: '', garments: [], colors: [], customColor: '', sizes: [], budget: '', partnerCode: '' }
 
 function garmentOptionFor(garment: string, productName: string) {
   const value = `${garment} ${productName}`.toLowerCase()
@@ -96,6 +97,7 @@ function initialFieldsFor(request: StudioIntakeRequest): IntakeFields {
     customColor: '',
     sizes,
     budget: items.length > 0 ? budgetOptionFor(items[0].price) : '',
+    partnerCode: '',
   }
 }
 
@@ -127,6 +129,7 @@ function makeIntakeMessage(fields: IntakeFields, photoCount: number) {
     `• Reference Photo Links: ${photoCount > 0 ? 'Attach selected photos directly in this WhatsApp chat.' : 'None'}`,
     '',
     '"Hi Kainchi Club! I have prepared my custom inquiry. Sharing details here for confirmation!"',
+    ...(fields.partnerCode.trim() ? [`• Referred By Partner: ${fields.partnerCode.trim()}`] : []),
     '--------------------------------------------------',
   ].join('\n')
 }
@@ -418,6 +421,19 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
           <p className="studio-intake-upload-note">Photos are not uploaded as links. Tap below to chat on WhatsApp — you can attach your photos directly in the chat with the studio!</p>
           <p className="studio-intake-upload-tip">Tip: You can also tap the 📎 paperclip in WhatsApp to send your photos directly in chat.</p>
         </section>
+
+        <label className="studio-intake-field studio-intake-partner-field" htmlFor="studio-intake-partner-code">
+          <span>Referred by a Studio Partner? Enter their Code (Optional)</span>
+          <input
+            className="studio-intake-partner-input"
+            id="studio-intake-partner-code"
+            type="text"
+            maxLength={60}
+            value={fields.partnerCode}
+            placeholder="Enter their personal artisan code"
+            onChange={(event) => setFields((current) => ({ ...current, partnerCode: event.target.value }))}
+          />
+        </label>
 
         <div className="studio-intake-actions">
           <button className="studio-intake-proceed" type="button" onClick={proceedToWhatsApp}>

@@ -19,6 +19,7 @@ import { FAQSection } from './faq-section'
 import { FamilyCollectionBanner } from './family-collection-banner'
 import { DiwaliComboPopup } from './diwali-combo-popup'
 import { StudioIntakeModal } from './studio-intake-modal'
+import { StudioAllianceProgram } from './studio-alliance-program'
 
 const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg'
 const OVERLAY_HISTORY_KEY = '__kainchiClubOverlay'
@@ -179,6 +180,7 @@ export function StorefrontClient() {
         <ProductCollection products={featuredProducts} onCustomize={openProduct} />
         <LetterboxFeedback />
         <ArtworkLibrary products={products} onCustomize={openProduct} />
+        <StudioAllianceProgram />
         <section className="story-section" id="story" aria-labelledby="story-title">
           <div className="story-number">K—C<br />2026</div>
           <div className="story-copy"><p className="eyebrow"><span className="eyebrow-dot" /> A small studio with a big heart</p><h2 id="story-title">Not just what<br />you <em>wear.</em><br />What you <em>carry.</em></h2></div>
