@@ -1,4 +1,5 @@
 import { formatRupees, type CatalogProduct } from './catalog'
+import { requestStudioIntake } from './studio-intake'
 
 export const WHATSAPP_PHONE = '918863075356'
 export const GIFT_BOX_PRICE = 99
@@ -78,5 +79,15 @@ export function createWhatsAppOrderUrl(items: readonly CartLineItem[]) {
 
 export function openWhatsAppOrder(items: readonly CartLineItem[]) {
   if (items.length === 0) return
-  window.open(createWhatsAppOrderUrl(items), '_blank', 'noopener,noreferrer')
+
+  requestStudioIntake({
+    directUrl: createWhatsAppOrderUrl(items),
+    items: items.map(({ product, color, size }) => ({
+      productName: product.title,
+      garment: product.garment,
+      color: color.name,
+      size,
+      price: product.price,
+    })),
+  })
 }

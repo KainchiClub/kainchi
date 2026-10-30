@@ -18,6 +18,7 @@ import { PolicyModals } from './policy-modals'
 import { FAQSection } from './faq-section'
 import { FamilyCollectionBanner } from './family-collection-banner'
 import { DiwaliComboPopup } from './diwali-combo-popup'
+import { StudioIntakeModal } from './studio-intake-modal'
 
 const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg'
 const OVERLAY_HISTORY_KEY = '__kainchiClubOverlay'
@@ -199,6 +200,7 @@ export function StorefrontClient() {
       />
       <VisitorLeadPopup />
       <DiwaliComboPopup />
+      <StudioIntakeModal />
       {selectedProduct && <ProductCustomizer
         product={selectedProduct}
         defaultIncludesGiftBox={premiumPackagingDefault}
