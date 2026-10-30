@@ -111,6 +111,9 @@ export function DiwaliComboPopup() {
       }}
     >
       <div className="diwali-combo-inner">
+        <div className="diwali-combo-sparkles" aria-hidden="true">
+          {Array.from({ length: 12 }, (_, index) => <span className="diwali-combo-sparkle" key={index} />)}
+        </div>
         <div className="diwali-combo-topline">
           <p className="diwali-combo-kicker">KAINCHI CLUB · FESTIVE EDITION</p>
           <button className="diwali-combo-close" type="button" onClick={closeOffer} aria-label="Close Diwali offer">
