@@ -1,25 +1,52 @@
-import { ArrowUpRight, Box, Package, Recycle, ScrollText } from 'lucide-react'
+import { ArrowUpRight, Box, Check, Crown, Package, Recycle, ScrollText } from 'lucide-react'
+import { formatRupees } from './catalog'
+import { GIFT_BOX_PRICE } from './order'
 
 const packagingImage = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Gemini_Generated_Image_5kl0775kl0775kl0.png-hPQJW5RzGUOvJenVxL6HVXJW8qYQar.jpeg'
+const premiumPackagingImage = '/packaging/collector-vault-concept.png'
 
 const packaging = [
   { title: 'The Experience Box', subtitle: 'A little ceremony for the reveal.', icon: Box },
   { title: 'The Eco-Mailer', subtitle: 'Thoughtful from the outside in.', icon: Recycle },
-  { title: 'Utility Sleeve Tube', subtitle: 'Keep the art safe on the way.', icon: ScrollText },
-  { title: 'Canvas Drawstring Utility Pouch', subtitle: 'The useful thing you keep.', icon: Package },
+  { title: 'The Utility Tube', subtitle: 'Keep the art safe on the way.', icon: ScrollText },
+  { title: 'Drawstring Pouch', subtitle: 'The useful thing you keep.', icon: Package },
 ]
 
-export function PackagingShowcase() {
+type PackagingShowcaseProps = {
+  premiumPackagingSelected: boolean
+  onPremiumPackagingChange: (isSelected: boolean) => void
+}
+
+export function PackagingShowcase({ premiumPackagingSelected, onPremiumPackagingChange }: PackagingShowcaseProps) {
   return (
     <section className="packaging-section" id="unboxing" aria-labelledby="packaging-title">
       <div className="packaging-copy">
         <p className="eyebrow"><span className="eyebrow-dot" /> The unboxing experience</p>
         <h2 id="packaging-title">Good things<br />come <em>wrapped.</em></h2>
         <p>From the first fold to the last thread, every detail is part of the piece.</p>
-        <div className="packaging-list">{packaging.map(({ title, subtitle, icon: Icon }, index) => <div className="packaging-item" key={title}><span className="packaging-index">0{index + 1}</span><Icon aria-hidden="true" /><span><strong>{title}</strong><small>{subtitle}</small></span></div>)}</div>
+        <div className="packaging-standard">
+          <p className="packaging-tier-label">Tier A · Standard Eco Packaging</p>
+          <p className="packaging-tier-subtitle">Included with every regular order · Thoughtfully crafted</p>
+          <div className="packaging-list">{packaging.map(({ title, subtitle, icon: Icon }, index) => <div className="packaging-item" key={title}><span className="packaging-index">0{index + 1}</span><Icon aria-hidden="true" /><span><strong>{title}</strong><small>{subtitle}</small></span></div>)}</div>
+        </div>
         <a className="packaging-link" href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club%2C%20tell%20me%20about%20your%20gift%20packaging.">Add the little extra <ArrowUpRight aria-hidden="true" /></a>
       </div>
-      <figure className="packaging-figure" aria-label="Four complete Kainchi Club packaging formats"><img className="packaging-visual-banner" src={packagingImage} alt="Kainchi Club's complete packaging presentation: The Experience Box, The Eco-Mailer, The Utility Tube, and Drawstring Utility Pouch." loading="lazy" decoding="async" /></figure>
+      <figure className="packaging-figure" aria-label="Four complete Kainchi Club standard packaging formats"><img className="packaging-visual-banner" src={packagingImage} alt="Kainchi Club's standard packaging presentation: The Experience Box, The Eco-Mailer, The Utility Tube, and Drawstring Pouch." loading="lazy" decoding="async" /></figure>
+      <section className="collector-vault" aria-labelledby="collector-vault-title">
+        <div className="collector-vault-copy">
+          <p className="collector-vault-badge"><Crown aria-hidden="true" /> Signature Luxury Upgrade <span>(+{formatRupees(GIFT_BOX_PRICE)})</span></p>
+          <h3 id="collector-vault-title">The Collector&apos;s Vault</h3>
+          <p className="collector-vault-description">Individually wax-sealed, rigid collector box, embossed certificate of authenticity, scented tissue wrap, and custom artisan ribbons.</p>
+          <button className={`collector-vault-toggle${premiumPackagingSelected ? ' selected' : ''}`} type="button" aria-pressed={premiumPackagingSelected} onClick={() => onPremiumPackagingChange(!premiumPackagingSelected)}>
+            {premiumPackagingSelected ? <><Check aria-hidden="true" /> Selected · Remove premium packaging</> : `Select +${formatRupees(GIFT_BOX_PRICE)} Premium Packaging`}
+          </button>
+          <p className="collector-vault-note">Adds {formatRupees(GIFT_BOX_PRICE)} per item to your current order. With an empty cart, it will be preselected for your next piece.</p>
+        </div>
+        <figure className="collector-vault-visual">
+          <img src={premiumPackagingImage} alt="Concept preview of a deep burgundy collector box with wax-sealed tissue, an embossed certificate, and artisan ribbons." loading="lazy" decoding="async" />
+          <figcaption>Visual concept · Collector&apos;s Vault</figcaption>
+        </figure>
+      </section>
     </section>
   )
 }

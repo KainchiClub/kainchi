@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { ArrowUpRight, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
 import { formatRupees } from './catalog'
 import { FREE_GIFT_THRESHOLD, FREE_GIFT_VALUE, GIFT_BOX_PRICE, MAX_ORDER_QUANTITY, getCartLineTotal, getCartTotal, hasFreeGiftUnlocked, type CartLineItem } from './order'
 
@@ -63,6 +63,7 @@ export function OrderCart({ items, isOpen, onOpenChange, onQuantityChange, onGif
           <section className="order-cart-dialog" role="dialog" aria-modal="true" aria-labelledby="order-cart-title">
             <div className="order-cart-header">
               <div>
+                <button type="button" className="overlay-back-button" onClick={() => onOpenChange(false)}><ArrowLeft aria-hidden="true" /> Back to Collection</button>
                 <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Order in progress</p>
                 <h2 id="order-cart-title">Your order <span>({itemCount})</span></h2>
               </div>
@@ -80,7 +81,7 @@ export function OrderCart({ items, isOpen, onOpenChange, onQuantityChange, onGif
                         <p>{item.product.garment} · {item.color.name} · Size {item.size}</p>
                         <label className="order-cart-giftbox">
                           <input type="checkbox" checked={item.includesGiftBox} onChange={(event) => onGiftBoxChange(item.cartId, event.target.checked)} />
-                          <span>Add gift box (+{formatRupees(GIFT_BOX_PRICE)} per item)</span>
+                          <span>Collector&apos;s Vault premium packaging (+{formatRupees(GIFT_BOX_PRICE)} per item)</span>
                         </label>
                       </div>
                       <div className="order-cart-line-controls">
@@ -100,7 +101,7 @@ export function OrderCart({ items, isOpen, onOpenChange, onQuantityChange, onGif
                   <p>{giftUnlocked ? <>Gift Unlocked: <strong>FREE KAINCHI SPECIAL GIFT (WORTH {formatRupees(FREE_GIFT_VALUE)})</strong> has been added to your order!</> : <>Spend <strong>{formatRupees(amountUntilGift)}</strong> more to unlock a <strong>FREE Special Gift (Worth {formatRupees(FREE_GIFT_VALUE)})</strong>!</>}</p>
                 </div>
                 <div className="order-cart-summary">
-                  <p><span>Packaging box add-on</span><strong>{giftBoxCount > 0 ? `${formatRupees(GIFT_BOX_PRICE)} × ${giftBoxCount}` : 'None'}</strong></p>
+                  <p><span>Premium packaging upgrade</span><strong>{giftBoxCount > 0 ? `${formatRupees(GIFT_BOX_PRICE)} × ${giftBoxCount}` : 'Standard included'}</strong></p>
                   <p className="order-cart-total"><span>Total payable</span><strong>{formatRupees(total)}</strong></p>
                 </div>
                 <div className="order-cart-actions">

@@ -51,9 +51,12 @@ export function getGiftBoxQuantity(items: readonly CartLineDetails[]) {
 
 export function createWhatsAppOrderMessage(items: readonly CartLineItem[]) {
   const giftBoxQuantity = getGiftBoxQuantity(items)
+  const standardPackagingQuantity = items.reduce((total, item) => total + (item.includesGiftBox ? 0 : item.quantity), 0)
   const itemSummaries = items.map((item, index) => {
     const productAmount = item.product.price * item.quantity
-    const packaging = item.includesGiftBox ? `Yes (+${formatRupees(GIFT_BOX_PRICE)} per item)` : 'No'
+    const packaging = item.includesGiftBox
+      ? `Collector’s Vault (+${formatRupees(GIFT_BOX_PRICE)} per item)`
+      : 'Standard Eco Packaging (included)'
 
     return [
       `${index + 1}. ${item.product.title}`,
@@ -68,11 +71,10 @@ export function createWhatsAppOrderMessage(items: readonly CartLineItem[]) {
     ].join('\n')
   })
 
-  const packagingSummary = giftBoxQuantity === 0
-    ? 'No'
-    : giftBoxQuantity === 1
-      ? `Yes (+${formatRupees(GIFT_BOX_PRICE)})`
-      : `Yes (+${formatRupees(GIFT_BOX_PRICE)} × ${giftBoxQuantity} items)`
+  const packagingSummary = [
+    ...(standardPackagingQuantity > 0 ? [`Standard Eco Packaging (included) × ${standardPackagingQuantity} item(s)`] : []),
+    ...(giftBoxQuantity > 0 ? [`Collector’s Vault (+${formatRupees(GIFT_BOX_PRICE)} × ${giftBoxQuantity} item(s))`] : []),
+  ].join(' · ') || 'Standard Eco Packaging (included)'
   const orderChecklist = [...itemSummaries]
   if (hasFreeGiftUnlocked(items)) orderChecklist.push(FREE_GIFT_RECEIPT_LINE)
 
@@ -82,7 +84,7 @@ export function createWhatsAppOrderMessage(items: readonly CartLineItem[]) {
     '🛍️ *ITEMS ORDERED:*',
     orderChecklist.join('\n\n'),
     '────────────────────────',
-    `📦 *Packaging Box Add-on:* ${packagingSummary}`,
+    `📦 *Packaging:* ${packagingSummary}`,
     `💰 *TOTAL PAYABLE:* ${formatRupees(getCartTotal(items))}`,
     '────────────────────────',
     'Please share payment details and dispatch timeline for this order.',

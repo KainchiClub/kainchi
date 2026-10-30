@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Check, Minus, Plus, ShoppingBag, X } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Check, Minus, Plus, ShoppingBag, X } from 'lucide-react'
 import { formatRupees, type CatalogProduct } from './catalog'
 import { FABRIC_COLORS, GIFT_BOX_PRICE, MAX_ORDER_QUANTITY, type CartLineDetails, type FabricColor } from './order'
 
@@ -9,16 +9,17 @@ const sizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL']
 
 type ProductCustomizerProps = {
   product: CatalogProduct
+  defaultIncludesGiftBox: boolean
   onClose: () => void
   onAddToCart: (details: CartLineDetails) => void
   onOrderNow: (details: CartLineDetails) => void
 }
 
-export function ProductCustomizer({ product, onClose, onAddToCart, onOrderNow }: ProductCustomizerProps) {
+export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, onAddToCart, onOrderNow }: ProductCustomizerProps) {
   const [size, setSize] = useState('M')
   const [color, setColor] = useState<FabricColor>(FABRIC_COLORS[0])
   const [quantity, setQuantity] = useState(1)
-  const [includesGiftBox, setIncludesGiftBox] = useState(false)
+  const [includesGiftBox, setIncludesGiftBox] = useState(defaultIncludesGiftBox)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const total = product.price * quantity + (includesGiftBox ? GIFT_BOX_PRICE * quantity : 0)
   const soldOut = product.stockStatus === 'sold-out'
@@ -52,7 +53,7 @@ export function ProductCustomizer({ product, onClose, onAddToCart, onOrderNow }:
   return (
     <div className="customizer-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <section className="customizer-dialog" role="dialog" aria-modal="true" aria-labelledby="customizer-title">
-        <div className="customizer-topline"><span className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Make it yours</span><button ref={closeButtonRef} type="button" className="icon-button" onClick={onClose} aria-label="Close customization"><X /></button></div>
+        <div className="customizer-topline"><div className="customizer-topline-start"><button type="button" className="overlay-back-button" onClick={onClose}><ArrowLeft aria-hidden="true" /> Back to Collection</button><span className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Make it yours</span></div><button ref={closeButtonRef} type="button" className="icon-button" onClick={onClose} aria-label="Close customization"><X /></button></div>
         <div className="customizer-layout">
           <div className="customizer-visual-column">
             <div className="customizer-product-visual">
@@ -85,7 +86,7 @@ export function ProductCustomizer({ product, onClose, onAddToCart, onOrderNow }:
               <div className="color-options">{FABRIC_COLORS.map((option) => <button type="button" key={option.name} className={`color-option${color.name === option.name ? ' active' : ''}`} aria-label={`Select ${option.name} fabric base color`} aria-pressed={color.name === option.name} title={option.name} onClick={() => setColor(option)}><span className="color-swatch" style={{ background: option.sample }}>{color.name === option.name && <Check aria-hidden="true" />}</span><span>{option.name}</span></button>)}</div>
             </fieldset>
 
-            <label className="giftbox-option"><input type="checkbox" checked={includesGiftBox} onChange={(event) => setIncludesGiftBox(event.target.checked)} /><span className="giftbox-check" aria-hidden="true"><Check /></span><span><strong>Add Premium Custom Gift Box &amp; Unboxing Packaging</strong><small>Hand-finished, ready to gift <b>(+₹99 per item)</b></small></span></label>
+            <label className="giftbox-option"><input type="checkbox" checked={includesGiftBox} onChange={(event) => setIncludesGiftBox(event.target.checked)} /><span className="giftbox-check" aria-hidden="true"><Check /></span><span><strong>Collector&apos;s Vault premium packaging</strong><small>Hand-finished, ready to gift <b>(+₹99 per item)</b></small></span></label>
             <div className="customizer-total"><span>Final calculated price</span><strong aria-live="polite">{formatRupees(total)}</strong></div>
             <div className="customizer-order-actions">
               <button className="button button-outline-dark" type="button" onClick={() => onAddToCart(orderDetails)} disabled={soldOut}><ShoppingBag aria-hidden="true" /> Add to cart</button>
