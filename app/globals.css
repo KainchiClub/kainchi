@@ -432,6 +432,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .art-image { object-position: center; }
 .product-order:disabled { cursor: not-allowed; opacity: .58; }
 .stock-badge { pointer-events: none; }
+.product-image::after, .art-image-wrap::after, .packaging-figure::after { content: ""; position: absolute; z-index: 3; right: 0; bottom: 10%; width: 36px; height: 36px; box-sizing: border-box; border: 1px solid rgb(103 49 51 / 58%); border-radius: 50%; background-color: #f0e5d4; background-image: url("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg"); background-position: center; background-repeat: no-repeat; background-size: cover; box-shadow: 0 2px 7px rgb(39 24 18 / 24%); opacity: .96; pointer-events: none; }
+.packaging-figure::after { right: .6%; bottom: .6%; width: 30px; height: 30px; }
 .artwork-footnote button { cursor: pointer; }
 .success-mark { width: 18px; height: 18px; display: grid; place-items: center; border: 1px solid #93a28f; border-radius: 50%; font-size: 11px; }
 
@@ -588,7 +590,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .packaging-item small { color: #b9a695; font-size: 8px; }
 .packaging-link { display: inline-flex; align-items: center; gap: 8px; color: #e0c49e; font-size: 10px; font-weight: 700; }
 .packaging-link svg { width: 14px; height: 14px; }
-.packaging-figure { align-self: center; min-width: 0; margin: 0; }
+.packaging-figure { position: relative; align-self: center; min-width: 0; margin: 0; }
 .packaging-visual-banner { display: block; width: 100%; height: auto; }
 
 @media (max-width: 900px) {
