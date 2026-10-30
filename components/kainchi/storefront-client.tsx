@@ -12,6 +12,7 @@ import { OrderCart } from './order-cart'
 import { openWhatsAppOrder, type CartLineDetails, type CartLineItem } from './order'
 import { PackagingShowcase } from './packaging-showcase'
 import { SiteHeader } from './site-header'
+import { VisitorLeadPopup } from './visitor-lead-popup'
 
 const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg'
 
@@ -76,6 +77,7 @@ export function StorefrontClient() {
         onRemove={(cartId) => setCartItems((current) => current.filter((item) => item.cartId !== cartId))}
         onCheckout={() => openWhatsAppOrder(cartItems)}
       />
+      <VisitorLeadPopup />
       {selectedProduct && <ProductCustomizer
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}

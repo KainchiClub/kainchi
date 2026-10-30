@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useCatalogProducts } from '@/components/kainchi/catalog-store'
 import { ARTWORK_THEMES, type CatalogProduct } from '@/components/kainchi/catalog'
 import { signOutAdmin, unlockAdmin } from './actions'
+import { VisitorLeadsPanel } from './visitor-leads-panel'
 
 const initialLoginState = { error: '' }
 
@@ -153,6 +154,8 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
             </table>
           </div>
         </section>
+
+        <VisitorLeadsPanel />
 
         <section className="admin-panel admin-add-panel" aria-labelledby="add-item-title">
           <div className="admin-panel-heading"><div><h2 id="add-item-title">Add New Item</h2><p>New items appear in the storefront catalog immediately.</p></div></div>
