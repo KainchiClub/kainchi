@@ -18,7 +18,7 @@ export function SiteHeader() {
         {navigation.map((item) => <a href={item.href} key={item.label}>{item.label}</a>)}
       </nav>
       <div className="header-actions">
-        <a className="header-cta" href="https://wa.me/91XXXXXXXXXX?text=Hi%20Kainchi%20Club%2C%20I%27d%20love%20to%20know%20more.">
+        <a className="header-cta" href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club,%20I%20have%20an%20inquiry%20regarding%20your%20collection." target="_blank" rel="noopener noreferrer">
           Talk to the studio <ArrowUpRight aria-hidden="true" />
         </a>
       </div>
