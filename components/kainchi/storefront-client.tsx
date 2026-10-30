@@ -1,10 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
-import { type CatalogProduct } from './catalog'
+import { getFeaturedProducts, type CatalogProduct } from './catalog'
 import { useCatalogProducts } from './catalog-store'
+import { LetterboxFeedback } from './letterbox-feedback'
 import { HeroShowcase } from './hero-showcase'
 import { ProductCollection } from './product-collection'
 import { ProductCustomizer } from './product-customizer'
@@ -34,6 +35,7 @@ function createCartLine(details: CartLineDetails): CartLineItem {
 
 export function StorefrontClient() {
   const [products] = useCatalogProducts()
+  const featuredProducts = useMemo(() => getFeaturedProducts(products), [products])
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null)
   const [cartItems, setCartItems] = useState<CartLineItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
@@ -168,7 +170,8 @@ export function StorefrontClient() {
       <main>
         <HeroShowcase />
         <div className="canvas-band" aria-label="Made with care, worn with feeling"><span>MADE WITH CARE</span><span className="canvas-band-mark"><Scissors aria-hidden="true" /></span><span>WORN WITH FEELING</span></div>
-        <ProductCollection products={products} onCustomize={openProduct} />
+        <ProductCollection products={featuredProducts} onCustomize={openProduct} />
+        <LetterboxFeedback />
         <ArtworkLibrary products={products} onCustomize={openProduct} />
         <section className="story-section" id="story" aria-labelledby="story-title">
           <div className="story-number">K—C<br />2026</div>

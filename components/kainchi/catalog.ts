@@ -33,6 +33,26 @@ export type CatalogProduct = {
   uploaded?: boolean
 }
 
+export const FEATURED_ARTWORK_IDS = [
+  'drive-01',
+  'drive-02',
+  'drive-03',
+  'drive-04',
+  'drive-05',
+  'drive-06',
+  'drive-07',
+  'drive-08',
+] as const
+
+export function getFeaturedProducts(products: CatalogProduct[]) {
+  const featured = FEATURED_ARTWORK_IDS.flatMap((id) => {
+    const product = products.find((item) => item.id === id)
+    return product ? [product] : []
+  })
+  const featuredIds = new Set(featured.map((product) => product.id))
+  return [...featured, ...products.filter((product) => !featuredIds.has(product.id))].slice(0, FEATURED_ARTWORK_IDS.length)
+}
+
 function driveImage(fileId: string) {
   return `https://lh3.googleusercontent.com/d/${fileId}=w1200`
 }
