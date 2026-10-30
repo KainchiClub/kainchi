@@ -19,7 +19,9 @@ export function SiteHeader() {
       </nav>
       <div className="header-actions">
         <a className="header-cta" href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club,%20I%20have%20an%20inquiry%20regarding%20your%20collection." target="_blank" rel="noopener noreferrer">
-          Talk to the studio <ArrowUpRight aria-hidden="true" />
+          <span>Talk to the studio</span>
+          <span className="header-cta-status"><span className="header-cta-status-dot" aria-hidden="true" />Studio Active</span>
+          <ArrowUpRight aria-hidden="true" />
         </a>
       </div>
     </header>
