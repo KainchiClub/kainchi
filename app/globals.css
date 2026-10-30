@@ -993,7 +993,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .diwali-combo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .diwali-combo-card { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; border: 1px solid #d0b99c; padding: 18px 16px 15px; color: #4c382e; background: rgb(255 251 244 / 76%); box-shadow: 3px 3px 0 rgb(121 35 51 / 7%); }
 .diwali-combo-number { color: #a77b4e; font: italic 12px var(--font-display); }
-.diwali-combo-card h3 { margin: 12px 0 8px; color: #61232e; font: 500 21px/1.1 var(--font-display); }
+.diwali-combo-feature { width: 100%; min-width: 0; display: flex; align-items: flex-start; gap: 10px; }
+.diwali-combo-thumbnail { position: relative; width: 70px; height: 70px; flex: 0 0 70px; overflow: hidden; border: 1px dashed #ad8c65; border-radius: 12px; background: linear-gradient(145deg, #eee3d4, #d9c6ae); box-shadow: inset 0 1px 5px rgb(56 35 22 / 18%), 0 0 0 3px rgb(246 237 224 / 70%); }
+.diwali-combo-thumbnail-image { position: absolute; width: 45px; height: 58px; border: 1px solid rgb(115 86 61 / 35%); border-radius: 5px; object-fit: contain; background: #f5efe5; box-shadow: 0 3px 7px rgb(56 35 22 / 24%); }
+.diwali-combo-thumbnail-image:first-child { left: 0; bottom: 0; transform: rotate(-7deg); }
+.diwali-combo-thumbnail-image:nth-child(2) { top: 0; right: 0; transform: rotate(7deg); }
+.diwali-combo-thumbnail-image:nth-child(3) { top: 8px; left: 14px; z-index: 2; width: 42px; height: 54px; transform: rotate(1deg); }
+.diwali-combo-thumbnail-image:only-child { inset: 0; width: 100%; height: 100%; border: 0; border-radius: inherit; object-fit: cover; transform: none; box-shadow: none; }
+.diwali-combo-copy { min-width: 0; flex: 1; }
+.diwali-combo-card h3 { margin: 0 0 8px; color: #61232e; font: 500 21px/1.1 var(--font-display); }
 .diwali-combo-card p { margin: 0 0 16px; color: #6e5949; font-size: 10px; line-height: 1.6; }
 .diwali-combo-note { margin-top: auto; border-top: 1px solid #e1d2bf; padding-top: 10px; color: #8a6540; font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .diwali-combo-cta { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; border: 1px solid #792333; padding: 0 18px; color: #fff7ee; background: #792333; font-size: 11px; font-weight: 700; transition: background .2s ease, transform .2s ease; }
@@ -1009,8 +1017,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .diwali-combo-inner h2 { max-width: 480px; font-size: clamp(28px, 8vw, 38px); }
   .diwali-combo-subtitle { margin: 10px 0 17px; font-size: 11px; }
   .diwali-combo-grid { grid-template-columns: 1fr; gap: 8px; }
-  .diwali-combo-card { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 9px; padding: 12px; }
-  .diwali-combo-number { grid-row: 1 / span 3; padding-top: 2px; }
+  .diwali-combo-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+  .diwali-combo-number { grid-row: auto; padding-top: 0; }
+  .diwali-combo-thumbnail { width: 64px; height: 64px; flex-basis: 64px; }
+  .diwali-combo-thumbnail-image { width: 42px; height: 54px; }
+  .diwali-combo-thumbnail-image:nth-child(3) { top: 7px; left: 12px; width: 38px; height: 50px; }
   .diwali-combo-card h3 { margin: 0 0 4px; font-size: 18px; }
   .diwali-combo-card p { margin: 0 0 7px; font-size: 9px; }
   .diwali-combo-note { margin-top: 0; padding-top: 0; border: 0; font-size: 7px; }

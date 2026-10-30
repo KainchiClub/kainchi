@@ -2,8 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, X } from 'lucide-react'
+import { initialProducts } from './catalog'
+import { referenceArtwork } from './hero-showcase'
 
 const SESSION_KEY = 'kainchi_diwali_offer_expiry'
+const productImages = new Map(initialProducts.map((product) => [product.id, product.image]))
+
+function productThumbnail(productId: string) {
+  return productImages.get(productId)?.replace(/=w\d+$/, '=w240') ?? ''
+}
 const REMEMBER_DURATION = 24 * 60 * 60 * 1000
 const WHATSAPP_MESSAGE = 'Hi Kainchi Club, I am interested in claiming your exclusive Diwali Combo Offer. Please share the details!'
 const WHATSAPP_HREF = `https://wa.me/918863075356?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`
@@ -14,18 +21,24 @@ const combos = [
     title: 'The Street Duo',
     description: '1 Raw Denim Jeans + 1 Heavy Fleece Sweatshirt',
     note: 'Special Festive Price',
+    thumbnailImages: [productThumbnail('drive-04'), productThumbnail('drive-02')],
+    thumbnailAlt: 'Painted Denim jeans paired with the Orbit Within fleece hoodie',
   },
   {
     number: '02',
     title: 'Twin Warmth Set',
     description: '2 Premium Fleece Hoodies / Sweatshirts',
     note: 'Any 2 Artworks',
+    thumbnailImages: [productThumbnail('drive-02'), productThumbnail('drive-03')],
+    thumbnailAlt: 'Orbit Within and Moonlit Valley fleece hoodie artwork previews',
   },
   {
     number: '03',
     title: 'The Heritage Trio',
     description: '1 Vintage Leather Jacket + 1 Fleece Hoodie + 1 Denim Jeans',
     note: 'The Master Collector Set',
+    thumbnailImages: [referenceArtwork],
+    thumbnailAlt: 'Studio collection leather jacket, hoodie, and illustrated denim shown together',
   },
 ]
 
@@ -111,8 +124,24 @@ export function DiwaliComboPopup() {
           {combos.map((combo) => (
             <article className="diwali-combo-card" key={combo.title}>
               <span className="diwali-combo-number">{combo.number}</span>
-              <h3>{combo.title}</h3>
-              <p>{combo.description}</p>
+              <div className="diwali-combo-feature">
+                <div className="diwali-combo-thumbnail" role="img" aria-label={combo.thumbnailAlt}>
+                  {combo.thumbnailImages.map((image, index) => (
+                    <img
+                      className="diwali-combo-thumbnail-image"
+                      key={`${combo.number}-${index}`}
+                      src={image}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ))}
+                </div>
+                <div className="diwali-combo-copy">
+                  <h3>{combo.title}</h3>
+                  <p>{combo.description}</p>
+                </div>
+              </div>
               <span className="diwali-combo-note">{combo.note}</span>
             </article>
           ))}
