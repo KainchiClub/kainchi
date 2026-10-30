@@ -20,7 +20,7 @@ export function ProductCollection({ products, onCustomize }: { products: Catalog
             <button className="product-image-link" type="button" onClick={() => onCustomize(product)} aria-label={`View ${product.title}`}>
               <span className="product-image"><img src={product.image} alt={`${product.title} — ${product.garment}, ${product.theme} artwork`} loading={index === 0 ? 'eager' : 'lazy'} decoding="async" fetchPriority={index === 0 ? 'high' : 'auto'} draggable={false} onContextMenu={(event) => event.preventDefault()} /><span className={`stock-badge${soldOut ? ' sold-out' : ''}`} aria-label={`Stock status: ${soldOut ? 'Sold Out' : 'In Stock'}`}>{soldOut ? 'Sold Out' : 'In Stock'}</span><span className="product-number">{String(index + 1).padStart(2, '0')}</span><span className="product-image-arrow"><MoveUpRight aria-hidden="true" /></span></span>
             </button>
-            <div className="product-meta"><p className="product-theme">{product.theme}</p><h3>{product.title}</h3><p className="product-garment">{product.garment}</p><span className="product-price">{formatRupees(product.price)}</span></div>
+            <div className="product-meta"><p className="product-theme">{product.theme}</p><h3>{product.title} <span className="product-code-label">· {product.productCode}</span></h3><p className="product-garment">{product.garment}</p><span className="product-price">{formatRupees(product.price)}</span></div>
             <button className="product-order" type="button" onClick={() => onCustomize(product)} disabled={soldOut}>{soldOut ? 'Sold Out' : 'Order on WhatsApp'}{!soldOut && <ArrowUpRight aria-hidden="true" />}</button>
           </article>
         })}

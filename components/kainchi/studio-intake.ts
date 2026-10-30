@@ -2,6 +2,7 @@ export const STUDIO_INTAKE_EVENT = 'kainchi:studio-intake'
 
 export type StudioIntakeItem = {
   productName: string
+  productCode?: string
   garment: string
   color: string
   size: string

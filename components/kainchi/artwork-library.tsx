@@ -87,7 +87,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
                 <button className="art-image-link" type="button" onClick={() => onCustomize(product)} aria-label={`View ${product.title}`}>
                   <span className="art-image-wrap"><img className="art-image" src={product.image} alt={`${product.title} — ${product.garment} in the ${product.theme} theme`} loading="lazy" decoding="async" fetchPriority="low" draggable={false} onContextMenu={(event) => event.preventDefault()} /><span className={`stock-badge${soldOut ? ' sold-out' : ''}`} aria-label={`Stock status: ${soldOut ? 'Sold Out' : 'In Stock'}`}>{soldOut ? 'Sold Out' : 'In Stock'}</span><span className="art-card-sticker">KAINCHI ORIGINAL</span><span className="art-image-arrow"><ArrowUpRight aria-hidden="true" /></span></span>
                 </button>
-                <div className="art-card-meta"><p className="art-theme">{product.theme}</p><h3>{product.title}</h3><span className="art-garment">{product.garment} · ₹{new Intl.NumberFormat('en-IN').format(product.price)}</span></div>
+                <div className="art-card-meta"><p className="art-theme">{product.theme}</p><h3>{product.title} <span className="product-code-label">· {product.productCode}</span></h3><span className="art-garment">{product.garment} · ₹{new Intl.NumberFormat('en-IN').format(product.price)}</span></div>
                 <button className="product-order" type="button" onClick={() => onCustomize(product)} disabled={soldOut}>{soldOut ? 'Sold Out' : 'Order on WhatsApp'}{!soldOut && <ArrowUpRight aria-hidden="true" />}</button>
               </article>
             })}</div> : <div className="art-empty"><p>No pieces match that search just yet.</p></div>}

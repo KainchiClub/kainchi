@@ -200,7 +200,7 @@ export function StorefrontClient() {
       />
       <VisitorLeadPopup />
       <DiwaliComboPopup />
-      <StudioIntakeModal />
+      <StudioIntakeModal products={products} />
       {selectedProduct && <ProductCustomizer
         product={selectedProduct}
         defaultIncludesGiftBox={premiumPackagingDefault}

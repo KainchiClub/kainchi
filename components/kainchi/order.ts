@@ -53,6 +53,7 @@ export function getGiftBoxQuantity(items: readonly CartLineDetails[]) {
 export function createWhatsAppOrderMessage(items: readonly CartLineItem[]) {
   const itemSummaries = items.map((item) => [
     `• Item: ${item.product.title}`,
+    `• Product Code: ${item.product.productCode ?? 'Left blank'}`,
     `• Size: ${item.size}`,
     `• Packaging Tier: ${item.includesGiftBox ? `+${formatRupees(GIFT_BOX_PRICE)} Luxury Upgrade` : 'Standard'}`,
     ...(item.quantity > 1 ? [`• Quantity: ${item.quantity}`] : []),
@@ -84,6 +85,7 @@ export function openWhatsAppOrder(items: readonly CartLineItem[]) {
     directUrl: createWhatsAppOrderUrl(items),
     items: items.map(({ product, color, size }) => ({
       productName: product.title,
+      productCode: product.productCode,
       garment: product.garment,
       color: color.name,
       size,

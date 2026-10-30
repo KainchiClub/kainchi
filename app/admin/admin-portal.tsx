@@ -4,7 +4,7 @@ import { useActionState, useState, type FormEvent, type KeyboardEvent } from 're
 import { ArrowUpRight, LockKeyhole, Plus, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useCatalogProducts } from '@/components/kainchi/catalog-store'
-import { ARTWORK_THEMES, type CatalogProduct } from '@/components/kainchi/catalog'
+import { ARTWORK_THEMES, getNextProductCode, type CatalogProduct } from '@/components/kainchi/catalog'
 import { signOutAdmin, unlockAdmin } from './actions'
 import { VisitorLeadsPanel } from './visitor-leads-panel'
 import { FeedbackModerationPanel } from './feedback-moderation-panel'
@@ -40,6 +40,8 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
   const [products, setProducts] = useCatalogProducts()
   const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>('catalog')
   const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({})
+  const [productCodeDrafts, setProductCodeDrafts] = useState<Record<string, string>>({})
+  const [productCodeErrors, setProductCodeErrors] = useState<Record<string, string>>({})
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState<(typeof ARTWORK_THEMES)[number]>(ARTWORK_THEMES[0])
   const [price, setPrice] = useState('1699')
@@ -70,6 +72,42 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
     if (!Number.isSafeInteger(nextPrice) || nextPrice < 1 || nextPrice > 1_000_000) return
 
     setProducts((current) => current.map((product) => product.id === productId ? { ...product, price: nextPrice } : product))
+  }
+
+  function updateProductCode(productId: string, rawValue: string) {
+    const productCode = rawValue.trim().toUpperCase()
+    setProductCodeDrafts((current) => ({ ...current, [productId]: productCode }))
+
+    if (!productCode) {
+      setProductCodeErrors((current) => ({ ...current, [productId]: 'A product code is required.' }))
+      return
+    }
+
+    const isDuplicate = products.some((product) => product.id !== productId && product.productCode?.toUpperCase() === productCode)
+    if (isDuplicate) {
+      setProductCodeErrors((current) => ({ ...current, [productId]: 'That code is already assigned to another item.' }))
+      return
+    }
+
+    setProductCodeErrors((current) => {
+      const next = { ...current }
+      delete next[productId]
+      return next
+    })
+    setProducts((current) => current.map((product) => product.id === productId ? { ...product, productCode } : product))
+  }
+
+  function resetProductCodeDraft(productId: string) {
+    setProductCodeDrafts((current) => {
+      const next = { ...current }
+      delete next[productId]
+      return next
+    })
+    setProductCodeErrors((current) => {
+      const next = { ...current }
+      delete next[productId]
+      return next
+    })
   }
 
   function resetPriceDraft(productId: string) {
@@ -108,6 +146,7 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
     const newProduct: CatalogProduct = {
       id: `owner-${crypto.randomUUID()}`,
       title: title.trim(),
+      productCode: getNextProductCode(products, 'Oversized T-Shirt', title.trim()),
       garment: 'Oversized T-Shirt',
       theme: category,
       price: itemPrice,
@@ -128,7 +167,7 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
         <div className="admin-notice">
           <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Owner access</p>
           <h1 id="admin-page-title">Admin Portal</h1>
-          <p>Enter your owner PIN to manage artwork prices and stock availability.</p>
+          <p>Enter your owner PIN to manage product codes, prices, and stock availability.</p>
           <form className="admin-login-form" action={loginAction}>
             <label htmlFor="admin-pin">Owner PIN</label>
             <input id="admin-pin" name="pin" type="password" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="current-password" required aria-describedby={loginState.error ? 'admin-login-error' : undefined} />
@@ -174,19 +213,20 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
         <div className="admin-tab-panel" id="admin-panel-catalog" role="tabpanel" aria-labelledby="admin-tab-catalog" tabIndex={0} hidden={activeAdminTab !== 'catalog'}>
           <section className="admin-panel" aria-labelledby="catalog-table-title">
             <div className="admin-panel-heading">
-              <div><h2 id="catalog-table-title">Artwork catalog</h2><p>{products.length} items · prices and stock update on the storefront in this browser</p></div>
+              <div><h2 id="catalog-table-title">Artwork catalog</h2><p>{products.length} items · product codes, prices, and stock are saved in this browser</p></div>
               <span className="admin-count">{String(products.length).padStart(2, '0')} ITEMS</span>
             </div>
             <div className="admin-table-wrap">
               <table className="admin-table">
-                <caption className="sr-only">All catalog artworks with editable base prices and stock status</caption>
-                <thead><tr><th scope="col">Thumbnail</th><th scope="col">Product Title</th><th scope="col">Category</th><th scope="col">Base Price</th><th scope="col">Stock Status</th></tr></thead>
+                <caption className="sr-only">All catalog artworks with editable product codes, base prices, and stock status</caption>
+                <thead><tr><th scope="col">Thumbnail</th><th scope="col">Product Title</th><th scope="col">Product Code</th><th scope="col">Category</th><th scope="col">Base Price</th><th scope="col">Stock Status</th></tr></thead>
                 <tbody>
                   {products.map((product) => {
                     const soldOut = product.stockStatus === 'sold-out'
                     return <tr key={product.id}>
                       <td><img className="admin-thumbnail" src={product.image} alt="" loading="lazy" draggable={false} onContextMenu={(event) => event.preventDefault()} /></td>
                       <td><strong className="admin-product-title">{product.title}</strong><span className="admin-product-garment">{product.garment}</span></td>
+                      <td><label className="admin-product-code-field"><span className="sr-only">Product code for {product.title}</span><input type="text" maxLength={24} autoCapitalize="characters" spellCheck={false} value={productCodeDrafts[product.id] ?? product.productCode ?? ''} onChange={(event) => updateProductCode(product.id, event.target.value)} onBlur={() => resetProductCodeDraft(product.id)} aria-invalid={Boolean(productCodeErrors[product.id])} aria-describedby={productCodeErrors[product.id] ? `admin-code-error-${product.id}` : undefined} />{productCodeErrors[product.id] && <span className="admin-product-code-error" id={`admin-code-error-${product.id}`} role="alert">{productCodeErrors[product.id]}</span>}</label></td>
                       <td>{product.theme}</td>
                       <td><label className="admin-price-field"><span aria-hidden="true">₹</span><span className="sr-only">Base price for {product.title}</span><input type="number" min="1" max="1000000" step="1" value={priceDrafts[product.id] ?? String(product.price)} onChange={(event) => updatePrice(product.id, event.target.value)} onBlur={() => resetPriceDraft(product.id)} /></label></td>
                       <td><button className={`admin-stock-toggle${soldOut ? ' sold-out' : ''}`} type="button" aria-pressed={!soldOut} onClick={() => toggleStock(product)}>{soldOut ? 'Sold Out' : 'In Stock'}</button></td>

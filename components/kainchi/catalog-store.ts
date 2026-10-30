@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ARTWORK_THEMES, GARMENT_TYPES, initialProducts, type ArtworkTheme, type CatalogProduct, type GarmentType } from './catalog'
+import { ARTWORK_THEMES, GARMENT_TYPES, assignCategoryProductCodes, initialProducts, type ArtworkTheme, type CatalogProduct, type GarmentType } from './catalog'
 
 const STORAGE_KEY = 'kainchi-catalog-v1'
 
@@ -35,10 +35,10 @@ function readCatalogProducts(serialized: string | null) {
     const parsed: unknown = JSON.parse(serialized)
     if (!Array.isArray(parsed)) return initialProducts
 
-    return parsed.filter(isCatalogProduct).map((product) => ({
+    return assignCategoryProductCodes(parsed.filter(isCatalogProduct).map((product) => ({
       ...product,
       stockStatus: product.stockStatus === 'sold-out' ? 'sold-out' as const : 'in-stock' as const,
-    }))
+    })))
   } catch {
     return initialProducts
   }

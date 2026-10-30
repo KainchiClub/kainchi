@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { WHATSAPP_PHONE } from './order'
+import type { CatalogProduct } from './catalog'
+import { FitSizeGuide } from './fit-size-guide'
 import { requestStudioIntake, STUDIO_INTAKE_EVENT, type StudioIntakeRequest } from './studio-intake'
 
 const garmentOptions = [
@@ -37,6 +39,7 @@ const maxReferencePhotos = 5
 const maxReferencePhotoSize = 10 * 1024 * 1024
 
 type IntakeFields = {
+  productCodeOrName: string
   garments: string[]
   colors: string[]
   customColor: string
@@ -50,7 +53,7 @@ type ReferencePhoto = {
   previewUrl: string
 }
 
-const emptyFields: IntakeFields = { garments: [], colors: [], customColor: '', sizes: [], budget: '' }
+const emptyFields: IntakeFields = { productCodeOrName: '', garments: [], colors: [], customColor: '', sizes: [], budget: '' }
 
 function garmentOptionFor(garment: string, productName: string) {
   const value = `${garment} ${productName}`.toLowerCase()
@@ -81,11 +84,14 @@ function budgetOptionFor(price: number) {
 
 function initialFieldsFor(request: StudioIntakeRequest): IntakeFields {
   const items = request.items ?? []
+  const productCodes = [...new Set(items.map((item) => item.productCode?.trim()).filter((code): code is string => Boolean(code)))]
+  const productNames = [...new Set(items.map((item) => item.productName.trim()).filter(Boolean))]
   const garments = [...new Set(items.map((item) => garmentOptionFor(item.garment, item.productName)).filter(Boolean))]
   const colors = [...new Set(items.map((item) => colorOptionFor(item.color)).filter(Boolean))]
   const sizes = [...new Set(items.map((item) => item.size).filter((size) => sizeOptions.includes(size as (typeof sizeOptions)[number])))]
 
   return {
+    productCodeOrName: productCodes.length > 0 ? productCodes.join(', ') : productNames.join(', '),
     garments,
     colors,
     customColor: '',
@@ -109,32 +115,30 @@ function getSafeWhatsAppUrl(value?: string) {
   return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`
 }
 
-function makeIntakeMessage(fields: IntakeFields, request: StudioIntakeRequest, photoCount: number) {
-  const productNames = [...new Set((request.items ?? []).map((item) => item.productName.trim()).filter(Boolean))]
-  const productSuffix = productNames.length > 0 ? ` — ${productNames.join(', ')}` : ''
+function makeIntakeMessage(fields: IntakeFields, photoCount: number) {
   const selectedColors = fields.colors.map((color) => (
     color === 'Custom Color' && fields.customColor.trim()
       ? `Custom Color: ${fields.customColor.trim()}`
       : color
   ))
-  const photoReminder = `📎 ${photoCount} custom reference ${photoCount === 1 ? 'photo' : 'photos'} ready to send`
 
   return [
     '--------------------------------------------------',
     '✂️ *KAINCHI CLUB — CUSTOM STUDIO INTAKE* ✂️',
     '--------------------------------------------------',
-    `• Selected Garments: ${fields.garments.join(', ')}${productSuffix}`,
-    `• Color/Wash Preferences: ${selectedColors.join(', ')}`,
-    `• Sizes Required: ${fields.sizes.join(', ')}`,
-    `• Budget Range: ${fields.budget}`,
-    `• Reference Photos: ${photoReminder} (attach them here for discussion)`,
+    `• Product Code: ${fields.productCodeOrName.trim() || 'Left Blank'}`,
+    `• Garments: ${fields.garments.join(', ') || 'None'}`,
+    `• Color: ${selectedColors.join(', ') || 'None'}`,
+    `• Size: ${fields.sizes.join(', ') || 'None'}`,
+    `• Budget: ${fields.budget || 'Left Blank'}`,
+    `• Reference Photo Links: ${photoCount > 0 ? 'Directly sending in chat' : 'None'}`,
     '',
-    '"Hi Kainchi Club! I have prepared my custom requirements and reference ideas. Sharing them here for review!"',
+    '"Hi Kainchi Club! I have prepared my custom inquiry. Sharing details here for confirmation!"',
     '--------------------------------------------------',
   ].join('\n')
 }
 
-export function StudioIntakeModal() {
+export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const firstGarmentRef = useRef<HTMLButtonElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -146,6 +150,12 @@ export function StudioIntakeModal() {
   const [uploadStatus, setUploadStatus] = useState('')
   const [isDragging, setIsDragging] = useState(false)
 
+  function clearSelectedPhotos() {
+    photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.previewUrl))
+    photosRef.current = []
+    setPhotos([])
+  }
+
   useEffect(() => () => {
     photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.previewUrl))
   }, [])
@@ -153,6 +163,7 @@ export function StudioIntakeModal() {
   useEffect(() => {
     const handleRequest = (event: Event) => {
       const nextRequest = (event as CustomEvent<StudioIntakeRequest>).detail ?? {}
+      clearSelectedPhotos()
       setRequest(nextRequest)
       setFields(initialFieldsFor(nextRequest))
       setUploadStatus('')
@@ -192,12 +203,6 @@ export function StudioIntakeModal() {
       dialog.close()
     }
   }, [isOpen])
-
-  const hasCompleteIntake = fields.garments.length > 0
-    && fields.colors.length > 0
-    && fields.sizes.length > 0
-    && Boolean(fields.budget)
-    && (!fields.colors.includes('Custom Color') || Boolean(fields.customColor.trim()))
 
   function toggleOption(field: 'garments' | 'colors' | 'sizes', value: string) {
     setFields((current) => {
@@ -250,11 +255,27 @@ export function StudioIntakeModal() {
   }
 
   function proceedToWhatsApp() {
-    if (!hasCompleteIntake) return
+    const message = makeIntakeMessage(fields, photos.length)
+    const files = photos.map((photo) => photo.file)
+    const canShareFiles = files.length > 0
+      && typeof navigator.share === 'function'
+      && typeof navigator.canShare === 'function'
+      && navigator.canShare({ files })
 
-    const message = makeIntakeMessage(fields, request, photos.length)
+    if (canShareFiles) {
+      void navigator.share({ title: 'Kainchi Club studio references', text: message, files }).then(() => {
+        clearSelectedPhotos()
+        dialogRef.current?.close()
+      }).catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setUploadStatus('Device sharing was unavailable. You can attach the photos from WhatsApp instead.')
+      })
+      return
+    }
+
     const url = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`
     window.open(url, '_blank', 'noopener,noreferrer')
+    clearSelectedPhotos()
     dialogRef.current?.close()
   }
 
@@ -275,10 +296,27 @@ export function StudioIntakeModal() {
         </div>
         <div className="studio-intake-heading">
           <h2 id="studio-intake-title"><span aria-hidden="true">✂️ </span>Personalize Your Studio Request</h2>
-          <p id="studio-intake-subtitle">Help our artisans match the exact piece, fit, and style for you.</p>
+          <p id="studio-intake-subtitle">Every field is optional. Share what you know, or continue with nothing selected.</p>
         </div>
 
         <div className="studio-intake-fields">
+          <label className="studio-intake-field" htmlFor="studio-intake-product-code">
+            <span>Product Code / Name (Optional)</span>
+            <input
+              id="studio-intake-product-code"
+              type="text"
+              list="studio-intake-product-options"
+              maxLength={100}
+              value={fields.productCodeOrName}
+              placeholder="Choose a product code or type a name"
+              onChange={(event) => setFields((current) => ({ ...current, productCodeOrName: event.target.value }))}
+            />
+            <datalist id="studio-intake-product-options">
+              {products.map((product) => product.productCode
+                ? <option key={product.id} value={product.productCode} label={product.title} />
+                : null)}
+            </datalist>
+          </label>
           <fieldset className="studio-intake-field studio-intake-choice-field">
             <legend>Garment Category</legend>
             <div className="studio-intake-choice-options">
@@ -345,21 +383,9 @@ export function StudioIntakeModal() {
             <details className="studio-intake-size-guide">
               <summary>Size Guide</summary>
               <div className="studio-intake-size-guide-content">
-                <p>Garment measurements in inches. Choose your usual size for a relaxed fit.</p>
-                <div className="studio-intake-size-table-wrap">
-                  <table>
-                    <caption className="sr-only">Kainchi Club tee and hoodie measurements in inches</caption>
-                    <thead><tr><th scope="col">Size</th><th scope="col">Tee chest</th><th scope="col">Tee length</th><th scope="col">Hoodie chest</th><th scope="col">Hoodie length</th></tr></thead>
-                    <tbody>
-                      <tr><th scope="row">S</th><td>42</td><td>28</td><td>44</td><td>27</td></tr>
-                      <tr><th scope="row">M</th><td>44</td><td>29</td><td>46</td><td>28</td></tr>
-                      <tr><th scope="row">L</th><td>46</td><td>30</td><td>48</td><td>29</td></tr>
-                      <tr><th scope="row">XL</th><td>48</td><td>31</td><td>50</td><td>30</td></tr>
-                      <tr><th scope="row">XXL</th><td>50</td><td>32</td><td>52</td><td>31</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-                <p className="studio-intake-size-note">For denim, jacket, or a closer fit, the studio can confirm measurements before checkout.</p>
+                <p>Choose the fit that feels right; all measurements are in inches.</p>
+                <FitSizeGuide variant="light" />
+                <p className="studio-intake-size-note">For denim and jackets, the studio can confirm measurements before checkout.</p>
               </div>
             </details>
           </fieldset>
@@ -417,11 +443,12 @@ export function StudioIntakeModal() {
             </ul>
           )}
           {uploadStatus && <p className="studio-intake-upload-status" role="status" aria-live="polite">{uploadStatus}</p>}
-          <p className="studio-intake-upload-note">Photos will be prepared for your studio inquiry. Tap below to share them directly with our artisan on WhatsApp. After WhatsApp opens, attach the photos from your device.</p>
+          <p className="studio-intake-upload-note">Photos stay on this device. On supported phones, choose WhatsApp in the share sheet to include them; otherwise attach them manually after WhatsApp opens.</p>
+          <p className="studio-intake-upload-tip">Tip: You can also tap the 📎 paperclip in WhatsApp to send your photos directly in chat.</p>
         </section>
 
         <div className="studio-intake-actions">
-          <button className="studio-intake-proceed" type="button" onClick={proceedToWhatsApp} disabled={!hasCompleteIntake}>
+          <button className="studio-intake-proceed" type="button" onClick={proceedToWhatsApp}>
             Proceed to Studio WhatsApp →
           </button>
           <a
@@ -434,13 +461,6 @@ export function StudioIntakeModal() {
             Skip &amp; chat directly on WhatsApp
           </a>
         </div>
-        {!hasCompleteIntake && (
-          <p className="studio-intake-hint">
-            {fields.colors.includes('Custom Color') && !fields.customColor.trim()
-              ? 'Describe your custom color and choose at least one garment, size, and price range.'
-              : 'Choose at least one garment, color, size, and price range to prepare your studio note.'}
-          </p>
-        )}
       </div>
     </dialog>
   )

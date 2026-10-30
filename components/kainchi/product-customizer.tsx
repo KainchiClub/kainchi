@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowUpRight, Check, Minus, Plus, Ruler, ShoppingBag, X } from 'lucide-react'
 import { formatRupees, type CatalogProduct } from './catalog'
+import { FitSizeGuide } from './fit-size-guide'
 import { FABRIC_COLORS, GIFT_BOX_PRICE, MAX_ORDER_QUANTITY, type CartLineDetails, type FabricColor } from './order'
 
 const sizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL']
@@ -80,7 +81,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
           </div>
           <div className="customizer-options">
             <p className="eyebrow eyebrow-dark">CUSTOM ORDER</p>
-            <h2 id="customizer-title">{product.title}</h2>
+            <h2 id="customizer-title">{product.title} <span className="customizer-product-code">· {product.productCode}</span></h2>
             <p className="customizer-category">{product.garment} <span>·</span> {product.theme}</p>
 
             <fieldset className="option-group">
@@ -129,38 +130,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
             <button ref={sizeGuideCloseButtonRef} aria-label="Close size and fit guide" className="size-guide-close" onClick={() => setIsSizeGuideOpen(false)} type="button"><X aria-hidden="true" /></button>
           </div>
           <p className="size-guide-intro">All measurements are garment measurements in inches. <span className="size-guide-mobile-tip">Swipe tables sideways on smaller screens.</span></p>
-          <section className="size-guide-category" aria-labelledby="size-guide-tees">
-            <h3 id="size-guide-tees">Oversized Heavy Tees <span>Drop Shoulder</span></h3>
-            <div className="size-guide-table-wrap">
-              <table className="size-guide-table">
-                <caption className="sr-only">Oversized heavy tee measurements in inches</caption>
-                <thead><tr><th scope="col">Size</th><th scope="col">Chest (in)</th><th scope="col">Length (in)</th><th scope="col">Shoulder (in)</th></tr></thead>
-                <tbody>
-                  <tr><th scope="row">S</th><td>42</td><td>28</td><td>20</td></tr>
-                  <tr><th scope="row">M</th><td>44</td><td>29</td><td>21</td></tr>
-                  <tr><th scope="row">L</th><td>46</td><td>30</td><td>22</td></tr>
-                  <tr><th scope="row">XL</th><td>48</td><td>31</td><td>23</td></tr>
-                  <tr><th scope="row">XXL</th><td>50</td><td>32</td><td>24</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-          <section className="size-guide-category" aria-labelledby="size-guide-fleece">
-            <h3 id="size-guide-fleece">Heavy Fleece Hoodies &amp; Sweatshirts</h3>
-            <div className="size-guide-table-wrap">
-              <table className="size-guide-table">
-                <caption className="sr-only">Heavy fleece hoodie and sweatshirt measurements in inches</caption>
-                <thead><tr><th scope="col">Size</th><th scope="col">Chest (in)</th><th scope="col">Length (in)</th><th scope="col">Sleeve (in)</th></tr></thead>
-                <tbody>
-                  <tr><th scope="row">S</th><td>44</td><td>27</td><td>24</td></tr>
-                  <tr><th scope="row">M</th><td>46</td><td>28</td><td>25</td></tr>
-                  <tr><th scope="row">L</th><td>48</td><td>29</td><td>25.5</td></tr>
-                  <tr><th scope="row">XL</th><td>50</td><td>30</td><td>26</td></tr>
-                  <tr><th scope="row">XXL</th><td>52</td><td>31</td><td>26.5</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <FitSizeGuide variant="dark" />
           <section className="size-guide-category" aria-labelledby="size-guide-denim">
             <h3 id="size-guide-denim">Streetwear Denim Jeans</h3>
             <div className="size-guide-table-wrap">
@@ -176,7 +146,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
               </table>
             </div>
           </section>
-          <p className="size-guide-tip"><strong>Pro tip</strong> All our tops are cut with an intentional drop-shoulder streetwear drape. Order your normal size for the signature relaxed look, or size down for a standard regular fit.</p>
+          <p className="size-guide-tip"><strong>Pro tip</strong> Choose Standard / Regular Fit for a closer silhouette or Signature Streetwear Oversized for the relaxed drop-shoulder drape.</p>
         </div>
       </dialog>
     </div>

@@ -25,12 +25,64 @@ export type StockStatus = 'in-stock' | 'sold-out'
 export type CatalogProduct = {
   id: string
   title: string
+  productCode?: string
   garment: GarmentType
   theme: ArtworkTheme
   price: number
   image: string
   stockStatus?: StockStatus
   uploaded?: boolean
+}
+
+export function getProductCodePrefix(product: Pick<CatalogProduct, 'garment' | 'title'>) {
+  const garment = product.garment.toLowerCase()
+  const label = `${garment} ${product.title.toLowerCase()}`
+
+  if (/\b(combo|co[\s-]?ord|set)\b/.test(label)) return 'CMB'
+  if (garment === 'denim jeans') return 'DNM'
+  if (/hoodie/.test(garment)) return 'HOD'
+  if (/sweatshirt/.test(garment)) return 'SWT'
+  if (/jacket/.test(garment)) return 'JCK'
+  if (/tee|t-shirt/.test(garment)) return 'TEE'
+  return 'TEE'
+}
+
+export function assignCategoryProductCodes(products: readonly CatalogProduct[]) {
+  const reservedCodes = new Set(products.map((product) => product.productCode?.trim().toUpperCase()).filter(Boolean))
+  const generatedCodes = new Set<string>()
+  const nextByPrefix = new Map<string, number>()
+
+  return products.map((product) => {
+    const savedCode = product.productCode?.trim()
+    if (savedCode) return { ...product, productCode: savedCode }
+
+    const prefix = getProductCodePrefix(product)
+    let sequence = nextByPrefix.get(prefix) ?? 1
+    let productCode = `#KC-${prefix}-${String(sequence).padStart(2, '0')}`
+
+    while (reservedCodes.has(productCode.toUpperCase()) || generatedCodes.has(productCode.toUpperCase())) {
+      sequence += 1
+      productCode = `#KC-${prefix}-${String(sequence).padStart(2, '0')}`
+    }
+
+    nextByPrefix.set(prefix, sequence + 1)
+    generatedCodes.add(productCode.toUpperCase())
+    return { ...product, productCode }
+  })
+}
+
+export function getNextProductCode(products: readonly CatalogProduct[], garment: GarmentType, title: string) {
+  const prefix = getProductCodePrefix({ garment, title })
+  const usedCodes = new Set(products.map((product) => product.productCode?.trim().toUpperCase()).filter(Boolean))
+  let sequence = 1
+  let productCode = `#KC-${prefix}-${String(sequence).padStart(2, '0')}`
+
+  while (usedCodes.has(productCode.toUpperCase())) {
+    sequence += 1
+    productCode = `#KC-${prefix}-${String(sequence).padStart(2, '0')}`
+  }
+
+  return productCode
 }
 
 export const FEATURED_ARTWORK_IDS = [
@@ -57,7 +109,7 @@ function driveImage(fileId: string) {
   return `https://lh3.googleusercontent.com/d/${fileId}=w1200`
 }
 
-export const initialProducts: CatalogProduct[] = [
+const catalogSeed: Omit<CatalogProduct, 'productCode'>[] = [
   { id: 'drive-01', title: 'Owl in Bloom', garment: 'Oversized T-Shirt', theme: 'Nature & Scenic', price: 1699, image: driveImage('1wePskySZauoxgUSKc8eTdElz9jv4JkB8') },
   { id: 'drive-02', title: 'Orbit Within', garment: 'Fleece Hoodie', theme: 'Brahmand', price: 2499, image: driveImage('1x9Ej_aTNmiEPzrXT7-PAw2NCNXtEDEM2') },
   { id: 'drive-03', title: 'Moonlit Valley', garment: 'Fleece Hoodie', theme: 'Nature & Scenic', price: 2499, image: driveImage('1Id-SzIYmChj5Jkavm1vwe_IECfcx7u08') },
@@ -98,6 +150,8 @@ export const initialProducts: CatalogProduct[] = [
   { id: 'drive-38', title: 'Mahadev Flame', garment: 'Heavy Boxy Tee', theme: 'Divine & Spiritual', price: 1699, image: driveImage('1sBgF-lsR5MtMv2v7SDckCUdNQqnXcOGn') },
   { id: 'drive-39', title: 'Street Poster', garment: 'Heavy Boxy Tee', theme: 'Streetwear', price: 1699, image: driveImage('1n3V9DEHB6HyhXyNTJlktYoBdgSw1TK2I') },
 ]
+
+export const initialProducts: CatalogProduct[] = assignCategoryProductCodes(catalogSeed)
 
 export function formatRupees(amount: number) {
   return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(amount)}`
