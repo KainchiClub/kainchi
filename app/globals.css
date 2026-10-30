@@ -551,18 +551,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .packaging-item small { color: #b9a695; font-size: 8px; }
 .packaging-link { display: inline-flex; align-items: center; gap: 8px; color: #e0c49e; font-size: 10px; font-weight: 700; }
 .packaging-link svg { width: 14px; height: 14px; }
-.packaging-figure { display: grid; grid-template-rows: repeat(4, minmax(140px, 1fr)); align-self: stretch; gap: 8px; min-width: 0; min-height: 100%; margin: 0; }
-.packaging-visual-item { display: grid; grid-template-columns: minmax(132px, .72fr) minmax(0, 1fr); align-items: center; gap: 15px; min-width: 0; overflow: hidden; border: 1px solid #d6c4ae; padding: 6px 15px; color: #4b3327; background: #eee4d6; }
-.packaging-visual-photo { position: relative; width: 100%; height: 120px; min-width: 0; overflow: hidden; background: #eee4d6; }
-.packaging-visual-photo img { position: absolute; top: -24%; left: 0; width: 400%; max-width: none; height: 140%; display: block; object-fit: fill; }
-.packaging-visual-photo-1 img { top: -26%; width: 333%; height: 130%; }
-.packaging-visual-photo-2 img { left: -124%; }
-.packaging-visual-photo-3 img { left: -224%; }
-.packaging-visual-photo-4 img { left: -312%; }
-.packaging-visual-copy { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
-.packaging-visual-index { color: #8e6a4f; font-size: 7px; font-weight: 700; letter-spacing: .16em; }
-.packaging-visual-copy strong { color: #3c2a21; font: 500 clamp(14px, 1.5vw, 20px)/1.1 var(--font-display); }
-.packaging-visual-copy small { color: #846d5a; font-size: 9px; line-height: 1.5; }
+.packaging-figure { align-self: center; min-width: 0; margin: 0; }
+.packaging-visual-banner { display: block; width: 100%; height: auto; }
 
 @media (max-width: 900px) {
   .product-grid, .art-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 25px 17px; }
@@ -627,11 +617,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .order-cart-summary .order-cart-total strong { font-size: 22px; }
   .packaging-section { grid-template-columns: 1fr; gap: 25px; padding: 58px 22px; }
   .packaging-copy h2 { font-size: 46px; }
-  .packaging-figure { grid-template-rows: repeat(4, minmax(140px, 1fr)); gap: 8px; }
-  .packaging-visual-item { grid-template-columns: minmax(124px, .82fr) minmax(0, 1fr); gap: 10px; padding: 6px 10px; }
-  .packaging-visual-item img { max-height: 120px; }
-  .packaging-visual-copy strong { font-size: 16px; }
-  .packaging-visual-copy small { font-size: 8px; }
+
   .site-footer .footer-wordmark { font-size: 12px; }
   .footer-wordmark .wordmark-logo { width: 27px; height: 27px; }
   .admin-page { padding: 20px 16px; }
