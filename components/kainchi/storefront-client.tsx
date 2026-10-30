@@ -16,6 +16,8 @@ import { SiteHeader } from './site-header'
 import { VisitorLeadPopup } from './visitor-lead-popup'
 import { PolicyModals } from './policy-modals'
 import { FAQSection } from './faq-section'
+import { FamilyCollectionBanner } from './family-collection-banner'
+import { DiwaliComboPopup } from './diwali-combo-popup'
 
 const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg'
 const OVERLAY_HISTORY_KEY = '__kainchiClubOverlay'
@@ -172,6 +174,7 @@ export function StorefrontClient() {
       <main>
         <HeroShowcase />
         <div className="canvas-band" aria-label="Made with care, worn with feeling"><span>MADE WITH CARE</span><span className="canvas-band-mark"><Scissors aria-hidden="true" /></span><span>WORN WITH FEELING</span></div>
+        <FamilyCollectionBanner />
         <ProductCollection products={featuredProducts} onCustomize={openProduct} />
         <LetterboxFeedback />
         <ArtworkLibrary products={products} onCustomize={openProduct} />
@@ -195,6 +198,7 @@ export function StorefrontClient() {
         onCheckout={() => openWhatsAppOrder(cartItems)}
       />
       <VisitorLeadPopup />
+      <DiwaliComboPopup />
       {selectedProduct && <ProductCustomizer
         product={selectedProduct}
         defaultIncludesGiftBox={premiumPackagingDefault}

@@ -5,10 +5,13 @@ import { ArrowUpRight, X } from 'lucide-react'
 import { addVisitorLead, type VisitorLead } from './visitor-leads'
 
 const SESSION_SHOWN_KEY = 'kainchi_lead_shown'
+const FESTIVE_OFFER_SESSION_KEY = 'kainchi_diwali_offer_expiry'
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function hasSeenLeadPrompt() {
   try {
+    const festiveOfferExpiry = Number(window.sessionStorage.getItem(FESTIVE_OFFER_SESSION_KEY))
+    if (Number.isFinite(festiveOfferExpiry) && festiveOfferExpiry > Date.now()) return true
     return window.sessionStorage.getItem(SESSION_SHOWN_KEY) === '1'
   } catch {
     return true

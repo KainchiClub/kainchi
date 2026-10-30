@@ -35,8 +35,9 @@ export function PackagingShowcase({ premiumPackagingSelected, onPremiumPackaging
       <section className="collector-vault" aria-labelledby="collector-vault-title">
         <div className="collector-vault-copy">
           <p className="collector-vault-badge"><Crown aria-hidden="true" /> Signature Luxury Upgrade <span>(+{formatRupees(GIFT_BOX_PRICE)})</span></p>
-          <h3 id="collector-vault-title">The Collector&apos;s Vault</h3>
-          <p className="collector-vault-description">Individually wax-sealed, rigid collector box, embossed certificate of authenticity, scented tissue wrap, and custom artisan ribbons.</p>
+          <h3 id="collector-vault-title">The Collector&apos;s Vault — Curated for Gifting &amp; Keepsakes (+₹99)</h3>
+          <p className="collector-vault-description">Planning a memorable gift for a birthday, anniversary, or special festival? Upgrade any piece to our Signature Collector&apos;s Vault. Delivered in an ultra-rigid wax-sealed collector box with custom artisan ribbons, scented tissue, and a handwritten personalized greeting note of your choice. Ready to gift straight out of the box.</p>
+          <p className="collector-vault-standard-note">Standard eco-packaging (Boxes, Mailers, Tubes, and Pouches) continues to be included free with all regular orders.</p>
           <button className={`collector-vault-toggle${premiumPackagingSelected ? ' selected' : ''}`} type="button" aria-pressed={premiumPackagingSelected} onClick={() => onPremiumPackagingChange(!premiumPackagingSelected)}>
             {premiumPackagingSelected ? <><Check aria-hidden="true" /> Selected · Remove premium packaging</> : `Select +${formatRupees(GIFT_BOX_PRICE)} Premium Packaging`}
           </button>
