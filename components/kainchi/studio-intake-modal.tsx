@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
-import { WHATSAPP_PHONE } from './order'
 import type { CatalogProduct } from './catalog'
 import { FitSizeGuide } from './fit-size-guide'
 import { requestStudioIntake, STUDIO_INTAKE_EVENT, type StudioIntakeRequest } from './studio-intake'
@@ -109,12 +108,6 @@ function isWhatsAppUrl(value: string) {
   }
 }
 
-function getSafeWhatsAppUrl(value?: string) {
-  if (value && isWhatsAppUrl(value)) return value
-  const message = 'Hi Kainchi Club, I would like to chat with the studio directly.'
-  return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`
-}
-
 function makeIntakeMessage(fields: IntakeFields, photoCount: number) {
   const selectedColors = fields.colors.map((color) => (
     color === 'Custom Color' && fields.customColor.trim()
@@ -131,7 +124,7 @@ function makeIntakeMessage(fields: IntakeFields, photoCount: number) {
     `• Color: ${selectedColors.join(', ') || 'None'}`,
     `• Size: ${fields.sizes.join(', ') || 'None'}`,
     `• Budget: ${fields.budget || 'Left Blank'}`,
-    `• Reference Photo Links: ${photoCount > 0 ? 'Directly sending in chat' : 'None'}`,
+    `• Reference Photo Links: ${photoCount > 0 ? 'Attach selected photos directly in this WhatsApp chat.' : 'None'}`,
     '',
     '"Hi Kainchi Club! I have prepared my custom inquiry. Sharing details here for confirmation!"',
     '--------------------------------------------------',
@@ -144,7 +137,6 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
   const photoInputRef = useRef<HTMLInputElement>(null)
   const photosRef = useRef<ReferencePhoto[]>([])
   const [isOpen, setIsOpen] = useState(false)
-  const [request, setRequest] = useState<StudioIntakeRequest>({})
   const [fields, setFields] = useState<IntakeFields>(emptyFields)
   const [photos, setPhotos] = useState<ReferencePhoto[]>([])
   const [uploadStatus, setUploadStatus] = useState('')
@@ -164,7 +156,6 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
     const handleRequest = (event: Event) => {
       const nextRequest = (event as CustomEvent<StudioIntakeRequest>).detail ?? {}
       clearSelectedPhotos()
-      setRequest(nextRequest)
       setFields(initialFieldsFor(nextRequest))
       setUploadStatus('')
       setIsDragging(false)
@@ -255,28 +246,9 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
   }
 
   function proceedToWhatsApp() {
-    const message = makeIntakeMessage(fields, photos.length)
-    const files = photos.map((photo) => photo.file)
-    const canShareFiles = files.length > 0
-      && typeof navigator.share === 'function'
-      && typeof navigator.canShare === 'function'
-      && navigator.canShare({ files })
-
-    if (canShareFiles) {
-      void navigator.share({ title: 'Kainchi Club studio references', text: message, files }).then(() => {
-        clearSelectedPhotos()
-        dialogRef.current?.close()
-      }).catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        setUploadStatus('Device sharing was unavailable. You can attach the photos from WhatsApp instead.')
-      })
-      return
-    }
-
-    const url = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`
-    window.open(url, '_blank', 'noopener,noreferrer')
-    clearSelectedPhotos()
-    dialogRef.current?.close()
+    const finalIntakeMessage = makeIntakeMessage(fields, photos.length)
+    const waUrl = `https://wa.me/918863075356?text=${encodeURIComponent(finalIntakeMessage)}`
+    window.location.href = waUrl
   }
 
   return (
@@ -443,7 +415,7 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
             </ul>
           )}
           {uploadStatus && <p className="studio-intake-upload-status" role="status" aria-live="polite">{uploadStatus}</p>}
-          <p className="studio-intake-upload-note">Photos stay on this device. On supported phones, choose WhatsApp in the share sheet to include them; otherwise attach them manually after WhatsApp opens.</p>
+          <p className="studio-intake-upload-note">Photos are not uploaded as links. Tap below to chat on WhatsApp — you can attach your photos directly in the chat with the studio!</p>
           <p className="studio-intake-upload-tip">Tip: You can also tap the 📎 paperclip in WhatsApp to send your photos directly in chat.</p>
         </section>
 
@@ -453,7 +425,7 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
           </button>
           <a
             className="studio-intake-skip"
-            href={getSafeWhatsAppUrl(request.directUrl)}
+            href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club,%20I%20have%20an%20inquiry%20regarding%20your%20collection."
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => dialogRef.current?.close()}
