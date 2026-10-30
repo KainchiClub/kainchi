@@ -209,7 +209,6 @@ button { color: inherit; }
 .letterbox-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; }
 .letterbox-character-count { color: #99836e; font-size: 8px; }
 .letterbox-open-button { min-height: 38px; padding: 0 14px; font-size: 9px; }
-.letterbox-storage-note { margin: 11px 0 0; color: #8a6b4b; font-size: 8px; line-height: 1.5; }
 .letterbox-stamp { width: 112px; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; justify-self: center; border: 1px dashed #a77b5c; border-radius: 50%; color: #8c6d4b; transform: rotate(5deg); }
 .letterbox-stamp span { font-size: 6px; font-weight: 700; letter-spacing: .13em; }
 .letterbox-stamp strong { color: var(--crimson); font: 500 19px/.95 var(--font-display); text-align: center; }
@@ -898,7 +897,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .letterbox-confirmation small { color: #d3c0ad; font-size: 8px; line-height: 1.5; }
 .letterbox-confirmation button { width: 25px; height: 25px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid rgb(247 235 216 / 35%); color: #f7ecdc; background: transparent; cursor: pointer; }
 .letterbox-confirmation button svg { width: 13px; height: 13px; }
-.feedback-storage-note { margin: 14px 0 0; border-left: 2px solid #a87953; padding: 8px 10px; color: #745d49; background: rgb(213 195 171 / 24%); font-size: 9px; line-height: 1.5; }
 .feedback-admin-tools { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .feedback-storage-badge, .faq-storage-badge { border: 1px solid #cbb99e; border-radius: 999px; padding: 7px 10px; color: #765e46; background: #f3ece2; font-size: 7px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .feedback-show-hidden { border: 0; padding: 5px; color: var(--crimson); background: transparent; font: inherit; font-size: 8px; font-weight: 700; cursor: pointer; }
@@ -1007,12 +1005,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .diwali-combo-close { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid #bba68d; color: #5d493e; background: transparent; cursor: pointer; transition: color .18s ease, background .18s ease, border-color .18s ease; }
 .diwali-combo-close:hover { border-color: var(--crimson); color: #fff7ee; background: var(--crimson); }
 .diwali-combo-close svg { width: 17px; height: 17px; }
-.diwali-combo-dialog :is(.diwali-combo-close, .diwali-combo-cta):focus-visible { outline: 2px solid var(--crimson); outline-offset: 3px; }
+.diwali-combo-dialog :is(.diwali-combo-close, .diwali-combo-card, .diwali-combo-cta):focus-visible { outline: 2px solid var(--crimson); outline-offset: 3px; }
 .diwali-combo-overline { margin: 10px 0 6px; color: #9b774e; font-size: 8px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .diwali-combo-inner h2 { max-width: 760px; margin: 0; color: #4a211f; font: 500 clamp(30px, 4vw, 48px)/1.02 var(--font-display); letter-spacing: -.04em; }
 .diwali-combo-subtitle { max-width: 650px; margin: 12px 0 24px; color: #6e5949; font-size: 12px; line-height: 1.7; }
 .diwali-combo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.diwali-combo-card { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; border: 1px solid #d0b99c; padding: 18px 16px 15px; color: #4c382e; background: rgb(255 251 244 / 76%); box-shadow: 3px 3px 0 rgb(121 35 51 / 7%); }
+.diwali-combo-card { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; border: 1px solid #d0b99c; padding: 18px 16px 15px; color: #4c382e; background: rgb(255 251 244 / 76%); box-shadow: 3px 3px 0 rgb(121 35 51 / 7%); text-align: left; text-decoration: none; cursor: pointer; transition: border-color .18s ease, box-shadow .18s ease; }
+.diwali-combo-card:hover { border-color: #a77b4e; }
+.diwali-combo-card[data-selected="true"] { border-color: #792333; box-shadow: 0 0 0 2px rgb(121 35 51 / 16%), 3px 3px 0 rgb(121 35 51 / 7%); }
 .diwali-combo-number { color: #a77b4e; font: italic 12px var(--font-display); }
 .diwali-combo-feature { width: 100%; min-width: 0; display: flex; align-items: flex-start; gap: 10px; }
 .diwali-combo-thumbnail { position: relative; width: 70px; height: 70px; flex: 0 0 70px; overflow: hidden; border: 1px dashed #ad8c65; border-radius: 12px; background: linear-gradient(145deg, #eee3d4, #d9c6ae); box-shadow: inset 0 1px 5px rgb(56 35 22 / 18%), 0 0 0 3px rgb(246 237 224 / 70%); }
@@ -1056,5 +1056,5 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce) {
   .diwali-combo-dialog[open] { animation: none; }
   .diwali-combo-dialog[open] .diwali-combo-sparkle { animation: none; }
-  .diwali-combo-close, .diwali-combo-cta { transition: none; }
+  .diwali-combo-close, .diwali-combo-card, .diwali-combo-cta { transition: none; }
 }

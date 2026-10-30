@@ -74,7 +74,7 @@ export function LetterboxFeedback() {
     }
 
     setSubmissionStatus('')
-    setConfirmation('Thank you! Your note is saved in this browser.')
+    setConfirmation('Thank you! Your note has reached the studio desk.')
     setIsDialogOpen(false)
     setRating(0)
     setComment('')
@@ -106,13 +106,12 @@ export function LetterboxFeedback() {
             <span className="letterbox-character-count">{comment.length}/{MAX_COMMENT_LENGTH}</span>
             <button className="button button-crimson letterbox-open-button" onClick={() => { setSubmissionStatus(''); setConfirmation(''); setIsDialogOpen(true) }} type="button">Submit feedback</button>
           </div>
-          <p className="letterbox-storage-note">In this preview, notes are saved only in this browser and are not sent online.</p>
         </div>
         <div className="letterbox-stamp" aria-hidden="true"><span>OPEN</span><strong>STUDIO<br />MAIL</strong><span>KAINCHI CLUB</span></div>
         <span className="letterbox-card-number" aria-hidden="true">08 / 39</span>
       </div>
       {confirmation && <div className="letterbox-confirmation" role="status" aria-live="polite">
-        <span><strong>{confirmation}</strong><small>Only this browser can see it; it has not been sent online.</small></span>
+        <span><strong>{confirmation}</strong></span>
         <button type="button" onClick={() => setConfirmation('')} aria-label="Dismiss feedback confirmation"><X aria-hidden="true" /></button>
       </div>}
 
@@ -146,7 +145,6 @@ export function LetterboxFeedback() {
               value={comment}
             />
             <div className="feedback-form-meta"><span>{comment.length}/{MAX_COMMENT_LENGTH} characters</span><span>Rating required · Note optional</span></div>
-            <p className="feedback-storage-note">Saved in this browser only; this preview does not send notes online.</p>
             {submissionStatus && <p className="feedback-submit-status" role="alert">{submissionStatus}</p>}
             <div className="feedback-dialog-actions">
               <button className="button button-outline-dark" onClick={closeDialog} type="button">Keep browsing</button>
