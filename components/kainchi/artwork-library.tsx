@@ -5,6 +5,7 @@ import { Archive, ArrowUpRight, Search, X } from 'lucide-react'
 import { ARTWORK_THEMES, type CatalogProduct } from './catalog'
 
 const ARCHIVE_PAGE_SIZE = 12
+const STICKER_ARTWORK_IDS = ['drive-14', 'drive-06', 'drive-39', 'drive-22', 'drive-38', 'drive-08']
 
 export function ArtworkLibrary({ products, onCustomize }: { products: CatalogProduct[]; onCustomize: (product: CatalogProduct) => void }) {
   const [activeTheme, setActiveTheme] = useState('All artwork')
@@ -21,6 +22,10 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
     })
   }, [activeTheme, products, searchTerm])
   const visibleProducts = filteredProducts.slice(0, visibleLimit)
+  const stickerArtworks = STICKER_ARTWORK_IDS.flatMap((id) => {
+    const artwork = products.find((product) => product.id === id)
+    return artwork ? [artwork] : []
+  })
 
   function handleSearchChange(value: string) {
     setSearchTerm(value)
@@ -46,6 +51,11 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
           <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> The artwork archive</p>
           <h2 id="artwork-title">Find your <em>piece.</em></h2>
           <p className="section-intro">Search all {products.length} original designs by name, theme, or garment.</p>
+        </div>
+        <div className="artwork-sticker-collage" role="img" aria-label={`A collage of Kainchi Club originals: ${stickerArtworks.map((artwork) => artwork.title).join(', ')}`}>
+          {stickerArtworks.map((artwork, index) => <span className="artwork-sticker" data-sticker={index + 1} key={artwork.id}>
+            <img src={artwork.image} alt="" aria-hidden="true" loading="lazy" decoding="async" fetchPriority="low" draggable={false} />
+          </span>)}
         </div>
       </div>
       <div className="artwork-tools">

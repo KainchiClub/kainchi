@@ -50,44 +50,24 @@ export function getGiftBoxQuantity(items: readonly CartLineDetails[]) {
 }
 
 export function createWhatsAppOrderMessage(items: readonly CartLineItem[]) {
-  const giftBoxQuantity = getGiftBoxQuantity(items)
-  const standardPackagingQuantity = items.reduce((total, item) => total + (item.includesGiftBox ? 0 : item.quantity), 0)
-  const itemSummaries = items.map((item, index) => {
-    const productAmount = item.product.price * item.quantity
-    const packaging = item.includesGiftBox
-      ? `Collector’s Vault (+${formatRupees(GIFT_BOX_PRICE)} per item)`
-      : 'Standard Eco Packaging (included)'
-
-    return [
-      `${index + 1}. ${item.product.title}`,
-      `   • Artwork Category: ${item.product.theme}`,
-      `   • Garment: ${item.product.garment}`,
-      `   • Fabric Shade: ${item.color.name}`,
-      `   • Size: ${item.size}`,
-      `   • Qty: ${item.quantity}`,
-      `   • Packaging: ${packaging}`,
-      `   • Price: ${formatRupees(productAmount)} (${formatRupees(item.product.price)} × ${item.quantity})`,
-      `   • Final item total: ${formatRupees(getCartLineTotal(item))}`,
-    ].join('\n')
-  })
-
-  const packagingSummary = [
-    ...(standardPackagingQuantity > 0 ? [`Standard Eco Packaging (included) × ${standardPackagingQuantity} item(s)`] : []),
-    ...(giftBoxQuantity > 0 ? [`Collector’s Vault (+${formatRupees(GIFT_BOX_PRICE)} × ${giftBoxQuantity} item(s))`] : []),
-  ].join(' · ') || 'Standard Eco Packaging (included)'
-  const orderChecklist = [...itemSummaries]
-  if (hasFreeGiftUnlocked(items)) orderChecklist.push(FREE_GIFT_RECEIPT_LINE)
+  const itemSummaries = items.map((item) => [
+    `• Item: ${item.product.title}`,
+    `• Size: ${item.size}`,
+    `• Packaging Tier: ${item.includesGiftBox ? `+${formatRupees(GIFT_BOX_PRICE)} Luxury Upgrade` : 'Standard'}`,
+    ...(item.quantity > 1 ? [`• Quantity: ${item.quantity}`] : []),
+  ].join('\n'))
+  const orderInquiry = items.length === 1
+    ? 'Hi Kainchi Club, I would like to place an order for this piece. Please let me know how to proceed with confirmation.'
+    : 'Hi Kainchi Club, I would like to place an order for these pieces. Please let me know how to proceed with confirmation.'
 
   return [
-    '*KAINCHI CLUB - ORDER SUMMARY*',
+    '✂️ *KAINCHI CLUB — ORDER INQUIRY* ✂️',
     '────────────────────────',
-    '🛍️ *ITEMS ORDERED:*',
-    orderChecklist.join('\n\n'),
+    itemSummaries.join('\n\n'),
+    `• Estimated Total: ${formatRupees(getCartTotal(items))}`,
+    '',
+    `"${orderInquiry}"`,
     '────────────────────────',
-    `📦 *Packaging:* ${packagingSummary}`,
-    `💰 *TOTAL PAYABLE:* ${formatRupees(getCartTotal(items))}`,
-    '────────────────────────',
-    'Please share payment details and dispatch timeline for this order.',
   ].join('\n')
 }
 

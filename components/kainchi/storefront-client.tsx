@@ -14,6 +14,7 @@ import { openWhatsAppOrder, type CartLineDetails, type CartLineItem } from './or
 import { PackagingShowcase } from './packaging-showcase'
 import { SiteHeader } from './site-header'
 import { VisitorLeadPopup } from './visitor-lead-popup'
+import { PolicyModals } from './policy-modals'
 
 const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg'
 const OVERLAY_HISTORY_KEY = '__kainchiClubOverlay'
@@ -181,7 +182,7 @@ export function StorefrontClient() {
         </section>
         <PackagingShowcase premiumPackagingSelected={premiumPackagingSelected} onPremiumPackagingChange={changePremiumPackaging} />
       </main>
-      <footer className="site-footer"><a className="wordmark footer-wordmark" href="#top" aria-label="Kainchi Club home"><img className="wordmark-logo" src={brandLogo} alt="" /><span>KAINCHI <span className="wordmark-light">CLUB</span></span></a><p>Wear your own art. © 2026 Kainchi Club</p><div className="footer-links"><a href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club" aria-label="Contact Kainchi Club on WhatsApp">WhatsApp <ArrowUpRight aria-hidden="true" /></a><a href="#top" aria-label="Back to top">Back to top <ArrowUpRight aria-hidden="true" /></a><a href="/admin">Admin Portal <ArrowUpRight aria-hidden="true" /></a></div></footer>
+      <footer className="site-footer"><a className="wordmark footer-wordmark" href="#top" aria-label="Kainchi Club home"><img className="wordmark-logo" src={brandLogo} alt="" /><span>KAINCHI <span className="wordmark-light">CLUB</span></span></a><p>Wear your own art. © 2026 Kainchi Club</p><div className="footer-links"><a href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club" aria-label="Contact Kainchi Club on WhatsApp">WhatsApp <ArrowUpRight aria-hidden="true" /></a><a href="#top" aria-label="Back to top">Back to top <ArrowUpRight aria-hidden="true" /></a><a href="/admin">Admin Portal <ArrowUpRight aria-hidden="true" /></a><PolicyModals /></div></footer>
       <OrderCart
         items={cartItems}
         isOpen={isCartOpen}
