@@ -43,7 +43,7 @@ export function PackagingShowcase({ premiumPackagingSelected, onPremiumPackaging
           <p className="collector-vault-note">Adds {formatRupees(GIFT_BOX_PRICE)} per item to your current order. With an empty cart, it will be preselected for your next piece.</p>
         </div>
         <figure className="collector-vault-visual">
-          <img src={premiumPackagingImage} alt="Concept preview of a deep burgundy collector box with wax-sealed tissue, an embossed certificate, and artisan ribbons." loading="lazy" decoding="async" />
+          <img src={premiumPackagingImage} alt="Deep burgundy rigid keepsake box wrapped in crimson tissue and sealed with antique gold wax beside an embossed certificate." loading="lazy" decoding="async" />
           <figcaption>Visual concept · Collector&apos;s Vault</figcaption>
         </figure>
       </section>

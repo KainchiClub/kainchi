@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ArrowUpRight, Check, Minus, Plus, ShoppingBag, X } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Check, Minus, Plus, Ruler, ShoppingBag, X } from 'lucide-react'
 import { formatRupees, type CatalogProduct } from './catalog'
 import { FABRIC_COLORS, GIFT_BOX_PRICE, MAX_ORDER_QUANTITY, type CartLineDetails, type FabricColor } from './order'
 
@@ -20,7 +20,10 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
   const [color, setColor] = useState<FabricColor>(FABRIC_COLORS[0])
   const [quantity, setQuantity] = useState(1)
   const [includesGiftBox, setIncludesGiftBox] = useState(defaultIncludesGiftBox)
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const sizeGuideDialogRef = useRef<HTMLDialogElement>(null)
+  const sizeGuideCloseButtonRef = useRef<HTMLButtonElement>(null)
   const total = product.price * quantity + (includesGiftBox ? GIFT_BOX_PRICE * quantity : 0)
   const soldOut = product.stockStatus === 'sold-out'
   const orderDetails: CartLineDetails = { product, size, color, quantity, includesGiftBox }
@@ -28,6 +31,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
   useEffect(() => {
     closeButtonRef.current?.focus()
     const keepFocusInDialog = (event: KeyboardEvent) => {
+      if (document.querySelector('.size-guide-dialog[open]')) return
       if (event.key === 'Escape') {
         onClose()
         return
@@ -50,6 +54,18 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
     return () => window.removeEventListener('keydown', keepFocusInDialog)
   }, [onClose])
 
+  useEffect(() => {
+    const dialog = sizeGuideDialogRef.current
+    if (!dialog) return
+
+    if (isSizeGuideOpen && !dialog.open) {
+      dialog.showModal()
+      sizeGuideCloseButtonRef.current?.focus()
+    } else if (!isSizeGuideOpen && dialog.open) {
+      dialog.close()
+    }
+  }, [isSizeGuideOpen])
+
   return (
     <div className="customizer-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <section className="customizer-dialog" role="dialog" aria-modal="true" aria-labelledby="customizer-title">
@@ -70,6 +86,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
             <fieldset className="option-group">
               <legend>Choose your size <span>S — 3XL</span></legend>
               <div className="size-options">{sizes.map((option) => <button type="button" key={option} className={`size-pill${size === option ? ' active' : ''}`} aria-pressed={size === option} onClick={() => setSize(option)}>{option}</button>)}</div>
+              <button type="button" className="size-guide-trigger" onClick={() => setIsSizeGuideOpen(true)}><Ruler aria-hidden="true" /> Size &amp; Fit Guide</button>
             </fieldset>
 
             <fieldset className="option-group quantity-group">
@@ -96,6 +113,72 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
           </div>
         </div>
       </section>
+      <dialog
+        ref={sizeGuideDialogRef}
+        className="size-guide-dialog"
+        aria-labelledby="size-guide-title"
+        onCancel={(event) => { event.preventDefault(); setIsSizeGuideOpen(false) }}
+        onClose={() => setIsSizeGuideOpen(false)}
+      >
+        <div className="size-guide-inner">
+          <div className="size-guide-topline">
+            <div>
+              <p className="size-guide-kicker">KAINCHI CLUB · FIT NOTES</p>
+              <h2 id="size-guide-title">Size &amp; Fit Guide</h2>
+            </div>
+            <button ref={sizeGuideCloseButtonRef} aria-label="Close size and fit guide" className="size-guide-close" onClick={() => setIsSizeGuideOpen(false)} type="button"><X aria-hidden="true" /></button>
+          </div>
+          <p className="size-guide-intro">All measurements are garment measurements in inches. <span className="size-guide-mobile-tip">Swipe tables sideways on smaller screens.</span></p>
+          <section className="size-guide-category" aria-labelledby="size-guide-tees">
+            <h3 id="size-guide-tees">Oversized Heavy Tees <span>Drop Shoulder</span></h3>
+            <div className="size-guide-table-wrap">
+              <table className="size-guide-table">
+                <caption className="sr-only">Oversized heavy tee measurements in inches</caption>
+                <thead><tr><th scope="col">Size</th><th scope="col">Chest (in)</th><th scope="col">Length (in)</th><th scope="col">Shoulder (in)</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">S</th><td>42</td><td>28</td><td>20</td></tr>
+                  <tr><th scope="row">M</th><td>44</td><td>29</td><td>21</td></tr>
+                  <tr><th scope="row">L</th><td>46</td><td>30</td><td>22</td></tr>
+                  <tr><th scope="row">XL</th><td>48</td><td>31</td><td>23</td></tr>
+                  <tr><th scope="row">XXL</th><td>50</td><td>32</td><td>24</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section className="size-guide-category" aria-labelledby="size-guide-fleece">
+            <h3 id="size-guide-fleece">Heavy Fleece Hoodies &amp; Sweatshirts</h3>
+            <div className="size-guide-table-wrap">
+              <table className="size-guide-table">
+                <caption className="sr-only">Heavy fleece hoodie and sweatshirt measurements in inches</caption>
+                <thead><tr><th scope="col">Size</th><th scope="col">Chest (in)</th><th scope="col">Length (in)</th><th scope="col">Sleeve (in)</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">S</th><td>44</td><td>27</td><td>24</td></tr>
+                  <tr><th scope="row">M</th><td>46</td><td>28</td><td>25</td></tr>
+                  <tr><th scope="row">L</th><td>48</td><td>29</td><td>25.5</td></tr>
+                  <tr><th scope="row">XL</th><td>50</td><td>30</td><td>26</td></tr>
+                  <tr><th scope="row">XXL</th><td>52</td><td>31</td><td>26.5</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section className="size-guide-category" aria-labelledby="size-guide-denim">
+            <h3 id="size-guide-denim">Streetwear Denim Jeans</h3>
+            <div className="size-guide-table-wrap">
+              <table className="size-guide-table size-guide-denim-table">
+                <caption className="sr-only">Streetwear denim jean waist sizes and fit notes</caption>
+                <thead><tr><th scope="col">Waist (in)</th><th scope="col">Standard length</th><th scope="col">Fit</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">30</th><td>41–42 in</td><td>Relaxed Straight Fit</td></tr>
+                  <tr><th scope="row">32</th><td>41–42 in</td><td>Relaxed Straight Fit</td></tr>
+                  <tr><th scope="row">34</th><td>41–42 in</td><td>Relaxed Straight Fit</td></tr>
+                  <tr><th scope="row">36</th><td>41–42 in</td><td>Relaxed Straight Fit</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <p className="size-guide-tip"><strong>Pro tip</strong> All our tops are cut with an intentional drop-shoulder streetwear drape. Order your normal size for the signature relaxed look, or size down for a standard regular fit.</p>
+        </div>
+      </dialog>
     </div>
   )
 }

@@ -8,11 +8,13 @@ import { ARTWORK_THEMES, type CatalogProduct } from '@/components/kainchi/catalo
 import { signOutAdmin, unlockAdmin } from './actions'
 import { VisitorLeadsPanel } from './visitor-leads-panel'
 import { FeedbackModerationPanel } from './feedback-moderation-panel'
+import { FAQManagementPanel } from './faq-management-panel'
 
 const initialLoginState = { error: '' }
 const ADMIN_TABS = [
   { id: 'catalog', label: 'Artwork' },
   { id: 'feedback', label: 'Feedback' },
+  { id: 'faqs', label: 'Manage FAQs' },
   { id: 'leads', label: 'Studio leads' },
 ] as const
 type AdminTab = (typeof ADMIN_TABS)[number]['id']
@@ -146,7 +148,7 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
           <div>
             <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Owner access</p>
             <h1 id="admin-page-title">Admin Portal</h1>
-            <p>Manage the artwork catalog, feedback inbox, and captured studio leads.</p>
+            <p>Manage the artwork catalog, feedback, FAQs, and captured studio leads.</p>
           </div>
           <div className="admin-dashboard-actions">
             <Link className="button button-outline-dark" href="/#collection">View storefront <ArrowUpRight aria-hidden="true" /></Link>
@@ -210,6 +212,9 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
         </div>
         <div className="admin-tab-panel" id="admin-panel-feedback" role="tabpanel" aria-labelledby="admin-tab-feedback" tabIndex={0} hidden={activeAdminTab !== 'feedback'}>
           <FeedbackModerationPanel />
+        </div>
+        <div className="admin-tab-panel" id="admin-panel-faqs" role="tabpanel" aria-labelledby="admin-tab-faqs" tabIndex={0} hidden={activeAdminTab !== 'faqs'}>
+          <FAQManagementPanel />
         </div>
         <div className="admin-tab-panel" id="admin-panel-leads" role="tabpanel" aria-labelledby="admin-tab-leads" tabIndex={0} hidden={activeAdminTab !== 'leads'}>
           <VisitorLeadsPanel />

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Star, X } from 'lucide-react'
+import { useLocalBrowserStore } from './local-browser-store'
+import { EMPTY_STUDIO_FEEDBACK, FEEDBACK_STORAGE_KEY, isStudioFeedbackList } from './studio-content'
 
 const MAX_COMMENT_LENGTH = 240
 
@@ -34,6 +36,8 @@ export function LetterboxFeedback() {
   const [comment, setComment] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [submissionStatus, setSubmissionStatus] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [, saveFeedback] = useLocalBrowserStore(FEEDBACK_STORAGE_KEY, EMPTY_STUDIO_FEEDBACK, isStudioFeedbackList)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -43,6 +47,12 @@ export function LetterboxFeedback() {
     if (!isDialogOpen && dialog.open) dialog.close()
   }, [isDialogOpen])
 
+  useEffect(() => {
+    if (!confirmation) return
+    const timeout = window.setTimeout(() => setConfirmation(''), 5_000)
+    return () => window.clearTimeout(timeout)
+  }, [confirmation])
+
   function submitFeedback(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!rating) {
@@ -50,7 +60,24 @@ export function LetterboxFeedback() {
       return
     }
 
-    setSubmissionStatus('This note was not saved because shared feedback storage is not connected.')
+    const saved = saveFeedback((current) => [{
+      id: crypto.randomUUID(),
+      rating,
+      note: comment.trim(),
+      createdAt: new Date().toISOString(),
+      isHidden: false,
+    }, ...current])
+
+    if (!saved) {
+      setSubmissionStatus('This browser could not save your note. Check its storage settings and try again.')
+      return
+    }
+
+    setSubmissionStatus('')
+    setConfirmation('Thank you! Your note is saved in this browser.')
+    setIsDialogOpen(false)
+    setRating(0)
+    setComment('')
   }
 
   function closeDialog() {
@@ -77,13 +104,17 @@ export function LetterboxFeedback() {
           />
           <div className="letterbox-actions">
             <span className="letterbox-character-count">{comment.length}/{MAX_COMMENT_LENGTH}</span>
-            <button className="button button-crimson letterbox-open-button" onClick={() => { setSubmissionStatus(''); setIsDialogOpen(true) }} type="button">Submit feedback</button>
+            <button className="button button-crimson letterbox-open-button" onClick={() => { setSubmissionStatus(''); setConfirmation(''); setIsDialogOpen(true) }} type="button">Submit feedback</button>
           </div>
-          <p className="letterbox-storage-note" role="status">The shared inbox is not connected yet, so notes cannot be saved.</p>
+          <p className="letterbox-storage-note">In this preview, notes are saved only in this browser and are not sent online.</p>
         </div>
         <div className="letterbox-stamp" aria-hidden="true"><span>OPEN</span><strong>STUDIO<br />MAIL</strong><span>KAINCHI CLUB</span></div>
         <span className="letterbox-card-number" aria-hidden="true">08 / 39</span>
       </div>
+      {confirmation && <div className="letterbox-confirmation" role="status" aria-live="polite">
+        <span><strong>{confirmation}</strong><small>Only this browser can see it; it has not been sent online.</small></span>
+        <button type="button" onClick={() => setConfirmation('')} aria-label="Dismiss feedback confirmation"><X aria-hidden="true" /></button>
+      </div>}
 
       <dialog
         ref={dialogRef}
@@ -115,7 +146,7 @@ export function LetterboxFeedback() {
               value={comment}
             />
             <div className="feedback-form-meta"><span>{comment.length}/{MAX_COMMENT_LENGTH} characters</span><span>Rating required · Note optional</span></div>
-            <p className="feedback-storage-alert" role="status">Submissions are paused until shared feedback storage is connected. Nothing will be saved.</p>
+            <p className="feedback-storage-note">Saved in this browser only; this preview does not send notes online.</p>
             {submissionStatus && <p className="feedback-submit-status" role="alert">{submissionStatus}</p>}
             <div className="feedback-dialog-actions">
               <button className="button button-outline-dark" onClick={closeDialog} type="button">Keep browsing</button>
