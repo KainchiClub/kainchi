@@ -71,7 +71,7 @@ export function OrderCart({ items, isOpen, onOpenChange, onQuantityChange, onGif
                 <div className="order-cart-lines">
                   {items.map((item) => (
                     <article className="order-cart-line" key={item.cartId}>
-                      <img src={item.product.image} alt="" />
+                      <img src={item.product.image} alt="" draggable={false} onContextMenu={(event) => event.preventDefault()} />
                       <div className="order-cart-line-details">
                         <p className="order-cart-theme">{item.product.theme}</p>
                         <h3>{item.product.title}</h3>

@@ -1,20 +1,29 @@
 import 'server-only'
 
-import { createHmac, timingSafeEqual } from 'node:crypto'
+import { createHmac, scryptSync, timingSafeEqual } from 'node:crypto'
 import { cookies } from 'next/headers'
 
-const ADMIN_PIN = '0508'
+const ADMIN_PIN_SALT = Buffer.from('a3d661ec9111f62c6e52720430b73eda', 'hex')
+const ADMIN_PIN_HASH = Buffer.from('51ca5cf7defb10d217d83ab48b4772bbf9baeb8d6bd43e278ac746a80a7d4ab7', 'hex')
+const ADMIN_SESSION_KEY = Buffer.from('6f231eb39c1f049c5d2bf3404721d5b7a3cd5fd11a935eeae93a875c85b4c8e0', 'hex')
 const ADMIN_COOKIE = 'kainchi_admin_session'
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000
 
 function signExpiry(expiresAt: string) {
-  return createHmac('sha256', ADMIN_PIN).update(expiresAt).digest('base64url')
+  return createHmac('sha256', ADMIN_SESSION_KEY).update(expiresAt).digest('base64url')
 }
 
 export function isValidAdminPin(value: string) {
-  const submitted = Buffer.from(value)
-  const expected = Buffer.from(ADMIN_PIN)
-  return submitted.length === expected.length && timingSafeEqual(submitted, expected)
+  const hasValidFormat = value.length === 4 && /^\d{4}$/.test(value)
+  const candidate = hasValidFormat ? value : Buffer.alloc(4)
+  const submitted = scryptSync(candidate, ADMIN_PIN_SALT, ADMIN_PIN_HASH.length, {
+    N: 32_768,
+    r: 8,
+    p: 1,
+    maxmem: 64 * 1024 * 1024,
+  })
+  const matches = timingSafeEqual(submitted, ADMIN_PIN_HASH)
+  return hasValidFormat && matches
 }
 
 export async function createAdminSession() {

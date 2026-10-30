@@ -142,7 +142,7 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
                 {products.map((product) => {
                   const soldOut = product.stockStatus === 'sold-out'
                   return <tr key={product.id}>
-                    <td><img className="admin-thumbnail" src={product.image} alt="" loading="lazy" /></td>
+                    <td><img className="admin-thumbnail" src={product.image} alt="" loading="lazy" draggable={false} onContextMenu={(event) => event.preventDefault()} /></td>
                     <td><strong className="admin-product-title">{product.title}</strong><span className="admin-product-garment">{product.garment}</span></td>
                     <td>{product.theme}</td>
                     <td><label className="admin-price-field"><span aria-hidden="true">₹</span><span className="sr-only">Base price for {product.title}</span><input type="number" min="1" max="1000000" step="1" value={priceDrafts[product.id] ?? String(product.price)} onChange={(event) => updatePrice(product.id, event.target.value)} onBlur={() => resetPriceDraft(product.id)} /></label></td>

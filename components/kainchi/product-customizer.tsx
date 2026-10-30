@@ -56,7 +56,7 @@ export function ProductCustomizer({ product, onClose, onAddToCart, onOrderNow }:
         <div className="customizer-layout">
           <div className="customizer-visual-column">
             <div className="customizer-product-visual">
-              <img src={product.image} alt={`${product.title} custom ${product.garment}`} />
+              <img src={product.image} alt={`${product.title} custom ${product.garment}`} draggable={false} onContextMenu={(event) => event.preventDefault()} />
               <span className="customizer-image-label">{product.garment}</span>
             </div>
             <p className="customizer-fabric-label" aria-live="polite">Selected Fabric Color: <strong>{color.name}</strong></p>

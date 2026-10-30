@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
 import { type CatalogProduct } from './catalog'
@@ -24,6 +24,22 @@ export function StorefrontClient() {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null)
   const [cartItems, setCartItems] = useState<CartLineItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
+
+  useEffect(() => {
+    const blockInspectionShortcuts = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase()
+      const isInspectionShortcut = event.key === 'F12'
+        || (event.ctrlKey && event.shiftKey && key === 'i')
+        || (event.ctrlKey && key === 'u')
+
+      if (!isInspectionShortcut) return
+      event.preventDefault()
+      event.stopPropagation()
+    }
+
+    window.addEventListener('keydown', blockInspectionShortcuts, true)
+    return () => window.removeEventListener('keydown', blockInspectionShortcuts, true)
+  }, [])
 
   function addToCart(details: CartLineDetails) {
     setCartItems((current) => [...current, createCartLine(details)])
