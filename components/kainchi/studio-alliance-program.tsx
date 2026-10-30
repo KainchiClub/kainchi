@@ -1,7 +1,8 @@
 'use client'
 
-import { type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Scissors } from 'lucide-react'
+import { addStudioPartner, INITIAL_ACTIVE_PARTNERS, INITIAL_DREAMERS_WELCOMED, useStudioPartners } from './studio-partners'
 
 const privilegeSteps = [
   {
@@ -21,21 +22,50 @@ const privilegeSteps = [
 ] as const
 
 export function StudioAllianceProgram() {
+  const { partners } = useStudioPartners()
+  const [submitStatus, setSubmitStatus] = useState('')
+  const [whatsAppUrl, setWhatsAppUrl] = useState('')
+  const activePartnerCount = INITIAL_ACTIVE_PARTNERS + partners.filter((partner) => partner.status === 'Active').length
+  const dreamersWelcomedCount = INITIAL_DREAMERS_WELCOMED + partners.reduce((total, partner) => total + partner.referralsCount, 0)
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const contactDetails = String(new FormData(event.currentTarget).get('partnerContact') ?? '').trim()
     if (!contactDetails) return
+    setSubmitStatus('')
+    setWhatsAppUrl('')
+
+    try {
+      addStudioPartner(contactDetails)
+    } catch {
+      setSubmitStatus('This browser could not save your signup. Please try again or contact the studio directly.')
+      return
+    }
 
     const message = `Hi Kainchi Club! ✂️ I want to register as a Studio Partner under the Co-Ownership Program. Here is my details: ${contactDetails}. Please generate my personal referral code!`
-    window.location.href = `https://wa.me/918863075356?text=${encodeURIComponent(message)}`
+    const url = `https://wa.me/918863075356?text=${encodeURIComponent(message)}`
+    setWhatsAppUrl(url)
+    setSubmitStatus('Your signup was saved in this browser. If WhatsApp did not open, use the direct chat link below.')
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   return (
     <section className="studio-alliance" aria-labelledby="studio-alliance-title">
       <div className="studio-alliance-inner">
         <p className="studio-alliance-badge"><Scissors aria-hidden="true" /> Studio Alliance · Co-Ownership Program</p>
-        <h2 id="studio-alliance-title">You refer because this is your company. I am simply the artisan bringing your dreams to thread.</h2>
-        <p className="studio-alliance-subtitle">A rare privilege designed for collectors who wear the vision and build the studio alongside us.</p>
+        <div className="studio-alliance-intro-row">
+          <div className="studio-alliance-intro-copy">
+            <h2 id="studio-alliance-title">You refer because this is your company. I am simply the artisan bringing your dreams to thread.</h2>
+            <p className="studio-alliance-subtitle">A rare privilege designed for collectors who wear the vision and build the studio alongside us.</p>
+          </div>
+          <aside className="studio-alliance-live-card" aria-label="Live Studio Community Metric">
+            <p className="studio-alliance-live-status"><span className="studio-alliance-live-dot" aria-hidden="true" /> Live Studio Sync <span className="studio-alliance-local-tag">This browser</span></p>
+            <p className="studio-alliance-live-metric" aria-live="polite" aria-atomic="true">
+              <span key={activePartnerCount} className="studio-alliance-live-count">{activePartnerCount}</span> Active Partners <span className="studio-alliance-live-divider">·</span> <span key={dreamersWelcomedCount} className="studio-alliance-live-count">{dreamersWelcomedCount}+</span> Dreamers Welcomed
+            </p>
+            <p className="studio-alliance-live-note">Milestones tracked in this browser; ask the studio to confirm and apply any unlocked discount at checkout.</p>
+          </aside>
+        </div>
 
         <div className="studio-alliance-steps">
           {privilegeSteps.map((step) => (
@@ -79,7 +109,9 @@ export function StudioAllianceProgram() {
             />
             <button type="submit">Unlock Studio Partner Pass <span aria-hidden="true">➔</span></button>
           </div>
-          <p className="studio-alliance-form-note">Opens a direct WhatsApp chat with the studio to request your personal artisan code.</p>
+          <p className="studio-alliance-form-note">Your request is saved only in this browser and is not shared across devices.</p>
+          {submitStatus && <p className="studio-alliance-submit-status" role="status">{submitStatus}</p>}
+          {whatsAppUrl && <a className="studio-alliance-fallback-link" href={whatsAppUrl} target="_blank" rel="noopener noreferrer">Open the direct WhatsApp chat</a>}
         </form>
       </div>
     </section>

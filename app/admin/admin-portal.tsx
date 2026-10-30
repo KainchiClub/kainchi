@@ -9,6 +9,7 @@ import { signOutAdmin, unlockAdmin } from './actions'
 import { VisitorLeadsPanel } from './visitor-leads-panel'
 import { FeedbackModerationPanel } from './feedback-moderation-panel'
 import { FAQManagementPanel } from './faq-management-panel'
+import { AllianceReferralsPanel } from './alliance-referrals-panel'
 
 const initialLoginState = { error: '' }
 const ADMIN_TABS = [
@@ -16,6 +17,7 @@ const ADMIN_TABS = [
   { id: 'feedback', label: 'Feedback' },
   { id: 'faqs', label: 'Manage FAQs' },
   { id: 'leads', label: 'Studio leads' },
+  { id: 'alliance', label: 'Alliance & Referrals' },
 ] as const
 type AdminTab = (typeof ADMIN_TABS)[number]['id']
 
@@ -258,6 +260,9 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
         </div>
         <div className="admin-tab-panel" id="admin-panel-leads" role="tabpanel" aria-labelledby="admin-tab-leads" tabIndex={0} hidden={activeAdminTab !== 'leads'}>
           <VisitorLeadsPanel />
+        </div>
+        <div className="admin-tab-panel" id="admin-panel-alliance" role="tabpanel" aria-labelledby="admin-tab-alliance" tabIndex={0} hidden={activeAdminTab !== 'alliance'}>
+          <AllianceReferralsPanel />
         </div>
       </div>
     </section>
