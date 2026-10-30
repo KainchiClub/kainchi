@@ -2,6 +2,9 @@ import { formatRupees, type CatalogProduct } from './catalog'
 
 export const WHATSAPP_PHONE = '918863075356'
 export const GIFT_BOX_PRICE = 99
+export const FREE_GIFT_THRESHOLD = 5000
+export const FREE_GIFT_VALUE = 499
+export const FREE_GIFT_RECEIPT_LINE = `🎁 KAINCHI SPECIAL GIFT - FREE (Value ₹${FREE_GIFT_VALUE})`
 export const MAX_ORDER_QUANTITY = 99
 
 export const FABRIC_COLORS = [
@@ -38,6 +41,10 @@ export function getCartTotal(items: readonly CartLineDetails[]) {
   return items.reduce((total, item) => total + getCartLineTotal(item), 0)
 }
 
+export function hasFreeGiftUnlocked(items: readonly CartLineDetails[]) {
+  return getCartTotal(items) >= FREE_GIFT_THRESHOLD
+}
+
 export function getGiftBoxQuantity(items: readonly CartLineDetails[]) {
   return items.reduce((total, item) => total + (item.includesGiftBox ? item.quantity : 0), 0)
 }
@@ -66,12 +73,14 @@ export function createWhatsAppOrderMessage(items: readonly CartLineItem[]) {
     : giftBoxQuantity === 1
       ? `Yes (+${formatRupees(GIFT_BOX_PRICE)})`
       : `Yes (+${formatRupees(GIFT_BOX_PRICE)} × ${giftBoxQuantity} items)`
+  const orderChecklist = [...itemSummaries]
+  if (hasFreeGiftUnlocked(items)) orderChecklist.push(FREE_GIFT_RECEIPT_LINE)
 
   return [
     '*KAINCHI CLUB - ORDER SUMMARY*',
     '────────────────────────',
     '🛍️ *ITEMS ORDERED:*',
-    itemSummaries.join('\n\n'),
+    orderChecklist.join('\n\n'),
     '────────────────────────',
     `📦 *Packaging Box Add-on:* ${packagingSummary}`,
     `💰 *TOTAL PAYABLE:* ${formatRupees(getCartTotal(items))}`,

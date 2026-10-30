@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { ArrowUpRight, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
 import { formatRupees } from './catalog'
-import { GIFT_BOX_PRICE, MAX_ORDER_QUANTITY, getCartLineTotal, getCartTotal, type CartLineItem } from './order'
+import { FREE_GIFT_THRESHOLD, FREE_GIFT_VALUE, GIFT_BOX_PRICE, MAX_ORDER_QUANTITY, getCartLineTotal, getCartTotal, hasFreeGiftUnlocked, type CartLineItem } from './order'
 
 type OrderCartProps = {
   items: CartLineItem[]
@@ -20,6 +20,8 @@ export function OrderCart({ items, isOpen, onOpenChange, onQuantityChange, onGif
   const itemCount = items.reduce((total, item) => total + item.quantity, 0)
   const giftBoxCount = items.reduce((total, item) => total + (item.includesGiftBox ? item.quantity : 0), 0)
   const total = getCartTotal(items)
+  const giftUnlocked = hasFreeGiftUnlocked(items)
+  const amountUntilGift = Math.max(0, FREE_GIFT_THRESHOLD - total)
 
   useEffect(() => {
     if (!isOpen) return
@@ -92,6 +94,10 @@ export function OrderCart({ items, isOpen, onOpenChange, onQuantityChange, onGif
                       </div>
                     </article>
                   ))}
+                </div>
+                <div className={`order-cart-promo ${giftUnlocked ? 'is-unlocked' : ''}`} role="status" aria-live="polite">
+                  <span className="order-cart-promo-symbol" aria-hidden="true">{giftUnlocked ? '🎉' : '🛒'}</span>
+                  <p>{giftUnlocked ? <>Gift Unlocked: <strong>FREE KAINCHI SPECIAL GIFT (WORTH {formatRupees(FREE_GIFT_VALUE)})</strong> has been added to your order!</> : <>Spend <strong>{formatRupees(amountUntilGift)}</strong> more to unlock a <strong>FREE Special Gift (Worth {formatRupees(FREE_GIFT_VALUE)})</strong>!</>}</p>
                 </div>
                 <div className="order-cart-summary">
                   <p><span>Packaging box add-on</span><strong>{giftBoxCount > 0 ? `${formatRupees(GIFT_BOX_PRICE)} × ${giftBoxCount}` : 'None'}</strong></p>
