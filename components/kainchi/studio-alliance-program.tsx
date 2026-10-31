@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react'
 import { Scissors } from 'lucide-react'
 import { addStudioPartner, INITIAL_ACTIVE_PARTNERS, INITIAL_DREAMERS_WELCOMED, useStudioPartners } from './studio-partners'
+import { PartnerPassTracker } from './partner-pass-tracker'
 
 const privilegeSteps = [
   {
@@ -113,6 +114,8 @@ export function StudioAllianceProgram() {
           {submitStatus && <p className="studio-alliance-submit-status" role="status">{submitStatus}</p>}
           {whatsAppUrl && <a className="studio-alliance-fallback-link" href={whatsAppUrl} target="_blank" rel="noopener noreferrer">Open the direct WhatsApp chat</a>}
         </form>
+
+        <PartnerPassTracker />
       </div>
     </section>
   )

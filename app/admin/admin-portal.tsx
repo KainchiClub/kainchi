@@ -10,6 +10,7 @@ import { VisitorLeadsPanel } from './visitor-leads-panel'
 import { FeedbackModerationPanel } from './feedback-moderation-panel'
 import { FAQManagementPanel } from './faq-management-panel'
 import { AllianceReferralsPanel } from './alliance-referrals-panel'
+import { PartnerPassControl } from './partner-pass-control'
 
 const initialLoginState = { error: '' }
 const ADMIN_TABS = [
@@ -263,6 +264,7 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
         </div>
         <div className="admin-tab-panel" id="admin-panel-alliance" role="tabpanel" aria-labelledby="admin-tab-alliance" tabIndex={0} hidden={activeAdminTab !== 'alliance'}>
           <AllianceReferralsPanel />
+          <PartnerPassControl />
         </div>
       </div>
     </section>

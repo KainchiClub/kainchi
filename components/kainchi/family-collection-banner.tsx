@@ -12,7 +12,7 @@ export function FamilyCollectionBanner() {
           width={1208}
           height={804}
           sizes="100vw"
-          priority
+          priority={true}
           unoptimized={false}
           quality={100}
           style={{ width: '100%', height: 'auto', imageRendering: '-webkit-optimize-contrast', objectFit: 'cover' }}

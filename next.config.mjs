@@ -5,7 +5,7 @@ const nextConfig = {
   },
   productionBrowserSourceMaps: false,
   images: {
-    unoptimized: true,
+    unoptimized: false,
     qualities: [75, 100],
     remotePatterns: [
       {
