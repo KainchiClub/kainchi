@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useRef } from 'react'
 import { ArrowLeft, ArrowUpRight, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
 import { formatRupees } from './catalog'
@@ -74,7 +75,7 @@ export function OrderCart({ items, isOpen, onOpenChange, onQuantityChange, onGif
                 <div className="order-cart-lines">
                   {items.map((item) => (
                     <article className="order-cart-line" key={item.cartId}>
-                      <img src={item.product.image} alt="" draggable={false} onContextMenu={(event) => event.preventDefault()} />
+                      <Image src={item.product.image} alt="" width={160} height={160} loading="lazy" decoding="async" draggable={false} onContextMenu={(event) => event.preventDefault()} />
                       <div className="order-cart-line-details">
                         <p className="order-cart-theme">{item.product.theme}</p>
                         <h3>{item.product.title}</h3>

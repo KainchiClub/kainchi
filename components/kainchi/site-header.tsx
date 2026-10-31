@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { ArrowUpRight } from 'lucide-react'
 
 const navigation = [
@@ -11,7 +12,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <a className="wordmark" href="#top" aria-label="Kainchi Club home">
-        <img className="wordmark-logo" src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg" alt="" />
+        <Image className="wordmark-logo" src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg" alt="" width={96} height={96} loading="lazy" decoding="async" />
         <span>KAINCHI <span className="wordmark-light">CLUB</span></span>
       </a>
       <nav className="main-nav" aria-label="Main navigation">

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { Archive, ArrowUpRight, Search, X } from 'lucide-react'
 import { ARTWORK_THEMES, type CatalogProduct } from './catalog'
@@ -54,7 +55,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
         </div>
         <div className="artwork-sticker-collage" role="img" aria-label={`A collage of Kainchi Club originals: ${stickerArtworks.map((artwork) => artwork.title).join(', ')}`}>
           {stickerArtworks.map((artwork, index) => <span className="artwork-sticker" data-sticker={index + 1} key={artwork.id}>
-            <img src={artwork.image} alt="" aria-hidden="true" loading="lazy" decoding="async" fetchPriority="low" draggable={false} />
+            <Image src={artwork.image} alt="" aria-hidden="true" width={500} height={500} loading="lazy" decoding="async" draggable={false} />
           </span>)}
         </div>
       </div>
@@ -85,7 +86,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
               const soldOut = product.stockStatus === 'sold-out'
               return <article className="art-card" key={product.id} style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
                 <button className="art-image-link" type="button" onClick={() => onCustomize(product)} aria-label={`View ${product.title}`}>
-                  <span className="art-image-wrap"><img className="art-image" src={product.image} alt={`${product.title} — ${product.garment} in the ${product.theme} theme`} loading="lazy" decoding="async" fetchPriority="low" draggable={false} onContextMenu={(event) => event.preventDefault()} /><span className={`stock-badge${soldOut ? ' sold-out' : ''}`} aria-label={`Stock status: ${soldOut ? 'Sold Out' : 'In Stock'}`}>{soldOut ? 'Sold Out' : 'In Stock'}</span><span className="art-card-sticker">KAINCHI ORIGINAL</span><span className="art-image-arrow"><ArrowUpRight aria-hidden="true" /></span></span>
+                  <span className="art-image-wrap"><Image className="art-image" src={product.image} alt={`${product.title} — ${product.garment} in the ${product.theme} theme`} width={900} height={900} loading="lazy" decoding="async" draggable={false} onContextMenu={(event) => event.preventDefault()} /><span className={`stock-badge${soldOut ? ' sold-out' : ''}`} aria-label={`Stock status: ${soldOut ? 'Sold Out' : 'In Stock'}`}>{soldOut ? 'Sold Out' : 'In Stock'}</span><span className="art-card-sticker">KAINCHI ORIGINAL</span><span className="art-image-arrow"><ArrowUpRight aria-hidden="true" /></span></span>
                 </button>
                 <div className="art-card-meta"><p className="art-theme">{product.theme}</p><h3>{product.title} <span className="product-code-label">· {product.productCode}</span></h3><span className="art-garment">{product.garment} · ₹{new Intl.NumberFormat('en-IN').format(product.price)}</span></div>
                 <button className="product-order" type="button" onClick={() => onCustomize(product)} disabled={soldOut}>{soldOut ? 'Sold Out' : 'Order on WhatsApp'}{!soldOut && <ArrowUpRight aria-hidden="true" />}</button>

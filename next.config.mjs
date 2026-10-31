@@ -6,12 +6,16 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   images: {
     unoptimized: false,
+    formats: ['image/avif', 'image/webp'],
     qualities: [75, 100],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'hebbkx1anhila5yf.public.blob.vercel-storage.com',
-        pathname: '/IMG_20261030_215752-IUy58utpKLh0IEGp0TmSxn8mdyi27L.png',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
       },
     ],
   },

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, X } from 'lucide-react'
 import { initialProducts } from './catalog'
@@ -152,11 +153,13 @@ export function DiwaliComboPopup() {
               <div className="diwali-combo-feature">
                 <div className="diwali-combo-thumbnail" role="img" aria-label={combo.thumbnailAlt}>
                   {combo.thumbnailImages.map((image, index) => (
-                    <img
+                    <Image
                       className="diwali-combo-thumbnail-image"
                       key={`${combo.number}-${index}`}
                       src={image}
                       alt=""
+                      width={240}
+                      height={240}
                       loading="lazy"
                       decoding="async"
                     />
