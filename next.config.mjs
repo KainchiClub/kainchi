@@ -6,6 +6,14 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   images: {
     unoptimized: true,
+    qualities: [75, 100],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'hebbkx1anhila5yf.public.blob.vercel-storage.com',
+        pathname: '/IMG_20261030_215752-IUy58utpKLh0IEGp0TmSxn8mdyi27L.png',
+      },
+    ],
   },
   async headers() {
     return [
