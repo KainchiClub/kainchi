@@ -25,6 +25,7 @@ export function StudioAllianceProgram() {
   return (
     <section className="studio-alliance" aria-label="Studio Alliance Co-Ownership Program">
       <div className="studio-alliance-inner">
+        <h2 className="studio-alliance-master-heading"><span>Studio Alliance &amp;</span> <span className="studio-alliance-metallic">Member Privileges</span></h2>
         <div className="studio-alliance-steps">
           {privilegeSteps.map((step) => (
             <article className="studio-alliance-card" key={step.number}>

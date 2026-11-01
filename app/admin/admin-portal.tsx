@@ -14,6 +14,7 @@ import { PartnerPassControl } from './partner-pass-control'
 import { StudioWalletControl } from './studio-wallet-control'
 import { BulkInventoryManager } from './bulk-inventory-manager'
 import { SmartPricingEngine } from './smart-pricing-engine'
+import { BannerSlidesPanel } from './banner-slides-panel'
 
 const initialLoginState = { error: '' }
 const RETIRED_SKU_KEY = 'kainchi-retired-sku-vault-v1'
@@ -25,6 +26,7 @@ const ADMIN_TABS = [
   { id: 'leads', label: 'Studio leads' },
   { id: 'alliance', label: 'Alliance & Referrals' },
   { id: 'wallet', label: 'Studio Wallet' },
+  { id: 'banner-slides', label: 'Banner Slides' },
 ] as const
 type AdminTab = (typeof ADMIN_TABS)[number]['id']
 
@@ -283,6 +285,9 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
         </div>
         <div className="admin-tab-panel" id="admin-panel-wallet" role="tabpanel" aria-labelledby="admin-tab-wallet" tabIndex={0} hidden={activeAdminTab !== 'wallet'}>
           <StudioWalletControl />
+        </div>
+        <div className="admin-tab-panel" id="admin-panel-banner-slides" role="tabpanel" aria-labelledby="admin-tab-banner-slides" tabIndex={0} hidden={activeAdminTab !== 'banner-slides'}>
+          <BannerSlidesPanel />
         </div>
       </div>
     </section>

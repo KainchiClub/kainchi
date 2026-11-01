@@ -49,8 +49,8 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
     <section className="artwork-section section-wrap" id="artwork" aria-labelledby="artwork-title">
       <div className="artwork-heading">
         <div>
-          <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> The artwork archive</p>
-          <h2 id="artwork-title">Find your <em>piece.</em></h2>
+          <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Original artwork</p>
+          <h2 id="artwork-title">Find your <em>piece</em></h2>
           <p className="section-intro">Search all {products.length} original designs by name, theme, or garment.</p>
         </div>
         <div className="artwork-sticker-collage" role="img" aria-label={`A collage of Kainchi Club originals: ${stickerArtworks.map((artwork) => artwork.title).join(', ')}`}>
