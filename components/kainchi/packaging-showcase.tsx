@@ -23,7 +23,10 @@ export function PackagingShowcase({ premiumPackagingSelected, onPremiumPackaging
     <section className="packaging-section" id="unboxing" aria-labelledby="packaging-title">
       <div className="packaging-copy">
         <p className="eyebrow"><span className="eyebrow-dot" /> The unboxing experience</p>
-        <h2 id="packaging-title">Good things<br />come <em>wrapped.</em></h2>
+        <div className="packaging-heading-row">
+          <h2 id="packaging-title">Good things<br />come <em>wrapped.</em></h2>
+          <span className="packaging-luxury-badge"><Box aria-hidden="true" /> Gift-ready boxes</span>
+        </div>
         <p>From the first fold to the last thread, every detail is part of the piece.</p>
         <div className="packaging-standard">
           <p className="packaging-tier-label">Tier A · Standard Eco Packaging</p>

@@ -9,8 +9,8 @@ export function ProductCollection({ products, onCustomize }: { products: Catalog
     <section className="collection-section section-wrap" id="collection" aria-labelledby="collection-title">
       <div className="section-heading">
         <div>
-          <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> The essentials</p>
-          <h2 id="collection-title">Your next <em>favourite.</em></h2>
+          <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Everyday originals</p>
+          <h2 id="collection-title">Your next <em>favourite</em></h2>
           <p className="section-intro">Good fabric is just the beginning. Pick your piece, then make it yours.</p>
         </div>
       </div>
