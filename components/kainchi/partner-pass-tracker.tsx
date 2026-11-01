@@ -35,12 +35,10 @@ export function PartnerPassTracker() {
   return (
     <section className="studio-partner-tracker" aria-labelledby="studio-partner-tracker-title">
       <div className="studio-partner-tracker-copy">
-        <p className="studio-partner-tracker-kicker">A personal archive</p>
-        <h3 id="studio-partner-tracker-title">Track Partner Status</h3>
-        <p>Check your referral milestones and current lifetime privilege with your partner code or registered phone.</p>
+        <h3 id="studio-partner-tracker-title">Check Your Partner Status</h3>
       </div>
       <form className="studio-partner-tracker-form" onSubmit={checkPartnerStatus}>
-        <label htmlFor="partner-pass-lookup">Partner code or phone number</label>
+        <label htmlFor="partner-pass-lookup">Enter your WhatsApp Number to check your Partner Status</label>
         <div className="studio-partner-tracker-input-row">
           <input
             id="partner-pass-lookup"
@@ -48,28 +46,20 @@ export function PartnerPassTracker() {
             maxLength={80}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="KC-VIP-SAM-5356 or phone"
+            placeholder="Enter WhatsApp number"
           />
-          <button type="submit" disabled={!isLoaded} aria-label="Check partner status">
-            <Search aria-hidden="true" /> <span>Check status</span> <ArrowRight aria-hidden="true" />
+          <button type="submit" disabled={!isLoaded} aria-label="Check Milestone">
+            <Search aria-hidden="true" /> <span>Check Milestone</span> <ArrowRight aria-hidden="true" />
           </button>
         </div>
-        <p className="studio-partner-tracker-local-note">This no-integration preview stores passes only in this browser; it cannot look up records from another device.</p>
       </form>
 
       {didSearch && (
         matchedPass ? (
           <div className="studio-partner-tracker-result" role="status" aria-live="polite">
             <div className="studio-partner-tracker-result-heading">
-              <div>
-                <p className="studio-partner-tracker-result-label">{matchedPass.status}</p>
-                <h4>{matchedPass.partnerId}</h4>
-              </div>
-              <p className="studio-partner-tracker-discount">+{matchedPass.stackedDiscount}% <span>Lifetime Privilege</span></p>
-            </div>
-            <div className="studio-partner-tracker-progress-copy">
-              <span>{matchedPass.referralsCount} / {nextMilestone} Referrals Completed</span>
-              <span>{matchedPass.milestoneTarget - progressWithinTier} to next +1%</span>
+              <h4>Referrals: {matchedPass.referralsCount} / {nextMilestone}</h4>
+              <p className="studio-partner-tracker-discount">Next Privilege: +{matchedPass.stackedDiscount + 1}% <span>Stacked Discount</span></p>
             </div>
             <div
               className="studio-partner-tracker-progress"
