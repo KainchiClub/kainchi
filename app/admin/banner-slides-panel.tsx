@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { ArrowDown, ArrowUp, ImagePlus, Plus, Save, Trash2 } from 'lucide-react'
 import { useLocalBrowserStore } from '@/components/kainchi/local-browser-store'
+import { fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
 import {
   BANNER_SLIDES_STORAGE_KEY,
   DEFAULT_BANNER_SLIDES,
@@ -435,7 +436,7 @@ export function BannerSlidesPanel() {
               <div className="banner-slide-card-content">
                 <div className="banner-slide-preview">
                   {uploadPreviews[slide.id] || slideDrafts[slide.id]?.image || slide.image
-                    ? <img src={uploadPreviews[slide.id] ?? slideDrafts[slide.id]?.image ?? slide.image} alt="" loading={uploadPreviews[slide.id] ? 'eager' : 'lazy'} decoding="async" />
+                    ? <img src={resolveDriveImageUrl(uploadPreviews[slide.id] ?? slideDrafts[slide.id]?.image ?? slide.image)} alt="" loading={uploadPreviews[slide.id] ? 'eager' : 'lazy'} decoding="async" onError={fallbackImageOnError} />
                     : <span><ImagePlus aria-hidden="true" /> Image not set</span>}
                 </div>
                 <div className="banner-slide-fields">

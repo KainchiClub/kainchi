@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
 import { DEFAULT_BANNER_SLIDES, BANNER_SLIDES_STORAGE_KEY, isBannerSlideList } from './banner-slides'
 import { useLocalBrowserStore } from './local-browser-store'
 
@@ -89,13 +90,14 @@ export function FamilyCollectionBanner() {
             return <img
               key={slide.id}
               className={`family-collection-image${isCurrent ? ' is-current' : ''}`}
-              src={slide.image}
+              src={resolveDriveImageUrl(slide.image)}
               alt={isCurrent ? `Kainchi Club collection editorial, slide ${index + 1}` : ''}
               aria-hidden={!isCurrent}
               loading={isInitialPrioritySlide ? 'eager' : 'lazy'}
               fetchPriority={isInitialPrioritySlide ? 'high' : 'low'}
               decoding="async"
               draggable={false}
+              onError={fallbackImageOnError}
             />
           })}
           {slides.length > 1 && <div className="family-collection-indicators" role="group" aria-label="Choose a collection slide">

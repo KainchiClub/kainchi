@@ -14,6 +14,7 @@ import { PartnerPassControl } from './partner-pass-control'
 import { StudioWalletControl } from './studio-wallet-control'
 import { BulkInventoryManager } from './bulk-inventory-manager'
 import { SmartPricingEngine } from './smart-pricing-engine'
+import { IMAGE_FALLBACK, fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
 import { BannerSlidesPanel } from './banner-slides-panel'
 
 const initialLoginState = { error: '' }
@@ -33,14 +34,10 @@ type AdminTab = (typeof ADMIN_TABS)[number]['id']
 function normalizeDriveImageUrl(value: string) {
   try {
     const url = new URL(value.trim())
-    if (url.protocol !== 'https:') return null
+    if (url.protocol !== 'https:' || !['drive.google.com', 'docs.google.com', 'lh3.googleusercontent.com'].includes(url.hostname)) return null
 
-    if (url.hostname === 'drive.google.com' || url.hostname === 'docs.google.com') {
-      const fileId = url.pathname.match(/\/d\/([^/]+)/)?.[1] ?? url.searchParams.get('id')
-      return fileId ? `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}=w1200` : null
-    }
-
-    return url.hostname === 'lh3.googleusercontent.com' ? url.toString() : null
+    const resolvedImage = resolveDriveImageUrl(value)
+    return resolvedImage === IMAGE_FALLBACK ? null : resolvedImage
   } catch {
     return null
   }
@@ -241,7 +238,7 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
                   {products.map((product) => {
                       const stockStatus = product.stockStatus ?? 'in-stock'
                     return <tr key={product.id}>
-                      <td><img className="admin-thumbnail" src={product.image} alt="" loading="lazy" draggable={false} onContextMenu={(event) => event.preventDefault()} /></td>
+                      <td><img className="admin-thumbnail" src={resolveDriveImageUrl(product.image)} alt="" loading="lazy" draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} /></td>
                       <td><strong className="admin-product-title">{product.title}</strong><span className="admin-product-garment">{product.garment}</span></td>
                       <td><label className="admin-product-code-field"><span className="sr-only">Product code for {product.title}</span><input type="text" maxLength={24} autoCapitalize="characters" spellCheck={false} value={productCodeDrafts[product.id] ?? product.productCode ?? ''} onChange={(event) => updateProductCode(product.id, event.target.value)} onBlur={() => resetProductCodeDraft(product.id)} aria-invalid={Boolean(productCodeErrors[product.id])} aria-describedby={productCodeErrors[product.id] ? `admin-code-error-${product.id}` : undefined} />{productCodeErrors[product.id] && <span className="admin-product-code-error" id={`admin-code-error-${product.id}`} role="alert">{productCodeErrors[product.id]}</span>}</label></td>
                       <td>{product.theme}</td>
