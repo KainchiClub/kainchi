@@ -1477,6 +1477,66 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .retired-sku-item em { color: #8b1e2d; font-size: 9px; font-style: normal; font-weight: 700; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.wear-art-layout { position: relative; display: grid; gap: 12px; aspect-ratio: 1.2 / 1; min-height: 520px; overflow: hidden; isolation: isolate; }
+.wear-art-layout .artwork-back, .wear-art-layout .hero-artwork, .wear-art-layout .artwork-accent-frame { position: relative !important; inset: auto !important; transform: none !important; grid-area: auto; width: auto !important; height: 100% !important; align-self: stretch !important; margin: 0 !important; display: block !important; overflow: hidden; min-width: 0; min-height: 0; border: 1px solid rgb(212 174 113 / 40%); box-shadow: 0 16px 34px rgb(21 13 9 / 22%); }
+.wear-art-layout > .exhibit-label, .wear-art-layout > .exhibit-stamp, .wear-art-layout > .hero-gallery-foot { position: absolute !important; z-index: 5; }
+.wear-art-layout .artwork-back img, .wear-art-layout .hero-artwork > img, .wear-art-layout .artwork-accent-frame img { width: 100%; height: 100%; object-fit: cover; }
+.wear-art-layout .hero-artwork figcaption { position: absolute; inset: auto 10px 10px; z-index: 2; }
+.wear-art-layout .floating-caption { position: absolute; z-index: 2; right: 9px; bottom: 8px; }
+.wear-art-layout .artwork-accent-frame { display: block; }
+.layout-signature-triptych { grid-template-columns: .75fr 1.35fr .75fr; align-items: center; padding: 7% 5%; }
+.layout-signature-triptych .artwork-back-left { transform: rotate(-5deg) !important; }
+.layout-signature-triptych .artwork-back-right { transform: rotate(5deg) !important; }
+.layout-signature-triptych .hero-artwork { z-index: 2; }
+.layout-asymmetric-split { grid-template-columns: 1.35fr .72fr; grid-template-rows: 1fr 1fr; padding: 6% 8%; }
+.layout-asymmetric-split .hero-artwork { grid-row: 1 / -1; }
+.layout-asymmetric-split .artwork-back-left { grid-column: 2; }
+.layout-asymmetric-split .artwork-back-right { grid-column: 2; }
+.layout-asymmetric-split .artwork-accent-frame { display: none; }
+.layout-floating-cascade { display: block; padding: 7%; }
+.layout-floating-cascade .hero-artwork { position: absolute !important; inset: 12% 24% 12% 22% !important; z-index: 3; transform: rotate(-2deg) !important; }
+.layout-floating-cascade .artwork-back-left { position: absolute !important; inset: 20% 52% 15% 5% !important; transform: rotate(-10deg) !important; z-index: 2; }
+.layout-floating-cascade .artwork-back-right { position: absolute !important; inset: 15% 5% 21% 55% !important; transform: rotate(9deg) !important; z-index: 1; }
+.layout-floating-cascade .artwork-accent-frame { display: none; }
+.layout-archival-trio { grid-template-columns: repeat(3, 1fr); align-items: center; padding: 10% 4%; }
+.layout-archival-trio .hero-artwork { transform: translateY(-5%) !important; z-index: 2; }
+.layout-archival-trio .artwork-accent-frame { display: none; }
+.layout-runway-spotlight { grid-template-columns: repeat(2, 1fr); grid-template-rows: 1fr .42fr; padding: 5%; }
+.layout-runway-spotlight .hero-artwork { grid-column: 1 / -1; }
+.layout-runway-spotlight .artwork-back-right { grid-column: 2; }
+.layout-runway-spotlight .artwork-accent-frame { display: none; }
+.layout-offset-duo { grid-template-columns: 1fr 1fr; align-items: center; padding: 8% 5%; }
+.layout-offset-duo .hero-artwork { transform: translateY(-8%) !important; }
+.layout-offset-duo .artwork-back-right { transform: translateY(8%) !important; }
+.layout-offset-duo .artwork-accent-frame { display: none; }
+.layout-diagonal-stack { display: block; padding: 8%; }
+.layout-diagonal-stack .hero-artwork { position: absolute !important; inset: 9% 18% 9% 19% !important; z-index: 3; transform: rotate(4deg) !important; }
+.layout-diagonal-stack .artwork-back-left { position: absolute !important; inset: 9% 54% 28% 3% !important; transform: rotate(-13deg) !important; z-index: 2; }
+.layout-diagonal-stack .artwork-back-right { position: absolute !important; inset: 34% 3% 8% 55% !important; transform: rotate(-8deg) !important; z-index: 1; }
+.layout-diagonal-stack .artwork-accent-frame { display: none; }
+.layout-minimalist-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); padding: 5%; }
+.layout-minimalist-grid .artwork-accent-frame { display: block; }
+.layout-horizon-strip { grid-template-columns: 1.15fr .8fr .8fr; align-items: stretch; padding: 14% 3%; }
+.layout-horizon-strip .hero-artwork { transform: scale(1.05) !important; z-index: 2; }
+.layout-horizon-strip .artwork-accent-frame { display: none; }
+.layout-artisan-centerpiece { grid-template-columns: .65fr 1.4fr .65fr; align-items: center; padding: 8% 5%; }
+.layout-artisan-centerpiece .hero-artwork { z-index: 2; }
+.layout-artisan-centerpiece .artwork-back-left, .layout-artisan-centerpiece .artwork-back-right { border-radius: 50%; aspect-ratio: 1; }
+.layout-artisan-centerpiece .artwork-accent-frame { display: none; }
+
+.smart-pricing-tiers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 18px 0; }
+.smart-pricing-tiers article { border: 1px solid rgb(139 30 45 / 20%); padding: 12px; background: #fffaf2; }
+.smart-pricing-tiers strong, .smart-pricing-tiers span, .smart-pricing-tiers small { display: block; }
+.smart-pricing-tiers strong { color: #291b15; font-size: 11px; }
+.smart-pricing-tiers span { margin: 6px 0; color: #8b1e2d; font-size: 14px; font-weight: 700; }
+.smart-pricing-tiers small { color: #806f61; font-size: 9px; line-height: 1.4; }
+.smart-pricing-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; color: #806f61; font-size: 9px; }
+.smart-pricing-preview > span:first-child { width: 100%; color: #291b15; font-weight: 700; }
+.smart-pricing-chip { border: 1px solid #e1d6ca; padding: 6px 8px; background: #fffdf9; }
+@media (max-width: 760px) { .wear-art-layout { min-height: 430px; } .smart-pricing-tiers { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .wear-art-layout { min-height: 360px; } .wear-art-layout .exhibit-label, .wear-art-layout .hero-gallery-foot { display: none; } .smart-pricing-tiers { grid-template-columns: 1fr; } }
+
 @media (max-width: 640px) { .bulk-inventory-config { grid-template-columns: 1fr; } .bulk-inventory-actions { flex-direction: column; } }
 
 .admin-partner-pass-control { margin-top: 22px; }

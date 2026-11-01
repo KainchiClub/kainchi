@@ -24,6 +24,13 @@ import { StudioAllianceProgram } from './studio-alliance-program'
 
 const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg'
 const OVERLAY_HISTORY_KEY = '__kainchiClubOverlay'
+const ESSENTIALS_SHUFFLE_KEY = 'kainchi_essentials_shuffle_cycle'
+
+function shuffleEssentials(products: CatalogProduct[]) {
+  const pool = [...products]
+  for (let index = pool.length - 1; index > 0; index -= 1) { const swapIndex = Math.floor(Math.random() * (index + 1)); [pool[index], pool[swapIndex]] = [pool[swapIndex], pool[index]] }
+  return pool.slice(0, 8)
+}
 
 type StorefrontOverlayHistoryEntry = { id: string; kind: 'product' | 'cart' }
 
@@ -43,6 +50,19 @@ function createCartLine(details: CartLineDetails): CartLineItem {
 export function StorefrontClient() {
   const [products] = useCatalogProducts()
   const featuredProducts = useMemo(() => getFeaturedProducts(products), [products])
+  const [essentials, setEssentials] = useState(featuredProducts)
+
+  useEffect(() => {
+    try {
+      const used: string[] = JSON.parse(sessionStorage.getItem(ESSENTIALS_SHUFFLE_KEY) ?? '[]').filter((value: unknown): value is string => typeof value === 'string')
+      const unseen = products.filter((product) => !used.includes(product.id))
+      const source = unseen.length >= 8 ? unseen : products
+      const next = shuffleEssentials(source)
+      setEssentials(next)
+      const nextIds = [...used.filter((id) => source.some((product) => product.id === id)), ...next.map((product) => product.id)].slice(-Math.max(products.length, 8))
+      sessionStorage.setItem(ESSENTIALS_SHUFFLE_KEY, JSON.stringify(nextIds))
+    } catch { setEssentials(featuredProducts) }
+  }, [products, featuredProducts])
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null)
   const [cartItems, setCartItems] = useState<CartLineItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
@@ -175,10 +195,10 @@ export function StorefrontClient() {
     <>
       <SiteHeader />
       <main>
-        <HeroShowcase />
+        <HeroShowcase products={products} />
         <div className="canvas-band" aria-label="Made with care, worn with feeling"><span>MADE WITH CARE</span><span className="canvas-band-mark"><Scissors aria-hidden="true" /></span><span>WORN WITH FEELING</span></div>
         <FamilyCollectionBanner />
-        <ProductCollection products={featuredProducts} onCustomize={openProduct} />
+        <ProductCollection products={essentials} onCustomize={openProduct} />
         <LetterboxFeedback />
         <ArtworkLibrary products={products} onCustomize={openProduct} />
         <StudioAllianceProgram />

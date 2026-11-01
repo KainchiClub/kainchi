@@ -5,6 +5,8 @@ export const GARMENT_TYPES = [
   'Heavy Boxy Tee',
   'Zip-up Hoodie',
   'Bomber Jacket',
+  'Leather Jacket',
+  'Biker Jacket',
   'Denim Jacket',
   'Denim Jeans',
   'Printed Sweatshirt',
@@ -21,6 +23,23 @@ export const ARTWORK_THEMES = [
 
 export type GarmentType = (typeof GARMENT_TYPES)[number]
 export type ArtworkTheme = (typeof ARTWORK_THEMES)[number]
+
+export type PricingTier = 'minimal' | 'intricate'
+
+export function getSmartPricingTier(product: Pick<CatalogProduct, 'garment' | 'theme' | 'title'>): PricingTier {
+  const label = `${product.garment} ${product.theme} ${product.title}`.toLowerCase()
+  return /embroider|thread|dense|painted|archival|sacred|divine|wild|cosmic|flame|mandala|intricate|full/.test(label) ? 'intricate' : 'minimal'
+}
+
+export function getSmartPrice(product: Pick<CatalogProduct, 'garment' | 'theme' | 'title'>) {
+  const tier = getSmartPricingTier(product)
+  const garment = product.garment.toLowerCase()
+  if (/jacket/.test(garment)) return tier === 'intricate' ? 6999 : 4499
+  if (/hoodie/.test(garment)) return tier === 'intricate' ? 2999 : 1999
+  if (/sweatshirt/.test(garment)) return tier === 'intricate' ? 2599 : 1699
+  if (/tee|t-shirt|shirt/.test(garment)) return tier === 'intricate' ? 1199 : 799
+  return tier === 'intricate' ? 6999 : 4499
+}
 
 export type StockStatus = 'in-stock' | 'sold-out'
 
@@ -165,7 +184,7 @@ function assignInitialArticleCodes(products: CatalogProduct[]) {
   return products.map((product, index) => ({ ...product, articleCode: `KC-ART-${String(index + 1).padStart(3, '0')}` }))
 }
 
-export const initialProducts: CatalogProduct[] = assignInitialArticleCodes(assignCategoryProductCodes(catalogSeed))
+export const initialProducts: CatalogProduct[] = assignInitialArticleCodes(assignCategoryProductCodes(catalogSeed).map((product) => ({ ...product, price: getSmartPrice(product) })))
 
 export function formatRupees(amount: number) {
   return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(amount)}`

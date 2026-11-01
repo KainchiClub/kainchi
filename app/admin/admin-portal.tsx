@@ -13,6 +13,7 @@ import { AllianceReferralsPanel } from './alliance-referrals-panel'
 import { PartnerPassControl } from './partner-pass-control'
 import { StudioWalletControl } from './studio-wallet-control'
 import { BulkInventoryManager } from './bulk-inventory-manager'
+import { SmartPricingEngine } from './smart-pricing-engine'
 
 const initialLoginState = { error: '' }
 const ADMIN_TABS = [
@@ -218,6 +219,7 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
         </div>
 
         <div className="admin-tab-panel" id="admin-panel-catalog" role="tabpanel" aria-labelledby="admin-tab-catalog" tabIndex={0} hidden={activeAdminTab !== 'catalog'}>
+          <SmartPricingEngine products={products} setProducts={setProducts} />
           <section className="admin-panel" aria-labelledby="catalog-table-title">
             <div className="admin-panel-heading">
               <div><h2 id="catalog-table-title">Artwork catalog</h2><p>{products.length} items · product codes, prices, and stock are saved in this browser</p></div>
