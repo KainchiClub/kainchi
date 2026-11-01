@@ -139,7 +139,7 @@ function driveImage(fileId: string) {
   return `https://lh3.googleusercontent.com/d/${fileId}=w1200`
 }
 
-const catalogSeed: Omit<CatalogProduct, 'productCode'>[] = [
+const catalogSeed: CatalogProduct[] = [
   { id: 'drive-01', title: 'Owl in Bloom', garment: 'Oversized T-Shirt', theme: 'Nature & Scenic', price: 1699, image: driveImage('1wePskySZauoxgUSKc8eTdElz9jv4JkB8') },
   { id: 'drive-02', title: 'Orbit Within', garment: 'Fleece Hoodie', theme: 'Brahmand', price: 2499, image: driveImage('1x9Ej_aTNmiEPzrXT7-PAw2NCNXtEDEM2') },
   { id: 'drive-03', title: 'Moonlit Valley', garment: 'Fleece Hoodie', theme: 'Nature & Scenic', price: 2499, image: driveImage('1Id-SzIYmChj5Jkavm1vwe_IECfcx7u08') },
@@ -179,13 +179,20 @@ const catalogSeed: Omit<CatalogProduct, 'productCode'>[] = [
   { id: 'drive-37', title: 'Mountain Horizon', garment: 'Oversized T-Shirt', theme: 'Nature & Scenic', price: 1699, image: driveImage('1ggwPTX2W4QgZbNFRVqihTrZVaDw1_NzG') },
   { id: 'drive-38', title: 'Mahadev Flame', garment: 'Heavy Boxy Tee', theme: 'Divine & Spiritual', price: 1699, image: driveImage('1sBgF-lsR5MtMv2v7SDckCUdNQqnXcOGn') },
   { id: 'drive-39', title: 'Street Poster', garment: 'Heavy Boxy Tee', theme: 'Streetwear', price: 1699, image: driveImage('1n3V9DEHB6HyhXyNTJlktYoBdgSw1TK2I') },
+  { id: 'kc-art-shirt-embroidery-01', productCode: '#KC-SHT-01', title: 'Shirt Embroidery Print', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1-X0liT9tduCTYQifSsp3gIv8sQiojy5i'), stockStatus: 'in-stock' },
+  { id: 'kc-art-combo-trouser-shirt-01', productCode: '#KC-CMB-01', title: 'Artisan Trouser & Shirt Duo', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 2999, image: driveImage('1qHY3FW2f4I3S2rhGVLDQCehR0CrZdoZ4'), stockStatus: 'in-stock' },
 ]
 
 function assignInitialArticleCodes(products: CatalogProduct[]) {
   return products.map((product, index) => ({ ...product, articleCode: `KC-ART-${String(index + 1).padStart(3, '0')}` }))
 }
 
-export const initialProducts: CatalogProduct[] = assignInitialArticleCodes(assignCategoryProductCodes(catalogSeed).map((product) => ({ ...product, price: getSmartPrice(product) })))
+const FIXED_PRICE_CATALOG_IDS = new Set(['kc-art-shirt-embroidery-01', 'kc-art-combo-trouser-shirt-01'])
+
+export const initialProducts: CatalogProduct[] = assignInitialArticleCodes(assignCategoryProductCodes(catalogSeed).map((product) => ({
+  ...product,
+  price: FIXED_PRICE_CATALOG_IDS.has(product.id) ? product.price : getSmartPrice(product),
+})))
 
 export function formatRupees(amount: number) {
   return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(amount)}`
