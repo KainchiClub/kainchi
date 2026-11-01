@@ -14,7 +14,7 @@ export function ProductCollection({ products, onCustomize }: { products: Catalog
           <p className="section-intro">Good fabric is just the beginning. Pick your piece, then make it yours.</p>
         </div>
       </div>
-      <div className="product-grid">
+      <div className="product-grid" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}>
         {products.map((product, index) => {
           const soldOut = product.stockStatus === 'sold-out'
           return <article className="product-card" key={product.id}>

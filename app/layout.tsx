@@ -1,6 +1,10 @@
 import { Analytics } from '@vercel/analytics/next'
+import { DM_Sans, Playfair_Display } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+
+const bodyFont = DM_Sans({ subsets: ['latin'], display: 'swap', preload: true, variable: '--font-body-loaded' })
+const displayFont = Playfair_Display({ subsets: ['latin'], display: 'swap', preload: true, variable: '--font-display-loaded' })
 
 export const metadata: Metadata = {
   title: 'Kainchi Club — Wear Your Own Art',
@@ -37,7 +41,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <head>
+        <link rel="preconnect" href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com" />
+        <link rel="dns-prefetch" href="//hebbkx1anhila5yf.public.blob.vercel-storage.com" />
+        <link rel="preconnect" href="https://lh3.googleusercontent.com" />
+        <link rel="dns-prefetch" href="//lh3.googleusercontent.com" />
+      </head>
+      <body className={`antialiased ${bodyFont.variable} ${displayFont.variable}`}>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

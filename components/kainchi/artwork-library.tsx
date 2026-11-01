@@ -82,7 +82,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
               {filters.map((filter) => <button type="button" key={filter} className={`filter-pill${activeTheme === filter ? ' active' : ''}`} aria-pressed={activeTheme === filter} onClick={() => { setActiveTheme(filter); setVisibleLimit(ARCHIVE_PAGE_SIZE) }}>{filter}</button>)}
             </div>
             <p className="art-archive-count" aria-live="polite">Showing {Math.min(visibleLimit, filteredProducts.length)} of {filteredProducts.length} pieces</p>
-            {visibleProducts.length > 0 ? <div className="art-grid">{visibleProducts.map((product) => {
+            {visibleProducts.length > 0 ? <div className="art-grid" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}>{visibleProducts.map((product) => {
               const soldOut = product.stockStatus === 'sold-out'
               return <article className="art-card" key={product.id} style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
                 <button className="art-image-link" type="button" onClick={() => onCustomize(product)} aria-label={`View ${product.title}`}>

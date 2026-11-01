@@ -25,7 +25,7 @@ function isCatalogProduct(value: unknown): value is CatalogProduct {
     && Number.isFinite(product.price)
     && product.price > 0
     && typeof product.image === 'string'
-    && product.image.startsWith('https://')
+    && (product.image.startsWith('https://') || product.image.startsWith('data:image/'))
 }
 
 function readCatalogProducts(serialized: string | null) {

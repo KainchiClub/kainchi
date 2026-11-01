@@ -12,10 +12,12 @@ import { FAQManagementPanel } from './faq-management-panel'
 import { AllianceReferralsPanel } from './alliance-referrals-panel'
 import { PartnerPassControl } from './partner-pass-control'
 import { StudioWalletControl } from './studio-wallet-control'
+import { BulkInventoryManager } from './bulk-inventory-manager'
 
 const initialLoginState = { error: '' }
 const ADMIN_TABS = [
   { id: 'catalog', label: 'Artwork' },
+  { id: 'inventory', label: 'Bulk Inventory & Artwork Manager' },
   { id: 'feedback', label: 'Feedback' },
   { id: 'faqs', label: 'Manage FAQs' },
   { id: 'leads', label: 'Studio leads' },
@@ -254,6 +256,9 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
             {addError && <p className="admin-login-error" role="alert">{addError}</p>}
             <p className="admin-storage-note">Saved to this browser&apos;s local storage. The new item uses the Oversized T-Shirt garment type.</p>
           </section>
+        </div>
+        <div className="admin-tab-panel" id="admin-panel-inventory" role="tabpanel" aria-labelledby="admin-tab-inventory" tabIndex={0} hidden={activeAdminTab !== 'inventory'}>
+          <BulkInventoryManager products={products} setProducts={setProducts} />
         </div>
         <div className="admin-tab-panel" id="admin-panel-feedback" role="tabpanel" aria-labelledby="admin-tab-feedback" tabIndex={0} hidden={activeAdminTab !== 'feedback'}>
           <FeedbackModerationPanel />

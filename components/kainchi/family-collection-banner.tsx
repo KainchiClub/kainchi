@@ -13,6 +13,7 @@ export function FamilyCollectionBanner() {
           height={1152}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 1200px"
           priority={true}
+          loading="eager"
           fetchPriority="high"
           quality={85}
           style={{ width: '100%', height: 'auto', aspectRatio: '16/9', objectFit: 'cover', imageRendering: '-webkit-optimize-contrast' }}
