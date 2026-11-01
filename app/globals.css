@@ -1709,6 +1709,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hero-section { min-height: 600px; contain: layout; contain-intrinsic-size: auto 600px; }
 .family-collection-section, .family-collection-frame { contain: layout style; }
 .family-collection-media { aspect-ratio: 16 / 9; contain: layout paint; }
+.family-collection-image { backface-visibility: hidden; }
 .family-collection-image.is-current { transform: translateZ(0); will-change: opacity; }
 .customizer-dialog[open], .order-cart-dialog[open] { min-height: min(440px, calc(100dvh - 40px)); contain: layout style; transform: translateZ(0); will-change: transform; }
 .visitor-lead-card { contain: layout style; transform: translateZ(0); will-change: transform, opacity; }

@@ -9,7 +9,9 @@ const ROTATION_INTERVAL_MS = 3000
 export function FamilyCollectionBanner() {
   const [savedSlides] = useLocalBrowserStore(BANNER_SLIDES_STORAGE_KEY, DEFAULT_BANNER_SLIDES, isBannerSlideList)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [preloadedIndex, setPreloadedIndex] = useState<number | null>(null)
   const [isPaused, setIsPaused] = useState(false)
+  const hasAdvancedRef = useRef(false)
   const touchResumeTimeout = useRef<number | null>(null)
   const slides = useMemo(() => {
     const activeSlides = savedSlides.filter((slide) => slide.active && slide.image.trim())
@@ -22,9 +24,32 @@ export function FamilyCollectionBanner() {
   }, [slides.length])
 
   useEffect(() => {
+    if (slides.length < 2) return
+
+    const idleWindow = window as unknown as {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number
+      cancelIdleCallback?: (handle: number) => void
+    }
+    const nextIndex = (activeIndex + 1) % slides.length
+    const requestIdle = idleWindow.requestIdleCallback
+    const handle = requestIdle
+      ? requestIdle(() => setPreloadedIndex(nextIndex), { timeout: 1500 })
+      : window.setTimeout(() => setPreloadedIndex(nextIndex), 300)
+
+    return () => {
+      if (requestIdle) idleWindow.cancelIdleCallback?.(handle)
+      else window.clearTimeout(handle)
+    }
+  }, [activeIndex, slides])
+
+  useEffect(() => {
     if (isPaused || slides.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slides.length)
+      setActiveIndex((current) => {
+        const nextIndex = (current + 1) % slides.length
+        if (nextIndex !== current) hasAdvancedRef.current = true
+        return nextIndex
+      })
     }, ROTATION_INTERVAL_MS)
     return () => window.clearInterval(timer)
   }, [isPaused, slides.length])
@@ -55,19 +80,24 @@ export function FamilyCollectionBanner() {
             touchResumeTimeout.current = window.setTimeout(() => setIsPaused(false), 5000)
           }}
         >
-          {slides.map((slide, index) => (
-            <img
+          {slides.map((slide, index) => {
+            const isCurrent = index === activeIndex
+            const isIdlePreload = index === preloadedIndex && !isCurrent
+            if (!isCurrent && !isIdlePreload) return null
+
+            const isInitialPrioritySlide = isCurrent && index === 0 && !hasAdvancedRef.current
+            return <img
               key={slide.id}
-              className={`family-collection-image${index === activeIndex ? ' is-current' : ''}`}
+              className={`family-collection-image${isCurrent ? ' is-current' : ''}`}
               src={slide.image}
-              alt={index === activeIndex ? `Kainchi Club collection editorial, slide ${index + 1}` : ''}
-              aria-hidden={index !== activeIndex}
-              loading={index === activeIndex ? 'eager' : 'lazy'}
-              fetchPriority={index === activeIndex ? 'high' : 'auto'}
+              alt={isCurrent ? `Kainchi Club collection editorial, slide ${index + 1}` : ''}
+              aria-hidden={!isCurrent}
+              loading={isInitialPrioritySlide ? 'eager' : 'lazy'}
+              fetchPriority={isInitialPrioritySlide ? 'high' : 'low'}
               decoding="async"
               draggable={false}
             />
-          ))}
+          })}
           {slides.length > 1 && <div className="family-collection-indicators" role="group" aria-label="Choose a collection slide">
             {slides.map((slide, index) => <button
               key={slide.id}
@@ -75,7 +105,10 @@ export function FamilyCollectionBanner() {
               className={index === activeIndex ? 'is-current' : ''}
               aria-label={`Show slide ${index + 1}`}
               aria-pressed={index === activeIndex}
-              onClick={() => setActiveIndex(index)}
+              onClick={() => {
+                hasAdvancedRef.current = true
+                setActiveIndex(index)
+              }}
             />)}
           </div>}
         </div>
