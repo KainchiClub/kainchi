@@ -62,8 +62,8 @@ export function FamilyCollectionBanner() {
               src={slide.image}
               alt={index === activeIndex ? `Kainchi Club collection editorial, slide ${index + 1}` : ''}
               aria-hidden={index !== activeIndex}
-              loading={index === 0 ? 'eager' : 'lazy'}
-              fetchPriority={index === 0 ? 'high' : 'auto'}
+              loading={index === activeIndex ? 'eager' : 'lazy'}
+              fetchPriority={index === activeIndex ? 'high' : 'auto'}
               decoding="async"
               draggable={false}
             />

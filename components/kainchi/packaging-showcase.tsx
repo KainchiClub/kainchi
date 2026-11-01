@@ -38,14 +38,15 @@ export function PackagingShowcase({ premiumPackagingSelected, onPremiumPackaging
       <figure className="packaging-figure" aria-label="Four complete Kainchi Club standard packaging formats"><Image className="packaging-visual-banner" src={packagingImage} alt="Kainchi Club's standard packaging presentation: The Experience Box, The Eco-Mailer, The Utility Tube, and Drawstring Pouch." width={1200} height={900} loading="lazy" decoding="async" /></figure>
       <section className="collector-vault" aria-labelledby="collector-vault-title">
         <div className="collector-vault-copy">
-          <p className="collector-vault-badge"><Crown aria-hidden="true" /> Signature Luxury Upgrade <span>(+{formatRupees(GIFT_BOX_PRICE)})</span></p>
-          <h3 id="collector-vault-title">The Collector&apos;s Vault — Curated for Gifting &amp; Keepsakes (+₹99)</h3>
-          <p className="collector-vault-description">Planning a memorable gift for a birthday, anniversary, or special festival? Upgrade any piece to our Signature Collector&apos;s Vault. Delivered in an ultra-rigid wax-sealed collector box with custom artisan ribbons, scented tissue, and a handwritten personalized greeting note of your choice. Ready to gift straight out of the box.</p>
+          <p className="collector-vault-badge"><Crown aria-hidden="true" /> Limited numbered edition <span>+{formatRupees(GIFT_BOX_PRICE)} / item</span></p>
+          <h3 id="collector-vault-title"><span>The Collector&apos;s Vault</span> <span className="collector-vault-number" aria-label="Vault 99">99</span></h3>
+          <p className="collector-vault-subtitle">Curated for gifting &amp; keepsakes</p>
+          <p className="collector-vault-description">Upgrade any piece to our Signature Collector&apos;s Vault: an ultra-rigid wax-sealed collector box with custom artisan ribbons, scented tissue, and a handwritten personalized greeting note. Ready to gift straight out of the box.</p>
           <p className="collector-vault-standard-note">Standard eco-packaging (Boxes, Mailers, Tubes, and Pouches) continues to be included free with all regular orders.</p>
           <button className={`collector-vault-toggle${premiumPackagingSelected ? ' selected' : ''}`} type="button" aria-pressed={premiumPackagingSelected} onClick={() => onPremiumPackagingChange(!premiumPackagingSelected)}>
             {premiumPackagingSelected ? <><Check aria-hidden="true" /> Selected · Remove premium packaging</> : `Select +${formatRupees(GIFT_BOX_PRICE)} Premium Packaging`}
           </button>
-          <p className="collector-vault-note">Adds {formatRupees(GIFT_BOX_PRICE)} per item to your current order. With an empty cart, it will be preselected for your next piece.</p>
+          <p className="collector-vault-note">{formatRupees(GIFT_BOX_PRICE)} is added per item. With an empty cart, this upgrade will be preselected for your next piece.</p>
         </div>
         <figure className="collector-vault-visual">
           <Image src={premiumPackagingImage} alt="Deep burgundy rigid keepsake box wrapped in crimson tissue and sealed with antique gold wax beside an embossed certificate." width={900} height={900} loading="lazy" decoding="async" />

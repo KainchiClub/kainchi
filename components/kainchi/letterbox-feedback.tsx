@@ -89,7 +89,7 @@ export function LetterboxFeedback() {
       <div className="letterbox-card">
         <div className="letterbox-copy">
           <div className="letterbox-postmark"><span aria-hidden="true">KC</span><p>STUDIO CORRESPONDENCE <span>NO. 08</span></p></div>
-          <h2 id="letterbox-title">Leave us a <em>little note.</em></h2>
+          <h2 id="letterbox-title">Leave a <em>little note.</em></h2>
           <p className="letterbox-intro">A rating, a thought, a tiny story — every honest note helps the studio grow.</p>
           <StarRating rating={rating} onChange={setRating} />
           <label className="letterbox-note-label" htmlFor="letterbox-note">A short note <span>OPTIONAL</span></label>
