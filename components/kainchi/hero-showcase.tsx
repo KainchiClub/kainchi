@@ -9,6 +9,22 @@ const LAYOUT_KEY = 'kainchi_wear_art_layout_cycle'
 
 export function HeroShowcase({ products = [] }: { products?: CatalogProduct[] }) {
   const [layoutIndex, setLayoutIndex] = useState(0)
+  const [secondaryArtworkReady, setSecondaryArtworkReady] = useState(false)
+  useEffect(() => {
+    const idleWindow = window as unknown as {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number
+      cancelIdleCallback?: (handle: number) => void
+    }
+    const requestIdle = idleWindow.requestIdleCallback
+    const handle = requestIdle
+      ? requestIdle(() => setSecondaryArtworkReady(true), { timeout: 1800 })
+      : window.setTimeout(() => setSecondaryArtworkReady(true), 300)
+
+    return () => {
+      if (requestIdle) idleWindow.cancelIdleCallback?.(handle)
+      else window.clearTimeout(handle)
+    }
+  }, [])
   useEffect(() => {
     try {
       const used = JSON.parse(sessionStorage.getItem(LAYOUT_KEY) ?? '[]').filter((value: unknown): value is number => typeof value === 'number')
@@ -37,18 +53,18 @@ export function HeroShowcase({ products = [] }: { products?: CatalogProduct[] })
       <div className={`hero-gallery wear-art-layout layout-${LAYOUTS[layoutIndex]}`} aria-label={`Kainchi Club wearable art exhibition, ${LAYOUTS[layoutIndex].replaceAll('-', ' ')}`}>
         <div className="exhibit-label exhibit-label-top"><span>THE KAINCHI ARCHIVE</span><span>01 / 04</span></div>
         <div className="artwork-back artwork-back-left">
-          <Image src={artwork[0]} alt={`${titles[0]} editorial garment detail`} className="art-crop crop-hoodie" width={1200} height={1200} loading="lazy" decoding="async" />
+          {secondaryArtworkReady && <Image src={artwork[0]} alt={`${titles[0]} editorial garment detail`} className="art-crop crop-hoodie" width={1200} height={1200} loading="lazy" fetchPriority="low" decoding="async" />}
           <span className="floating-caption">01 — THE WILD SIDE</span>
         </div>
         <div className="artwork-back artwork-back-right">
-          <Image src={artwork[1]} alt={`${titles[1]} craft detail`} className="art-crop crop-denim" width={1200} height={1200} loading="lazy" decoding="async" />
+          {secondaryArtworkReady && <Image src={artwork[1]} alt={`${titles[1]} craft detail`} className="art-crop crop-denim" width={1200} height={1200} loading="lazy" fetchPriority="low" decoding="async" />}
           <span className="floating-caption">02 — EASTERN MYTH</span>
         </div>
         <figure className="hero-artwork">
           <Image src={artwork[2]} alt={`${titles[2]} featured wearable artwork`} width={1200} height={1200} priority={true} fetchPriority="high" decoding="async" />
           <figcaption><span>Wearable art, cut from a different cloth.</span><span>KA·01</span></figcaption>
         </figure>
-        <div className="artwork-accent-frame"><Image src={artwork[3]} alt={`${titles[3]} editorial detail`} width={800} height={800} loading="lazy" decoding="async" /></div>
+        <div className="artwork-accent-frame">{secondaryArtworkReady && <Image src={artwork[3]} alt={`${titles[3]} editorial detail`} width={800} height={800} loading="lazy" fetchPriority="low" decoding="async" />}</div>
         <div className="exhibit-stamp" aria-hidden="true"><span>MADE</span><strong>BY<br />YOU</strong><span>WORN<br />BY YOU</span></div>
         <div className="hero-gallery-foot"><span>GARMENTS AS A CANVAS</span><span>EST. WITH INTENTION</span></div>
       </div>
