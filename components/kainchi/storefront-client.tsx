@@ -49,20 +49,21 @@ function createCartLine(details: CartLineDetails): CartLineItem {
 
 export function StorefrontClient() {
   const [products] = useCatalogProducts()
-  const featuredProducts = useMemo(() => getFeaturedProducts(products), [products])
+  const availableProducts = useMemo(() => products.filter((product) => product.stockStatus !== 'sold-out' && product.stockStatus !== 'retired'), [products])
+  const featuredProducts = useMemo(() => getFeaturedProducts(availableProducts), [availableProducts])
   const [essentials, setEssentials] = useState(featuredProducts)
 
   useEffect(() => {
     try {
       const used: string[] = JSON.parse(sessionStorage.getItem(ESSENTIALS_SHUFFLE_KEY) ?? '[]').filter((value: unknown): value is string => typeof value === 'string')
-      const unseen = products.filter((product) => !used.includes(product.id))
-      const source = unseen.length >= 8 ? unseen : products
+      const unseen = availableProducts.filter((product) => !used.includes(product.id))
+      const source = unseen.length >= 8 ? unseen : availableProducts
       const next = shuffleEssentials(source)
       setEssentials(next)
-      const nextIds = [...used.filter((id) => source.some((product) => product.id === id)), ...next.map((product) => product.id)].slice(-Math.max(products.length, 8))
+      const nextIds = [...used.filter((id) => source.some((product) => product.id === id)), ...next.map((product) => product.id)].slice(-Math.max(availableProducts.length, 8))
       sessionStorage.setItem(ESSENTIALS_SHUFFLE_KEY, JSON.stringify(nextIds))
     } catch { setEssentials(featuredProducts) }
-  }, [products, featuredProducts])
+  }, [availableProducts, featuredProducts])
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null)
   const [cartItems, setCartItems] = useState<CartLineItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
@@ -195,12 +196,12 @@ export function StorefrontClient() {
     <>
       <SiteHeader />
       <main>
-        <HeroShowcase products={products} />
+        <HeroShowcase products={availableProducts} />
         <div className="canvas-band" aria-label="Made with care, worn with feeling"><span>MADE WITH CARE</span><span className="canvas-band-mark"><Scissors aria-hidden="true" /></span><span>WORN WITH FEELING</span></div>
         <FamilyCollectionBanner />
         <ProductCollection products={essentials} onCustomize={openProduct} />
         <LetterboxFeedback />
-        <ArtworkLibrary products={products} onCustomize={openProduct} />
+        <ArtworkLibrary products={availableProducts} onCustomize={openProduct} />
         <StudioAllianceProgram />
         <section className="story-section" id="story" aria-labelledby="story-title">
           <div className="story-number">K—C<br />2026</div>

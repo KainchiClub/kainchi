@@ -16,6 +16,7 @@ import { BulkInventoryManager } from './bulk-inventory-manager'
 import { SmartPricingEngine } from './smart-pricing-engine'
 
 const initialLoginState = { error: '' }
+const RETIRED_SKU_KEY = 'kainchi-retired-sku-vault-v1'
 const ADMIN_TABS = [
   { id: 'catalog', label: 'Artwork' },
   { id: 'inventory', label: 'Bulk Inventory & Artwork Manager' },
@@ -126,10 +127,15 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
     })
   }
 
-  function toggleStock(product: CatalogProduct) {
-    setProducts((current) => current.map((item) => item.id === product.id
-      ? { ...item, stockStatus: item.stockStatus === 'sold-out' ? 'in-stock' : 'sold-out' }
-      : item))
+  function updateStockStatus(product: CatalogProduct, status: 'in-stock' | 'sold-out' | 'retired') {
+    if (status === 'retired') {
+      const retired = (() => { try { return JSON.parse(window.localStorage.getItem(RETIRED_SKU_KEY) ?? '[]') as Array<Record<string, string>> } catch { return [] } })()
+      retired.push({ articleCode: product.articleCode ?? product.productCode ?? product.id, title: product.title, deletedAt: new Date().toISOString(), image: product.image })
+      window.localStorage.setItem(RETIRED_SKU_KEY, JSON.stringify(retired))
+      setProducts((current) => current.filter((item) => item.id !== product.id))
+      return
+    }
+    setProducts((current) => current.map((item) => item.id === product.id ? { ...item, stockStatus: status } : item))
   }
 
   function addCatalogItem(event: FormEvent<HTMLFormElement>) {
@@ -231,14 +237,14 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
                 <thead><tr><th scope="col">Thumbnail</th><th scope="col">Product Title</th><th scope="col">Product Code</th><th scope="col">Category</th><th scope="col">Base Price</th><th scope="col">Stock Status</th></tr></thead>
                 <tbody>
                   {products.map((product) => {
-                    const soldOut = product.stockStatus === 'sold-out'
+                      const stockStatus = product.stockStatus ?? 'in-stock'
                     return <tr key={product.id}>
                       <td><img className="admin-thumbnail" src={product.image} alt="" loading="lazy" draggable={false} onContextMenu={(event) => event.preventDefault()} /></td>
                       <td><strong className="admin-product-title">{product.title}</strong><span className="admin-product-garment">{product.garment}</span></td>
                       <td><label className="admin-product-code-field"><span className="sr-only">Product code for {product.title}</span><input type="text" maxLength={24} autoCapitalize="characters" spellCheck={false} value={productCodeDrafts[product.id] ?? product.productCode ?? ''} onChange={(event) => updateProductCode(product.id, event.target.value)} onBlur={() => resetProductCodeDraft(product.id)} aria-invalid={Boolean(productCodeErrors[product.id])} aria-describedby={productCodeErrors[product.id] ? `admin-code-error-${product.id}` : undefined} />{productCodeErrors[product.id] && <span className="admin-product-code-error" id={`admin-code-error-${product.id}`} role="alert">{productCodeErrors[product.id]}</span>}</label></td>
                       <td>{product.theme}</td>
                       <td><label className="admin-price-field"><span aria-hidden="true">₹</span><span className="sr-only">Base price for {product.title}</span><input type="number" min="1" max="1000000" step="1" value={priceDrafts[product.id] ?? String(product.price)} onChange={(event) => updatePrice(product.id, event.target.value)} onBlur={() => resetPriceDraft(product.id)} /></label></td>
-                      <td><button className={`admin-stock-toggle${soldOut ? ' sold-out' : ''}`} type="button" aria-pressed={!soldOut} onClick={() => toggleStock(product)}>{soldOut ? 'Sold Out' : 'In Stock'}</button></td>
+                      <td><label className="admin-stock-select"><span className="sr-only">Stock status for {product.title}</span><select value={stockStatus} onChange={(event) => updateStockStatus(product, event.target.value as 'in-stock' | 'sold-out' | 'retired')}><option value="in-stock">In Stock</option><option value="sold-out">Out of Stock</option><option value="retired">Retire / Delete SKU</option></select></label></td>
                     </tr>
                   })}
                 </tbody>

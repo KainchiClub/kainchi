@@ -37,7 +37,7 @@ function readCatalogProducts(serialized: string | null) {
 
     return assignCategoryProductCodes(parsed.filter(isCatalogProduct).map((product) => ({
       ...product,
-      stockStatus: product.stockStatus === 'sold-out' ? 'sold-out' as const : 'in-stock' as const,
+      stockStatus: product.stockStatus === 'sold-out' ? 'sold-out' as const : product.stockStatus === 'retired' ? 'retired' as const : 'in-stock' as const,
     })))
   } catch {
     return initialProducts

@@ -41,7 +41,7 @@ export function getSmartPrice(product: Pick<CatalogProduct, 'garment' | 'theme' 
   return tier === 'intricate' ? 6999 : 4499
 }
 
-export type StockStatus = 'in-stock' | 'sold-out'
+export type StockStatus = 'in-stock' | 'sold-out' | 'retired'
 
 export type CatalogProduct = {
   id: string
@@ -126,12 +126,13 @@ export const FEATURED_ARTWORK_IDS = [
 ] as const
 
 export function getFeaturedProducts(products: CatalogProduct[]) {
+  const available = products.filter((product) => product.stockStatus !== 'sold-out' && product.stockStatus !== 'retired')
   const featured = FEATURED_ARTWORK_IDS.flatMap((id) => {
-    const product = products.find((item) => item.id === id)
+    const product = available.find((item) => item.id === id)
     return product ? [product] : []
   })
   const featuredIds = new Set(featured.map((product) => product.id))
-  return [...featured, ...products.filter((product) => !featuredIds.has(product.id))].slice(0, FEATURED_ARTWORK_IDS.length)
+  return [...featured, ...available.filter((product) => !featuredIds.has(product.id))].slice(0, FEATURED_ARTWORK_IDS.length)
 }
 
 function driveImage(fileId: string) {

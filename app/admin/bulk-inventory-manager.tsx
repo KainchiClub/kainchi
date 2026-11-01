@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Check, ImagePlus, LoaderCircle, Upload, X } from 'lucide-react'
-import { ARTWORK_THEMES, GARMENT_TYPES, getNextArticleCode, getNextProductCode, type ArtworkTheme, type CatalogProduct, type GarmentType } from '@/components/kainchi/catalog'
+import { ARTWORK_THEMES, GARMENT_TYPES, getNextArticleCode, getNextProductCode, getSmartPrice, type ArtworkTheme, type CatalogProduct, type GarmentType } from '@/components/kainchi/catalog'
 
 const MAX_WIDTH = 1600
 const RETIRED_SKU_KEY = 'kainchi-retired-sku-vault-v1'
@@ -12,16 +12,17 @@ function readRetiredSkus(): RetiredSku[] { try { const value = JSON.parse(window
 function writeRetiredSkus(items: RetiredSku[]) { window.localStorage.setItem(RETIRED_SKU_KEY, JSON.stringify(items)) }
 function classifyArtwork(filename: string) {
   const label = filename.toLowerCase()
-  if (/lion|tiger|wild|animal|fauna|forest|leopard|wolf/.test(label)) return { theme: 'Nature & Scenic' as ArtworkTheme, title: 'Wildlife Archive Study' }
-  if (/mahadev|shiv|trishul|sacred|ganesh|devi|spiritual|temple|divine/.test(label)) return { theme: 'Divine & Spiritual' as ArtworkTheme, title: 'Sacred Mythology Archive' }
-  if (/car|auto|racing|race|motor|speed|velocity|bike/.test(label)) return { theme: 'Streetwear' as ArtworkTheme, title: 'Velocity Motorsport Study' }
-  if (/cosmic|space|star|moon|astral|satellite|orbit|celestial|galaxy/.test(label)) return { theme: 'Brahmand' as ArtworkTheme, title: 'Celestial Orbit Archive' }
-  if (/embroider|thread|stitch|needle|sew|patch|floral/.test(label)) return { theme: 'Embroidery / Threadwork' as ArtworkTheme, title: 'Threadwork Archive Study' }
-  return { theme: 'Abstract' as ArtworkTheme, title: 'Studio Archive Artwork' }
+  const garment: GarmentType = /leather|biker|rider|moto|jacket/.test(label) ? 'Leather Jacket' : /hoodie|pullover/.test(label) ? 'Fleece Hoodie' : /sweat|crewneck/.test(label) ? 'Printed Sweatshirt' : /shirt|linen|overshirt/.test(label) ? 'Shirts' : /denim|jeans/.test(label) ? 'Denim Jacket' : 'Oversized T-Shirt'
+  if (/lion|tiger|wild|animal|fauna|forest|leopard|wolf|bengal/.test(label)) return { garment, theme: 'Nature & Scenic' as ArtworkTheme, title: 'Bengal Sovereign Crest' }
+  if (/mahadev|shiv|trishul|sacred|ganesh|devi|spiritual|temple|divine/.test(label)) return { garment, theme: 'Divine & Spiritual' as ArtworkTheme, title: 'The Sacred Trishul Archive' }
+  if (/car|auto|racing|race|motor|speed|velocity|bike/.test(label)) return { garment, theme: 'Streetwear' as ArtworkTheme, title: 'Cosmic Velocity Study' }
+  if (/cosmic|space|star|moon|astral|satellite|orbit|celestial|galaxy/.test(label)) return { garment, theme: 'Brahmand' as ArtworkTheme, title: 'Celestial Orbit Archive' }
+  if (/embroider|thread|stitch|needle|sew|patch|floral/.test(label)) return { garment, theme: 'Embroidery / Threadwork' as ArtworkTheme, title: 'Minimalist Threadwork Study' }
+  return { garment, theme: 'Abstract' as ArtworkTheme, title: 'Studio Archive Artwork' }
 }
 const QUALITY = 0.85
 
-type UploadItem = { id: string; name: string; preview: string; title: string; suggestedTheme: ArtworkTheme; status: 'queued' | 'optimizing' | 'ready' | 'error'; size?: number; dataUrl?: string; error?: string }
+type UploadItem = { id: string; name: string; preview: string; title: string; suggestedGarment: GarmentType; suggestedTheme: ArtworkTheme; status: 'queued' | 'optimizing' | 'ready' | 'error'; size?: number; dataUrl?: string; error?: string }
 
 function titleFromFilename(name: string) { return name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim() }
 function readImage(file: File) { return new Promise<HTMLImageElement>((resolve, reject) => { const url = URL.createObjectURL(file); const image = new Image(); image.onload = () => { URL.revokeObjectURL(url); resolve(image) }; image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read image')) }; image.src = url }) }
@@ -46,7 +47,7 @@ export function BulkInventoryManager({ products, setProducts }: { products: Cata
     const files = Array.from(event.target.files ?? []).filter((file) => file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024)
     event.target.value = ''
     if (!files.length) return
-    const queued = files.map((file) => { const classification = classifyArtwork(file.name); const filenameTitle = titleFromFilename(file.name); const numericOnly = !filenameTitle || /^\d+$/.test(filenameTitle); return { id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`, name: file.name, preview: URL.createObjectURL(file), title: numericOnly ? classification.title : filenameTitle, suggestedTheme: classification.theme, status: 'queued' as const } })
+    const queued = files.map((file) => { const classification = classifyArtwork(file.name); const filenameTitle = titleFromFilename(file.name); const numericOnly = !filenameTitle || /^\d+$/.test(filenameTitle); return { id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`, name: file.name, preview: URL.createObjectURL(file), title: numericOnly ? classification.title : filenameTitle, suggestedGarment: classification.garment, suggestedTheme: classification.theme, status: 'queued' as const } })
     setItems((current) => [...current, ...queued])
     setProcessing(true)
     for (const item of queued) {
@@ -73,7 +74,9 @@ export function BulkInventoryManager({ products, setProducts }: { products: Cata
       const approvedOverride = index === 0 && overrideSku && vault.find((sku) => sku.articleCode === overrideSku && sku.overrideApprovedAt)
       const articleCode = approvedOverride ? overrideSku : getNextArticleCode(currentCatalog, vault.map((sku) => sku.articleCode))
       vault = vault.filter((sku) => sku.articleCode !== articleCode)
-      additions.push({ id: `bulk-${crypto.randomUUID()}`, title, articleCode, productCode: getNextProductCode(currentCatalog, garment, title), garment, theme: item.suggestedTheme || theme, price: validPrice, image: item.dataUrl!, stockStatus: 'in-stock', uploaded: true })
+      const assignedGarment = item.suggestedGarment || garment
+      const assignedTheme = item.suggestedTheme || theme
+      additions.push({ id: `bulk-${crypto.randomUUID()}`, title, articleCode, productCode: getNextProductCode(currentCatalog, assignedGarment, title), garment: assignedGarment, theme: assignedTheme, price: getSmartPrice({ garment: assignedGarment, theme: assignedTheme, title }), image: item.dataUrl!, stockStatus: 'in-stock', uploaded: true })
     })
     writeRetiredSkus(vault)
     setRetiredSkus(vault)
