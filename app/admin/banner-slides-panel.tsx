@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useState, type ChangeEvent, type DragEvent } from 'react'
 import { ArrowDown, ArrowUp, ImagePlus, Plus, Trash2 } from 'lucide-react'
 import { useLocalBrowserStore } from '@/components/kainchi/local-browser-store'
 import {
@@ -12,13 +12,81 @@ import {
   type BannerSlide,
 } from '@/components/kainchi/banner-slides'
 
-const MAX_UPLOAD_BYTES = 750_000
+const MAX_UPLOAD_BYTES = 3_000_000
+const MAX_STORED_IMAGE_LENGTH = 5_500_000
+const SUPPORTED_IMAGE_TYPES = new Set([
+  'image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif',
+  'image/bmp', 'image/heic', 'image/heif', 'image/tiff', 'image/tif',
+])
+
+type BannerSlideDraft = { image: string; caption: string }
+type CaptionGenerationState = { requestId: string; isGenerating: boolean; message: string }
+
+async function createLocalEditorialSuggestion(imageData: string, fileName: string) {
+  const normalizedName = fileName.toLowerCase()
+  if (/street|graffiti|spray|urban/.test(normalizedName)) return 'The street, in a new frame.'
+  if (/tailor|stitch|thread|sew/.test(normalizedName)) return 'Crafted with a sharper point of view.'
+  if (/drop|collection|editorial/.test(normalizedName)) return 'New art. No ordinary angles.'
+
+  try {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.src = imageData
+    await image.decode()
+
+    const canvas = document.createElement('canvas')
+    canvas.width = 16
+    canvas.height = 16
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+    if (!context) return 'Wear your own point of view.'
+
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+    let red = 0
+    let green = 0
+    let blue = 0
+    let brightness = 0
+    let saturation = 0
+    let samples = 0
+
+    for (let index = 0; index < pixels.length; index += 4) {
+      if (pixels[index + 3] < 24) continue
+      const r = pixels[index] / 255
+      const g = pixels[index + 1] / 255
+      const b = pixels[index + 2] / 255
+      const maximum = Math.max(r, g, b)
+      const minimum = Math.min(r, g, b)
+      red += r
+      green += g
+      blue += b
+      brightness += (0.2126 * r + 0.7152 * g + 0.0722 * b) * 255
+      saturation += maximum ? (maximum - minimum) / maximum : 0
+      samples += 1
+    }
+
+    if (!samples) return 'Wear your own point of view.'
+    const averageRed = red / samples
+    const averageGreen = green / samples
+    const averageBlue = blue / samples
+    const averageBrightness = brightness / samples
+    const averageSaturation = saturation / samples
+
+    if (averageBrightness < 72) return 'A little mystery, made to move.'
+    if (averageSaturation > 0.42) return 'Color with its own point of view.'
+    if (averageRed - averageBlue > 0.12 && averageRed - averageGreen > 0.04) return 'Warm tones, wild instincts.'
+    if (averageBlue - averageRed > 0.08) return 'Cool hues, bold horizons.'
+    return 'Wear your own point of view.'
+  } catch {
+    return 'Wear your own point of view.'
+  }
+}
 
 export function BannerSlidesPanel() {
   const [slides, saveSlides] = useLocalBrowserStore(BANNER_SLIDES_STORAGE_KEY, DEFAULT_BANNER_SLIDES, isBannerSlideList)
-  const [imageDrafts, setImageDrafts] = useState<Record<string, string>>({})
+  const [slideDrafts, setSlideDrafts] = useState<Record<string, BannerSlideDraft>>({})
+  const [captionStates, setCaptionStates] = useState<Record<string, CaptionGenerationState>>({})
   const [message, setMessage] = useState('')
-  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({})
+  const [draggingSlideId, setDraggingSlideId] = useState<string | null>(null)
 
   function saveSlideList(update: (current: BannerSlide[]) => BannerSlide[]) {
     const saved = saveSlides(update)
@@ -35,53 +103,121 @@ export function BannerSlidesPanel() {
       caption: 'Kainchi Club · Wear your own art.',
     }
     saveSlideList((current) => [...current, newSlide])
-    setImageDrafts((current) => ({ ...current, [newSlide.id]: '' }))
   }
 
-  function saveImage(slideId: string) {
-    const image = imageDrafts[slideId]?.trim() ?? ''
-    if (image && !isAllowedBannerImage(image)) {
-      setMessage('Use an HTTPS image URL, a banner image, or upload a JPG, PNG, or WebP file.')
+  function saveSlide(slideId: string) {
+    const draft = slideDrafts[slideId]
+    if (!draft) return
+    if (!draft.image || !isAllowedBannerImage(draft.image)) {
+      setMessage('Choose a valid image before saving this slide.')
+      return
+    }
+    if (captionStates[slideId]?.isGenerating) {
+      setMessage('Wait for the caption suggestion to finish, or try again before saving.')
       return
     }
 
-    saveSlideList((current) => current.map((slide) => slide.id === slideId ? { ...slide, image } : slide))
-    setImageDrafts((current) => {
+    const saved = saveSlideList((current) => current.map((slide) => slide.id === slideId
+      ? { ...slide, image: draft.image, caption: draft.caption.slice(0, 180) }
+      : slide))
+    if (!saved) return
+
+    setSlideDrafts((current) => {
+      const next = { ...current }
+      delete next[slideId]
+      return next
+    })
+    setCaptionStates((current) => {
       const next = { ...current }
       delete next[slideId]
       return next
     })
   }
 
-  function handleUpload(slideId: string, event: ChangeEvent<HTMLInputElement>) {
-    const file = event.currentTarget.files?.[0]
-    event.currentTarget.value = ''
-    if (!file) return
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setMessage('Choose a JPG, PNG, or WebP image.')
+  async function generateCaption(slideId: string, image: string, fileName: string, initialCaption: string, requestId: string) {
+    try {
+      const response = await fetch('/api/admin/banner-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image }),
+      })
+      if (!response.ok) throw new Error('Caption generation failed.')
+      const result: unknown = await response.json()
+      const caption = typeof result === 'object' && result !== null && 'caption' in result && typeof result.caption === 'string'
+        ? result.caption.trim().slice(0, 180)
+        : ''
+      if (!caption) throw new Error('The caption response was empty.')
+
+      setSlideDrafts((current) => {
+        const draft = current[slideId]
+        if (!draft || draft.image !== image || draft.caption !== initialCaption) return current
+        return { ...current, [slideId]: { ...draft, caption } }
+      })
+      setCaptionStates((current) => current[slideId]?.requestId === requestId
+        ? { ...current, [slideId]: { requestId, isGenerating: false, message: 'AI suggestion ready. Review or edit it before saving.' } }
+        : current)
+    } catch {
+      const caption = await createLocalEditorialSuggestion(image, fileName)
+      setSlideDrafts((current) => {
+        const draft = current[slideId]
+        if (!draft || draft.image !== image || draft.caption !== initialCaption) return current
+        return { ...current, [slideId]: { ...draft, caption } }
+      })
+      setCaptionStates((current) => current[slideId]?.requestId === requestId
+        ? { ...current, [slideId]: { requestId, isGenerating: false, message: 'AI captioning is unavailable. A local fallback suggestion is ready; review or replace it.' } }
+        : current)
+    }
+  }
+
+  function handleUpload(slideId: string, file: File) {
+    if (!SUPPORTED_IMAGE_TYPES.has(file.type.toLowerCase())) {
+      setMessage('Choose a supported raster image such as JPG, PNG, WebP, AVIF, GIF, or HEIC.')
       return
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      setMessage('For browser storage, uploaded images must be 750 KB or smaller. You can also use an HTTPS image URL.')
+      setMessage('Choose an image 3 MB or smaller. Images are kept at their original resolution and are not recompressed.')
       return
     }
 
+    const slide = slides.find((item) => item.id === slideId)
+    if (!slide) return
+
+    const captionAtSelection = slideDrafts[slideId]?.caption ?? slide.caption
     const reader = new FileReader()
     reader.onload = () => {
       const image = typeof reader.result === 'string' ? reader.result : ''
-      if (!image) {
-        setMessage('The image could not be read. Try another file.')
+      if (!image || image.length > MAX_STORED_IMAGE_LENGTH || !isAllowedBannerImage(image)) {
+        setMessage('This image cannot be stored in this browser. Choose a smaller supported image.')
         return
       }
-      const saved = saveSlideList((current) => current.map((slide) => slide.id === slideId ? { ...slide, image } : slide))
-      if (saved) setImageDrafts((current) => {
-        const next = { ...current }
-        delete next[slideId]
-        return next
-      })
+
+      const requestId = crypto.randomUUID()
+      setMessage('')
+      setSlideDrafts((current) => ({
+        ...current,
+        [slideId]: { image, caption: current[slideId]?.caption ?? slide.caption },
+      }))
+      setCaptionStates((current) => ({
+        ...current,
+        [slideId]: { requestId, isGenerating: true, message: 'Generating an editorial suggestion from the image…' },
+      }))
+      void generateCaption(slideId, image, file.name, captionAtSelection, requestId)
     }
     reader.onerror = () => setMessage('The image could not be read. Try another file.')
     reader.readAsDataURL(file)
+  }
+
+  function handleFileSelection(slideId: string, event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0]
+    event.currentTarget.value = ''
+    if (file) handleUpload(slideId, file)
+  }
+
+  function handleDrop(slideId: string, event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault()
+    setDraggingSlideId(null)
+    const file = event.dataTransfer.files[0]
+    if (file) handleUpload(slideId, file)
   }
 
   function reorderSlide(slideId: string, direction: -1 | 1) {
@@ -102,7 +238,12 @@ export function BannerSlidesPanel() {
 
   function deleteSlide(slideId: string) {
     saveSlideList((current) => current.filter((slide) => slide.id !== slideId))
-    setImageDrafts((current) => {
+    setSlideDrafts((current) => {
+      const next = { ...current }
+      delete next[slideId]
+      return next
+    })
+    setCaptionStates((current) => {
       const next = { ...current }
       delete next[slideId]
       return next
@@ -114,12 +255,12 @@ export function BannerSlidesPanel() {
       <div className="admin-panel-heading">
         <div>
           <h2 id="banner-slides-title">Banner Slides</h2>
-          <p>Manage up to {MAX_BANNER_SLIDES} storefront slides. Changes are saved only in this browser&apos;s local storage.</p>
+          <p>Manage up to {MAX_BANNER_SLIDES} storefront slides. Images and approved captions stay in this browser&apos;s local storage.</p>
         </div>
         <span className="admin-count">{slides.length} / {MAX_BANNER_SLIDES} SLOTS</span>
       </div>
       <div className="banner-slides-toolbar">
-        <p>External image URLs stay at their original quality. Browser uploads are limited to 750 KB each.</p>
+        <p>Drop or choose an image, then review the AI suggestion or a local fallback if AI Gateway is unavailable. Uploads stay at original resolution; the selected image is sent to AI Gateway only for captioning.</p>
         <button className="button button-crimson" type="button" onClick={addSlide} disabled={slides.length >= MAX_BANNER_SLIDES}>
           <Plus aria-hidden="true" /> Add new slide
         </button>
@@ -141,41 +282,52 @@ export function BannerSlidesPanel() {
               </div>
               <div className="banner-slide-card-content">
                 <div className="banner-slide-preview">
-                  {slide.image ? <img src={slide.image} alt="" loading="lazy" /> : <span><ImagePlus aria-hidden="true" /> Image not set</span>}
+                  {slideDrafts[slide.id]?.image || slide.image
+                    ? <img src={slideDrafts[slide.id]?.image ?? slide.image} alt="" loading="lazy" decoding="async" />
+                    : <span><ImagePlus aria-hidden="true" /> Image not set</span>}
                 </div>
                 <div className="banner-slide-fields">
-                  <label className="admin-field">
-                    <span>Image URL</span>
+                  <label
+                    className={`banner-slide-dropzone${draggingSlideId === slide.id ? ' is-dragging' : ''}`}
+                    onDragOver={(event) => { event.preventDefault(); setDraggingSlideId(slide.id) }}
+                    onDragLeave={() => setDraggingSlideId(null)}
+                    onDrop={(event) => handleDrop(slide.id, event)}
+                  >
                     <input
-                      type="text"
-                      inputMode="url"
-                      value={imageDrafts[slide.id] ?? slide.image}
-                      onChange={(event) => setImageDrafts((current) => ({ ...current, [slide.id]: event.target.value }))}
-                      placeholder="https://example.com/banner.jpg"
-                      aria-label={`Image URL for slide ${index + 1}`}
+                      className="sr-only"
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => handleFileSelection(slide.id, event)}
+                      aria-label={`Choose an image for slide ${index + 1}`}
                     />
+                    <ImagePlus aria-hidden="true" />
+                    <span>Drop an image here or <strong>choose a file</strong><small>Original resolution · up to 3 MB</small></span>
                   </label>
                   <label className="admin-field">
-                    <span>Caption</span>
+                    <span>Editorial caption</span>
                     <input
                       type="text"
                       maxLength={180}
-                      value={slide.caption}
-                      onChange={(event) => saveSlideList((current) => current.map((item) => item.id === slide.id ? { ...item, caption: event.target.value } : item))}
+                      value={slideDrafts[slide.id]?.caption ?? slide.caption}
+                      onChange={(event) => {
+                        const caption = event.target.value
+                        if (slideDrafts[slide.id]) {
+                          setSlideDrafts((current) => ({ ...current, [slide.id]: { ...current[slide.id], caption } }))
+                        } else {
+                          saveSlideList((current) => current.map((item) => item.id === slide.id ? { ...item, caption } : item))
+                        }
+                      }}
                       aria-label={`Caption for slide ${index + 1}`}
                     />
                   </label>
+                  {captionStates[slide.id] && <p className="banner-slide-caption-status" role="status" aria-live="polite">{captionStates[slide.id].message}</p>}
                   <div className="banner-slide-edit-actions">
-                    <button className="button button-outline-dark" type="button" onClick={() => saveImage(slide.id)}>Save image</button>
-                    <button className="button button-outline-dark" type="button" onClick={() => fileInputs.current[slide.id]?.click()}><ImagePlus aria-hidden="true" /> Upload replacement</button>
-                    <input
-                      ref={(element) => { fileInputs.current[slide.id] = element }}
-                      className="sr-only"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(event) => handleUpload(slide.id, event)}
-                      aria-label={`Upload image for slide ${index + 1}`}
-                    />
+                    <button
+                      className="button button-outline-dark"
+                      type="button"
+                      onClick={() => saveSlide(slide.id)}
+                      disabled={!slideDrafts[slide.id] || captionStates[slide.id]?.isGenerating}
+                    >Save image &amp; caption</button>
                   </div>
                 </div>
               </div>

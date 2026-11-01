@@ -42,7 +42,7 @@ export function isBannerSlideList(value: unknown): value is BannerSlide[] {
 export function isAllowedBannerImage(value: string) {
   const image = value.trim()
   if (image.startsWith('/images/banner/')) return true
-  if (/^data:image\/(?:jpeg|png|webp);base64,/i.test(image)) return true
+  if (/^data:image\/(?:jpeg|png|webp|avif|gif|bmp|heic|heif|tiff?);base64,/i.test(image)) return true
 
   try {
     return new URL(image).protocol === 'https:'
