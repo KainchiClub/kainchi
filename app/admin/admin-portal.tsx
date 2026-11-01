@@ -11,6 +11,7 @@ import { FeedbackModerationPanel } from './feedback-moderation-panel'
 import { FAQManagementPanel } from './faq-management-panel'
 import { AllianceReferralsPanel } from './alliance-referrals-panel'
 import { PartnerPassControl } from './partner-pass-control'
+import { StudioWalletControl } from './studio-wallet-control'
 
 const initialLoginState = { error: '' }
 const ADMIN_TABS = [
@@ -19,6 +20,7 @@ const ADMIN_TABS = [
   { id: 'faqs', label: 'Manage FAQs' },
   { id: 'leads', label: 'Studio leads' },
   { id: 'alliance', label: 'Alliance & Referrals' },
+  { id: 'wallet', label: 'Studio Wallet' },
 ] as const
 type AdminTab = (typeof ADMIN_TABS)[number]['id']
 
@@ -265,6 +267,9 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
         <div className="admin-tab-panel" id="admin-panel-alliance" role="tabpanel" aria-labelledby="admin-tab-alliance" tabIndex={0} hidden={activeAdminTab !== 'alliance'}>
           <AllianceReferralsPanel />
           <PartnerPassControl />
+        </div>
+        <div className="admin-tab-panel" id="admin-panel-wallet" role="tabpanel" aria-labelledby="admin-tab-wallet" tabIndex={0} hidden={activeAdminTab !== 'wallet'}>
+          <StudioWalletControl />
         </div>
       </div>
     </section>

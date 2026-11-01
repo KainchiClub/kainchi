@@ -1,6 +1,6 @@
 'use client'
 
-import { PartnerPassTracker } from './partner-pass-tracker'
+import { StudioWallet } from './studio-wallet'
 
 const privilegeSteps = [
   {
@@ -50,7 +50,7 @@ export function StudioAllianceProgram() {
           </article>
         </div>
 
-        <PartnerPassTracker />
+        <StudioWallet />
 
         <a className="studio-partner-pass-apply" href={partnerPassUrl} target="_blank" rel="noopener noreferrer">
           Apply for Studio Partner Pass <span aria-hidden="true">➔</span>
