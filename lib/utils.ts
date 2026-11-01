@@ -14,7 +14,7 @@ export function resolveDriveImageUrl(url: string | null | undefined): string {
   if (isDriveHost && /\/folders\//i.test(value)) return IMAGE_FALLBACK
 
   const match = value.match(/(?:\/d\/|[?&]id=)([a-zA-Z0-9_-]{25,})/)
-  if (match?.[1]) return `https://lh3.googleusercontent.com/d/${match[1]}=s1600`
+  if (match?.[1]) return `https://lh3.googleusercontent.com/d/${match[1]}=w1000-rw`
   return isDriveHost ? IMAGE_FALLBACK : value
 }
 

@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react'
 import { ARTWORK_THEMES, GARMENT_TYPES, assignCategoryProductCodes, getNextArticleCode, initialProducts, type ArtworkTheme, type CatalogProduct, type GarmentType } from './catalog'
 
 const STORAGE_KEY = 'kainchi-catalog-v1'
-const PERMANENT_CATALOG_PRODUCT_IDS = new Set(['kc-art-shirt-embroidery-01', 'kc-art-combo-trouser-shirt-01'])
+const CATALOG_MIGRATION_KEY = 'kainchi-catalog-shirt-series-v1'
+const PERMANENT_CATALOG_PRODUCTS = initialProducts.filter((product) => /^#KC-(?:SHT-\d{2}|CMB-01)$/.test(product.productCode ?? ''))
+const PERMANENT_CATALOG_PRODUCT_IDS = new Set(PERMANENT_CATALOG_PRODUCTS.map((product) => product.id))
+const LEGACY_TEMPORARY_PRODUCT_IDS = new Set(['kc-art-shirt-embroidery-01', 'kc-art-combo-trouser-shirt-01'])
 
 function isGarmentType(value: unknown): value is GarmentType {
   return GARMENT_TYPES.some((garment) => garment === value)
@@ -29,7 +32,7 @@ function isCatalogProduct(value: unknown): value is CatalogProduct {
     && (product.image.startsWith('https://') || product.image.startsWith('data:image/'))
 }
 
-function readCatalogProducts(serialized: string | null) {
+function readCatalogProducts(serialized: string | null, migrateShirtSeries = false) {
   if (!serialized) return initialProducts
 
   try {
@@ -40,13 +43,21 @@ function readCatalogProducts(serialized: string | null) {
       ...product,
       stockStatus: product.stockStatus === 'sold-out' ? 'sold-out' as const : product.stockStatus === 'retired' ? 'retired' as const : 'in-stock' as const,
     }))
-    const storedIds = new Set(storedProducts.map((product) => product.id))
-    const mergedProducts = [...storedProducts]
+    const retainedProducts = migrateShirtSeries
+      ? storedProducts.filter((product) => {
+        if (PERMANENT_CATALOG_PRODUCT_IDS.has(product.id)) return true
+        return !LEGACY_TEMPORARY_PRODUCT_IDS.has(product.id) && !/^#?KC-(?:SHT-\d{2}|CMB-01)$/i.test(product.productCode?.trim() ?? '')
+      })
+      : storedProducts
+    const storedIds = new Set(retainedProducts.map((product) => product.id))
+    const mergedProducts = [...retainedProducts]
 
-    for (const product of initialProducts) {
-      if (!PERMANENT_CATALOG_PRODUCT_IDS.has(product.id) || storedIds.has(product.id)) continue
-      mergedProducts.push({ ...product, stockStatus: product.stockStatus ?? 'in-stock', articleCode: getNextArticleCode(mergedProducts, []) })
-      storedIds.add(product.id)
+    if (migrateShirtSeries) {
+      for (const product of PERMANENT_CATALOG_PRODUCTS) {
+        if (storedIds.has(product.id)) continue
+        mergedProducts.push({ ...product, stockStatus: product.stockStatus ?? 'in-stock', articleCode: getNextArticleCode(mergedProducts, []) })
+        storedIds.add(product.id)
+      }
     }
 
     return assignCategoryProductCodes(mergedProducts)
@@ -61,7 +72,11 @@ export function useCatalogProducts() {
 
   useEffect(() => {
     const loadProducts = (serialized: string | null) => {
-      setProducts(readCatalogProducts(serialized))
+      const migrateShirtSeries = serialized !== null && window.localStorage.getItem(CATALOG_MIGRATION_KEY) !== 'complete'
+      const nextProducts = readCatalogProducts(serialized, migrateShirtSeries)
+      setProducts(nextProducts)
+      if (migrateShirtSeries) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextProducts))
+      window.localStorage.setItem(CATALOG_MIGRATION_KEY, 'complete')
       setIsLoaded(true)
     }
 
