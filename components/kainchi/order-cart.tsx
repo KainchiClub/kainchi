@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useRef } from 'react'
 import { ArrowLeft, ArrowUpRight, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
+import { fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
 import { formatRupees } from './catalog'
 import { FREE_GIFT_THRESHOLD, FREE_GIFT_VALUE, GIFT_BOX_PRICE, MAX_ORDER_QUANTITY, getCartLineTotal, getCartTotal, hasFreeGiftUnlocked, type CartLineItem } from './order'
 
@@ -75,7 +76,7 @@ export function OrderCart({ items, isOpen, onOpenChange, onQuantityChange, onGif
                 <div className="order-cart-lines">
                   {items.map((item) => (
                     <article className="order-cart-line" key={item.cartId}>
-                      <Image src={item.product.image} alt="" width={160} height={160} loading="lazy" decoding="async" draggable={false} onContextMenu={(event) => event.preventDefault()} />
+                      <Image src={resolveDriveImageUrl(item.product.image)} alt="" width={160} height={160} loading="lazy" decoding="async" draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} />
                       <div className="order-cart-line-details">
                         <p className="order-cart-theme">{item.product.theme}</p>
                         <h3>{item.product.title}</h3>

@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ARTWORK_THEMES, GARMENT_TYPES, assignCategoryProductCodes, initialProducts, type ArtworkTheme, type CatalogProduct, type GarmentType } from './catalog'
+import { ARTWORK_THEMES, GARMENT_TYPES, assignCategoryProductCodes, getNextArticleCode, initialProducts, type ArtworkTheme, type CatalogProduct, type GarmentType } from './catalog'
 
 const STORAGE_KEY = 'kainchi-catalog-v1'
+const PERMANENT_CATALOG_PRODUCT_IDS = new Set(['kc-art-shirt-embroidery-01', 'kc-art-combo-trouser-shirt-01'])
 
 function isGarmentType(value: unknown): value is GarmentType {
   return GARMENT_TYPES.some((garment) => garment === value)
@@ -35,10 +36,20 @@ function readCatalogProducts(serialized: string | null) {
     const parsed: unknown = JSON.parse(serialized)
     if (!Array.isArray(parsed)) return initialProducts
 
-    return assignCategoryProductCodes(parsed.filter(isCatalogProduct).map((product) => ({
+    const storedProducts = parsed.filter(isCatalogProduct).map((product) => ({
       ...product,
       stockStatus: product.stockStatus === 'sold-out' ? 'sold-out' as const : product.stockStatus === 'retired' ? 'retired' as const : 'in-stock' as const,
-    })))
+    }))
+    const storedIds = new Set(storedProducts.map((product) => product.id))
+    const mergedProducts = [...storedProducts]
+
+    for (const product of initialProducts) {
+      if (!PERMANENT_CATALOG_PRODUCT_IDS.has(product.id) || storedIds.has(product.id)) continue
+      mergedProducts.push({ ...product, stockStatus: product.stockStatus ?? 'in-stock', articleCode: getNextArticleCode(mergedProducts, []) })
+      storedIds.add(product.id)
+    }
+
+    return assignCategoryProductCodes(mergedProducts)
   } catch {
     return initialProducts
   }

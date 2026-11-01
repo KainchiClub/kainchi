@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, X } from 'lucide-react'
+import { fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
 import { initialProducts } from './catalog'
 import { referenceArtwork } from './hero-showcase'
 
@@ -156,12 +157,13 @@ export function DiwaliComboPopup() {
                     <Image
                       className="diwali-combo-thumbnail-image"
                       key={`${combo.number}-${index}`}
-                      src={image}
+                      src={resolveDriveImageUrl(image)}
                       alt=""
                       width={240}
                       height={240}
                       loading="lazy"
                       decoding="async"
+                      onError={fallbackImageOnError}
                     />
                   ))}
                 </div>
