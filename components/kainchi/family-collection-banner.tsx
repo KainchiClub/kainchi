@@ -1,6 +1,6 @@
 import Image from 'next/image'
 
-const familyCollectionImage = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_20261030_215752-IUy58utpKLh0IEGp0TmSxn8mdyi27L.png'
+const familyCollectionImage = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793520180941.png-TsGiiAjHcqIIiPAfjKxhHxtGhYG0ND.jpeg'
 
 export function FamilyCollectionBanner() {
   return (
@@ -8,14 +8,14 @@ export function FamilyCollectionBanner() {
       <figure className="family-collection-frame">
         <Image
           src={familyCollectionImage}
-          alt="Kainchi Club family apparel collection featuring illustrated hoodies, graphic denim, a panda jacket, and children's wear beneath the circular brand seal."
-          width={1208}
-          height={804}
-          sizes="100vw"
+          alt="Kainchi Club Studio Family showcase with a group wearing embroidered shirts, illustrated denim, hoodies, and jackets beneath the circular brand medallion."
+          width={2048}
+          height={1152}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 1200px"
           priority={true}
-          unoptimized={false}
-          quality={100}
-          style={{ width: '100%', height: 'auto', imageRendering: '-webkit-optimize-contrast', objectFit: 'cover' }}
+          fetchPriority="high"
+          quality={85}
+          style={{ width: '100%', height: 'auto', aspectRatio: '16/9', objectFit: 'cover', imageRendering: '-webkit-optimize-contrast' }}
         />
         <figcaption>Kainchi Club Collection · Crafted for Everyone. Wearable art for the entire circle.</figcaption>
       </figure>
