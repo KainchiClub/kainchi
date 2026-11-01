@@ -1461,6 +1461,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .bulk-inventory-item span { margin-top: 4px; color: #806f61; font-size: 9px; }
 .bulk-inventory-item button { border: 0; color: #8b1e2d; background: transparent; cursor: pointer; }
 .bulk-inventory-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+.bulk-inventory-tabs { display: flex; gap: 8px; margin: 16px 0; border-bottom: 1px solid #e1d6ca; }
+.bulk-inventory-tabs button { border: 0; border-bottom: 2px solid transparent; padding: 10px 12px; color: #806f61; background: transparent; font-size: 10px; font-weight: 700; cursor: pointer; }
+.bulk-inventory-tabs button.is-active { border-bottom-color: #8b1e2d; color: #8b1e2d; }
+.bulk-active-inventory, .retired-sku-vault { margin-top: 24px; }
+.bulk-active-inventory h3, .retired-sku-vault h3 { margin: 0 0 10px; color: #291b15; font-size: 14px; }
+.bulk-active-item, .retired-sku-item { display: flex; align-items: center; gap: 10px; border-top: 1px solid #e1d6ca; padding: 10px 0; }
+.bulk-active-item img, .retired-sku-item img { width: 44px; height: 44px; object-fit: cover; }
+.bulk-active-item div, .retired-sku-item div { min-width: 0; flex: 1; }
+.bulk-active-item strong, .bulk-active-item span, .retired-sku-item strong, .retired-sku-item span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bulk-active-item strong, .retired-sku-item strong { color: #291b15; font-size: 11px; }
+.bulk-active-item span, .retired-sku-item span, .retired-sku-vault > p { color: #806f61; font-size: 10px; }
+.bulk-active-item button, .retired-sku-item button { border: 1px solid #8b1e2d; padding: 7px 10px; color: #8b1e2d; background: #fffaf2; font-size: 9px; font-weight: 700; cursor: pointer; }
+.bulk-active-item button.is-confirming { color: #fff; background: #8b1e2d; }
+.retired-sku-item em { color: #8b1e2d; font-size: 9px; font-style: normal; font-weight: 700; }
+
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 640px) { .bulk-inventory-config { grid-template-columns: 1fr; } .bulk-inventory-actions { flex-direction: column; } }
 

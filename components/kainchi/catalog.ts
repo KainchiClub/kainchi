@@ -1,6 +1,7 @@
 export const GARMENT_TYPES = [
   'Fleece Hoodie',
   'Oversized T-Shirt',
+  'Shirts',
   'Heavy Boxy Tee',
   'Zip-up Hoodie',
   'Bomber Jacket',
@@ -15,6 +16,7 @@ export const ARTWORK_THEMES = [
   'Nature & Scenic',
   'Abstract',
   'Streetwear',
+  'Embroidery / Threadwork',
 ] as const
 
 export type GarmentType = (typeof GARMENT_TYPES)[number]
@@ -26,6 +28,7 @@ export type CatalogProduct = {
   id: string
   title: string
   productCode?: string
+  articleCode?: string
   garment: GarmentType
   theme: ArtworkTheme
   price: number
@@ -69,6 +72,13 @@ export function assignCategoryProductCodes(products: readonly CatalogProduct[]) 
     generatedCodes.add(productCode.toUpperCase())
     return { ...product, productCode }
   })
+}
+
+export function getNextArticleCode(products: readonly CatalogProduct[], retiredCodes: readonly string[]) {
+  const used = new Set([...products.map((product) => product.articleCode), ...retiredCodes].filter(Boolean).map((code) => code!.toUpperCase()))
+  let sequence = 1
+  while (used.has(`KC-ART-${String(sequence).padStart(3, '0')}`)) sequence += 1
+  return `KC-ART-${String(sequence).padStart(3, '0')}`
 }
 
 export function getNextProductCode(products: readonly CatalogProduct[], garment: GarmentType, title: string) {
@@ -151,7 +161,11 @@ const catalogSeed: Omit<CatalogProduct, 'productCode'>[] = [
   { id: 'drive-39', title: 'Street Poster', garment: 'Heavy Boxy Tee', theme: 'Streetwear', price: 1699, image: driveImage('1n3V9DEHB6HyhXyNTJlktYoBdgSw1TK2I') },
 ]
 
-export const initialProducts: CatalogProduct[] = assignCategoryProductCodes(catalogSeed)
+function assignInitialArticleCodes(products: CatalogProduct[]) {
+  return products.map((product, index) => ({ ...product, articleCode: `KC-ART-${String(index + 1).padStart(3, '0')}` }))
+}
+
+export const initialProducts: CatalogProduct[] = assignInitialArticleCodes(assignCategoryProductCodes(catalogSeed))
 
 export function formatRupees(amount: number) {
   return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(amount)}`
