@@ -153,7 +153,7 @@ export function DiwaliComboPopup() {
               <span className="diwali-combo-number">{combo.number}</span>
               <div className="diwali-combo-feature">
                 <div className="diwali-combo-thumbnail" role="img" aria-label={combo.thumbnailAlt}>
-                  {combo.thumbnailImages.map((image, index) => (
+                  {isOpen && combo.thumbnailImages.map((image, index) => (
                     <Image
                       className="diwali-combo-thumbnail-image"
                       key={`${combo.number}-${index}`}
@@ -161,8 +161,11 @@ export function DiwaliComboPopup() {
                       alt=""
                       width={240}
                       height={240}
-                      loading="lazy"
+                      sizes="70px"
+                      loading="eager"
+                      fetchPriority={index === 0 ? 'high' : 'auto'}
                       decoding="async"
+                      unoptimized
                       onError={fallbackImageOnError}
                     />
                   ))}

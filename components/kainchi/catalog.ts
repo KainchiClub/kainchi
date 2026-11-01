@@ -136,7 +136,7 @@ export function getFeaturedProducts(products: CatalogProduct[]) {
 }
 
 function driveImage(fileId: string) {
-  return `https://lh3.googleusercontent.com/d/${fileId}=w1200`
+  return `https://lh3.googleusercontent.com/d/${fileId}=w1000-rw`
 }
 
 const catalogSeed: CatalogProduct[] = [
@@ -179,19 +179,47 @@ const catalogSeed: CatalogProduct[] = [
   { id: 'drive-37', title: 'Mountain Horizon', garment: 'Oversized T-Shirt', theme: 'Nature & Scenic', price: 1699, image: driveImage('1ggwPTX2W4QgZbNFRVqihTrZVaDw1_NzG') },
   { id: 'drive-38', title: 'Mahadev Flame', garment: 'Heavy Boxy Tee', theme: 'Divine & Spiritual', price: 1699, image: driveImage('1sBgF-lsR5MtMv2v7SDckCUdNQqnXcOGn') },
   { id: 'drive-39', title: 'Street Poster', garment: 'Heavy Boxy Tee', theme: 'Streetwear', price: 1699, image: driveImage('1n3V9DEHB6HyhXyNTJlktYoBdgSw1TK2I') },
-  { id: 'kc-art-shirt-embroidery-01', productCode: '#KC-SHT-01', title: 'Shirt Embroidery Print', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1-X0liT9tduCTYQifSsp3gIv8sQiojy5i'), stockStatus: 'in-stock' },
-  { id: 'kc-art-combo-trouser-shirt-01', productCode: '#KC-CMB-01', title: 'Artisan Trouser & Shirt Duo', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 2999, image: driveImage('1qHY3FW2f4I3S2rhGVLDQCehR0CrZdoZ4'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-01', productCode: '#KC-SHT-01', title: 'Shirt Embroidery 01', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1qHY3FW2f4I3S2rhGVLDQCehR0CrZdoZ4'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-02', productCode: '#KC-SHT-02', title: 'Shirt Embroidery 02', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1zy-rXUJocYRr6pj0XhB-_qQMTFta_rFa'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-03', productCode: '#KC-SHT-03', title: 'Shirt Embroidery 03', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1H_2Uu2X_8qD5fNGSNKxbGTxMR2iCjib-'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-04', productCode: '#KC-SHT-04', title: 'Shirt Embroidery 04', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1VUMMAjz-HyzDBlwRIrSs1i9L1FF-Q91b'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-05', productCode: '#KC-SHT-05', title: 'Shirt Embroidery 05', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1d48bvcj_m6FmvHu73NUge08ohJDj97T2'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-06', productCode: '#KC-SHT-06', title: 'Shirt Embroidery 06', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1dWqew_hqSHSxel32v2lXMIm5kXIaq5tX'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-07', productCode: '#KC-SHT-07', title: 'Shirt Embroidery 07', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1qOAn0uxa1r7OiBSJhsn0976jUq0rSNmg'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-08', productCode: '#KC-SHT-08', title: 'Shirt Embroidery 08', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1N2ajWgYo4U555y6wOOuI3cbBAVkHUyoY'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-09', productCode: '#KC-SHT-09', title: 'Shirt Embroidery 09', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('17AENN7gDyZS0YVMFTJTfhH6YyewMffWJ'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-10', productCode: '#KC-SHT-10', title: 'Shirt Embroidery 10', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1abQIQM1NF0MycSMIX44pR9EG9uxU7adk'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-11', productCode: '#KC-SHT-11', title: 'Shirt Embroidery 11', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1tp9fdq7WdzxKOh0DbAuzfLywuibAQmt5'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-12', productCode: '#KC-SHT-12', title: 'Shirt Embroidery 12', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('12_X_p8LjY7ckgKthiXthVT1BB9AP-xuU'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-13', productCode: '#KC-SHT-13', title: 'Shirt Embroidery 13', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1lFZpkI-QIn2LJFALmkFbSraII8vSajmF'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-14', productCode: '#KC-SHT-14', title: 'Shirt Embroidery 14', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1-X0liT9tduCTYQifSsp3gIv8sQiojy5i'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-15', productCode: '#KC-SHT-15', title: 'Shirt Embroidery 15', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1unW0YWsIszJIIpPkwTdO0oP9YDn2j663'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-16', productCode: '#KC-SHT-16', title: 'Shirt Embroidery 16', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1WRm6AYLGa9XM2EuNL0d8dl5WUxvQ0q_G'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-17', productCode: '#KC-SHT-17', title: 'Shirt Embroidery 17', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1OYSaOqN8_UTjbWA46FJB37TiyV1lNDaR'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-18', productCode: '#KC-SHT-18', title: 'Shirt Embroidery 18', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1K57-VgZVRy-PwJ-SS8t9zE8_Wy0_xiKx'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-19', productCode: '#KC-SHT-19', title: 'Shirt Embroidery 19', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1mf5k4Xe2oCStZrUwiHfcIT1beqNeFZA_'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-20', productCode: '#KC-SHT-20', title: 'Shirt Embroidery 20', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1LG3_CyhnOvHNLZCenWk-gWP3iB62pt3l'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-21', productCode: '#KC-SHT-21', title: 'Shirt Embroidery 21', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1OJNNq5tAREzGOaKwGBatGtxpHFZPudWw'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-22', productCode: '#KC-SHT-22', title: 'Shirt Embroidery 22', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1p_ru_p1tpJ-NpkrWbWo_6T0Qz7HsddAG'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-23', productCode: '#KC-SHT-23', title: 'Shirt Embroidery 23', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1GjTaOrds6fjscXjSWnq58qRN8IcM-u7U'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-24', productCode: '#KC-SHT-24', title: 'Shirt Embroidery 24', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1n5WJNyXMsQlffN-MJ-IWTcUy1ajx1IF9'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-25', productCode: '#KC-SHT-25', title: 'Shirt Embroidery 25', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1VFr_dxfIeoGSbs8ywmbOopFBO0OxRBDU'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-26', productCode: '#KC-SHT-26', title: 'Shirt Embroidery 26', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1e9cTt4QvAVv-zj5MF5zc8JBlr2gmY3Ps'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-27', productCode: '#KC-SHT-27', title: 'Shirt Embroidery 27', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1Xi8g7LV91vXoHXphtq_wrdstS-mFktZb'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-28', productCode: '#KC-SHT-28', title: 'Shirt Embroidery 28', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('15yIgkaWDRvizAFq8JbCf1D0UM9_YIeso'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-embroidery-29', productCode: '#KC-SHT-29', title: 'Shirt Embroidery 29', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 1699, image: driveImage('1mfnI-YLokWNqrBcNevPIwSoxetPx9IXq'), stockStatus: 'in-stock' },
+  { id: 'kc-shirt-trouser-duo', productCode: '#KC-CMB-01', title: 'Artisan Trouser & Shirt Duo', garment: 'Shirts', theme: 'Embroidery / Threadwork', price: 2999, image: driveImage('1qHY3FW2f4I3S2rhGVLDQCehR0CrZdoZ4'), stockStatus: 'in-stock' },
 ]
 
 function assignInitialArticleCodes(products: CatalogProduct[]) {
   return products.map((product, index) => ({ ...product, articleCode: `KC-ART-${String(index + 1).padStart(3, '0')}` }))
 }
 
-const FIXED_PRICE_CATALOG_IDS = new Set(['kc-art-shirt-embroidery-01', 'kc-art-combo-trouser-shirt-01'])
+const FIXED_PRICE_CATALOG_CODE = /^#KC-(?:SHT-\d{2}|CMB-01)$/
 
 export const initialProducts: CatalogProduct[] = assignInitialArticleCodes(assignCategoryProductCodes(catalogSeed).map((product) => ({
   ...product,
-  price: FIXED_PRICE_CATALOG_IDS.has(product.id) ? product.price : getSmartPrice(product),
+  price: FIXED_PRICE_CATALOG_CODE.test(product.productCode ?? '') ? product.price : getSmartPrice(product),
 })))
 
 export function formatRupees(amount: number) {

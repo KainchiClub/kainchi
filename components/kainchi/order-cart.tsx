@@ -74,9 +74,9 @@ export function OrderCart({ items, isOpen, onOpenChange, onQuantityChange, onGif
             {items.length > 0 ? (
               <>
                 <div className="order-cart-lines">
-                  {items.map((item) => (
+                  {items.map((item, index) => (
                     <article className="order-cart-line" key={item.cartId}>
-                      <Image src={resolveDriveImageUrl(item.product.image)} alt="" width={160} height={160} loading="lazy" decoding="async" draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} />
+                      <Image src={resolveDriveImageUrl(item.product.image)} alt="" width={160} height={160} loading="eager" fetchPriority={index === 0 ? 'high' : 'auto'} decoding="async" unoptimized draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} />
                       <div className="order-cart-line-details">
                         <p className="order-cart-theme">{item.product.theme}</p>
                         <h3>{item.product.title}</h3>
