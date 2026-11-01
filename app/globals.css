@@ -85,6 +85,7 @@ button { color: inherit; }
 .note-rule { width: 29px; height: 1px; background: #a57c50; }
 
 .hero-gallery { align-self: center; justify-self: end; position: relative; width: min(100%, 620px); height: 428px; margin: 4px 0 0; }
+.hero-poster-image { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; border-radius: 16px; background: #e9ddca; box-shadow: 0 24px 58px rgb(0 0 0 / 32%); }
 .exhibit-label, .hero-gallery-foot { display: flex; justify-content: space-between; color: #c2a47b; font-size: 8px; font-weight: 600; letter-spacing: .16em; }
 .exhibit-label { position: absolute; top: -20px; left: 2px; right: 2px; }
 .hero-artwork { position: absolute; top: 18px; left: 12%; width: 78%; height: 355px; margin: 0; padding: 9px 9px 0; background: #e9ddca; box-shadow: 0 25px 65px rgb(0 0 0 / 36%); transform: rotate(1.4deg); z-index: 1; }
