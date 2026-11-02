@@ -35,7 +35,7 @@ export function PackagingShowcase({ premiumPackagingSelected, onPremiumPackaging
         </div>
         <a className="packaging-link" href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club%2C%20tell%20me%20about%20your%20gift%20packaging.">Add the little extra <ArrowUpRight aria-hidden="true" /></a>
       </div>
-      <figure className="packaging-figure" aria-label="Four complete Kainchi Club standard packaging formats"><Image className="packaging-visual-banner" src={packagingImage} alt="Kainchi Club's standard packaging presentation: The Experience Box, The Eco-Mailer, The Utility Tube, and Drawstring Pouch." width={1200} height={900} loading="lazy" decoding="async" /></figure>
+      <figure className="packaging-figure" aria-label="Four complete Kainchi Club standard packaging formats"><Image className="packaging-visual-banner" src={packagingImage} alt="Kainchi Club's standard packaging presentation: The Experience Box, The Eco-Mailer, The Utility Tube, and Drawstring Pouch." width={1200} height={900} sizes="(max-width: 700px) 94vw, 48vw" loading="lazy" decoding="async" /></figure>
       <section className="collector-vault" aria-labelledby="collector-vault-title">
         <div className="collector-vault-copy">
           <p className="collector-vault-badge"><Crown aria-hidden="true" /> Limited numbered edition <span>+{formatRupees(GIFT_BOX_PRICE)} / item</span></p>
@@ -49,7 +49,7 @@ export function PackagingShowcase({ premiumPackagingSelected, onPremiumPackaging
           <p className="collector-vault-note">{formatRupees(GIFT_BOX_PRICE)} is added per item. With an empty cart, this upgrade will be preselected for your next piece.</p>
         </div>
         <figure className="collector-vault-visual">
-          <Image src={premiumPackagingImage} alt="Deep burgundy rigid keepsake box wrapped in crimson tissue and sealed with antique gold wax beside an embossed certificate." width={900} height={900} loading="lazy" decoding="async" />
+          <Image src={premiumPackagingImage} alt="Deep burgundy rigid keepsake box wrapped in crimson tissue and sealed with antique gold wax beside an embossed certificate." width={900} height={900} sizes="(max-width: 700px) 90vw, 42vw" loading="lazy" decoding="async" />
           <figcaption>Visual concept · Collector&apos;s Vault</figcaption>
         </figure>
       </section>

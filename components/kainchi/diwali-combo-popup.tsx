@@ -157,15 +157,14 @@ export function DiwaliComboPopup() {
                     <Image
                       className="diwali-combo-thumbnail-image"
                       key={`${combo.number}-${index}`}
-                      src={resolveDriveImageUrl(image)}
+                      src={resolveDriveImageUrl(image, 240)}
                       alt=""
                       width={240}
                       height={240}
                       sizes="70px"
-                      loading="eager"
-                      fetchPriority={index === 0 ? 'high' : 'auto'}
+                      loading="lazy"
+                      fetchPriority="low"
                       decoding="async"
-                      unoptimized
                       onError={fallbackImageOnError}
                     />
                   ))}

@@ -54,15 +54,41 @@ export function StorefrontClient() {
   const [essentials, setEssentials] = useState(featuredProducts)
 
   useEffect(() => {
-    try {
-      const used: string[] = JSON.parse(sessionStorage.getItem(ESSENTIALS_SHUFFLE_KEY) ?? '[]').filter((value: unknown): value is string => typeof value === 'string')
-      const unseen = availableProducts.filter((product) => !used.includes(product.id))
-      const source = unseen.length >= 8 ? unseen : availableProducts
-      const next = shuffleEssentials(source)
-      setEssentials(next)
-      const nextIds = [...used.filter((id) => source.some((product) => product.id === id)), ...next.map((product) => product.id)].slice(-Math.max(availableProducts.length, 8))
-      sessionStorage.setItem(ESSENTIALS_SHUFFLE_KEY, JSON.stringify(nextIds))
-    } catch { setEssentials(featuredProducts) }
+    const idleWindow = window as unknown as {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number
+      cancelIdleCallback?: (handle: number) => void
+    }
+    let idleHandle: number | undefined
+    let timeoutHandle: number | undefined
+
+    const shuffleFeaturedProducts = () => {
+      try {
+        const used: string[] = JSON.parse(sessionStorage.getItem(ESSENTIALS_SHUFFLE_KEY) ?? '[]').filter((value: unknown): value is string => typeof value === 'string')
+        const unseen = availableProducts.filter((product) => !used.includes(product.id))
+        const source = unseen.length >= 8 ? unseen : availableProducts
+        const next = shuffleEssentials(source)
+        setEssentials(next)
+        const nextIds = [...used.filter((id) => source.some((product) => product.id === id)), ...next.map((product) => product.id)].slice(-Math.max(availableProducts.length, 8))
+        sessionStorage.setItem(ESSENTIALS_SHUFFLE_KEY, JSON.stringify(nextIds))
+      } catch { setEssentials(featuredProducts) }
+    }
+
+    const scheduleShuffle = () => {
+      if (idleWindow.requestIdleCallback) {
+        idleHandle = idleWindow.requestIdleCallback(shuffleFeaturedProducts, { timeout: 1500 })
+      } else {
+        timeoutHandle = window.setTimeout(shuffleFeaturedProducts, 0)
+      }
+    }
+
+    if (document.readyState === 'complete') scheduleShuffle()
+    else window.addEventListener('load', scheduleShuffle, { once: true })
+
+    return () => {
+      window.removeEventListener('load', scheduleShuffle)
+      if (idleHandle !== undefined) idleWindow.cancelIdleCallback?.(idleHandle)
+      if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle)
+    }
   }, [availableProducts, featuredProducts])
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null)
   const [cartItems, setCartItems] = useState<CartLineItem[]>([])
