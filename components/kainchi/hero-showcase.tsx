@@ -20,11 +20,12 @@ export function HeroShowcase(_props: { products?: CatalogProduct[] }) {
       <div className="hero-gallery wear-art-layout">
         <Image
           className="hero-poster-image"
-          src="/images/kainchi-hero-editorial.jpeg"
+          src="/images/kainchi-hero-editorial-1200.webp"
           alt="Kainchi Club editorial poster featuring a hoodie, leather jacket, sweatshirt, and embroidered jeans."
-          width={2400}
-          height={1792}
-          priority
+          width={1200}
+          height={896}
+          sizes="(max-width: 640px) 94vw, (max-width: 900px) 45vw, 42vw"
+          loading="eager"
           fetchPriority="high"
           decoding="sync"
           unoptimized

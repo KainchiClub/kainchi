@@ -1,4 +1,4 @@
-import { Analytics } from '@vercel/analytics/next'
+import { DeferredAnalytics } from '@/components/kainchi/deferred-analytics'
 import { DM_Sans, Playfair_Display } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
@@ -42,6 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preload" as="image" href="/images/kainchi-hero-editorial-1200.webp" fetchPriority="high" />
         <link rel="preconnect" href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com" />
         <link rel="dns-prefetch" href="//hebbkx1anhila5yf.public.blob.vercel-storage.com" />
         <link rel="preconnect" href="https://lh3.googleusercontent.com" />
@@ -49,7 +50,7 @@ export default function RootLayout({
       </head>
       <body className={`antialiased ${bodyFont.variable} ${displayFont.variable}`}>
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        {process.env.NODE_ENV === 'production' && <DeferredAnalytics />}
       </body>
     </html>
   )

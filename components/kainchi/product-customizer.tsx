@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowUpRight, Check, Minus, Plus, Ruler, ShoppingBag, X } from 'lucide-react'
-import { fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
+import { fallbackImageOnError, isImageOptimizerSource, resolveDriveImageUrl } from '@/lib/utils'
 import { formatRupees, type CatalogProduct } from './catalog'
 import { FitSizeGuide } from './fit-size-guide'
 import { FABRIC_COLORS, GIFT_BOX_PRICE, MAX_ORDER_QUANTITY, type CartLineDetails, type FabricColor } from './order'
@@ -76,7 +76,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
         <div className="customizer-layout">
           <div className="customizer-visual-column">
             <div className="customizer-product-visual">
-              <Image src={resolveDriveImageUrl(product.image)} alt={`${product.title} custom ${product.garment}`} width={1200} height={1200} loading="eager" fetchPriority="high" decoding="async" unoptimized draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} />
+              <Image src={resolveDriveImageUrl(product.image, 900)} alt={`${product.title} custom ${product.garment}`} width={1200} height={1200} sizes="(max-width: 700px) 90vw, 40vw" loading="eager" fetchPriority="high" decoding="async" unoptimized={!isImageOptimizerSource(resolveDriveImageUrl(product.image, 900))} draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} />
               <span className="customizer-image-label">{product.garment}</span>
             </div>
             <p className="customizer-fabric-label" aria-live="polite">Selected Fabric Color: <strong>{color.name}</strong></p>

@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { ArrowUpRight, MoveUpRight } from 'lucide-react'
-import { fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
+import { fallbackImageOnError, isImageOptimizerSource, resolveDriveImageUrl } from '@/lib/utils'
 import { formatRupees, type CatalogProduct } from './catalog'
 
 export function ProductCollection({ products, onCustomize }: { products: CatalogProduct[]; onCustomize: (product: CatalogProduct) => void }) {
@@ -18,9 +18,10 @@ export function ProductCollection({ products, onCustomize }: { products: Catalog
       <div className="product-grid" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}>
         {products.map((product, index) => {
           const soldOut = product.stockStatus === 'sold-out'
+          const imageSrc = resolveDriveImageUrl(product.image, 500)
           return <article className="product-card" key={product.id}>
             <button className="product-image-link" type="button" onClick={() => onCustomize(product)} aria-label={`View ${product.title}`}>
-              <span className="product-image"><Image src={resolveDriveImageUrl(product.image)} alt={`${product.title} — ${product.garment}, ${product.theme} artwork`} width={900} height={900} loading="lazy" fetchPriority="low" decoding="async" unoptimized draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} /><span className={`stock-badge${soldOut ? ' sold-out' : ''}`} aria-label={`Stock status: ${soldOut ? 'Sold Out' : 'In Stock'}`}>{soldOut ? 'Sold Out' : 'In Stock'}</span><span className="product-number">{String(index + 1).padStart(2, '0')}</span><span className="product-image-arrow"><MoveUpRight aria-hidden="true" /></span></span>
+              <span className="product-image"><Image src={imageSrc} alt={`${product.title} — ${product.garment}, ${product.theme} artwork`} width={900} height={900} sizes="(max-width: 900px) 48vw, 24vw" loading="lazy" fetchPriority="low" decoding="async" unoptimized={!isImageOptimizerSource(imageSrc)} draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} /><span className={`stock-badge${soldOut ? ' sold-out' : ''}`} aria-label={`Stock status: ${soldOut ? 'Sold Out' : 'In Stock'}`}>{soldOut ? 'Sold Out' : 'In Stock'}</span><span className="product-number">{String(index + 1).padStart(2, '0')}</span><span className="product-image-arrow"><MoveUpRight aria-hidden="true" /></span></span>
             </button>
             <div className="product-meta"><p className="product-theme">{product.theme}</p><h3>{product.title} <span className="product-code-label">· {product.productCode}</span></h3><p className="product-garment">{product.garment}</p><span className="product-price">{formatRupees(product.price)}</span></div>
             <button className="product-order" type="button" onClick={() => onCustomize(product)} disabled={soldOut}>{soldOut ? 'Sold Out' : 'Order on WhatsApp'}{!soldOut && <ArrowUpRight aria-hidden="true" />}</button>
