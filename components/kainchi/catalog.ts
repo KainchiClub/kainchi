@@ -48,7 +48,7 @@ export type CatalogProduct = {
   title: string
   productCode?: string
   articleCode?: string
-  garment: GarmentType
+  garment: GarmentType | 'Co-ords'
   theme: ArtworkTheme
   price: number
   image: string
@@ -100,7 +100,7 @@ export function getNextArticleCode(products: readonly CatalogProduct[], retiredC
   return `KC-ART-${String(sequence).padStart(3, '0')}`
 }
 
-export function getNextProductCode(products: readonly CatalogProduct[], garment: GarmentType, title: string) {
+export function getNextProductCode(products: readonly CatalogProduct[], garment: CatalogProduct['garment'], title: string) {
   const prefix = getProductCodePrefix({ garment, title })
   const usedCodes = new Set(products.map((product) => product.productCode?.trim().toUpperCase()).filter(Boolean))
   let sequence = 1
