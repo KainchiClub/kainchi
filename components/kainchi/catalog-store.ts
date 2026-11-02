@@ -9,8 +9,8 @@ const PERMANENT_CATALOG_PRODUCTS = initialProducts.filter((product) => /^#KC-(?:
 const PERMANENT_CATALOG_PRODUCT_IDS = new Set(PERMANENT_CATALOG_PRODUCTS.map((product) => product.id))
 const LEGACY_TEMPORARY_PRODUCT_IDS = new Set(['kc-art-shirt-embroidery-01', 'kc-art-combo-trouser-shirt-01'])
 
-function isGarmentType(value: unknown): value is GarmentType {
-  return GARMENT_TYPES.some((garment) => garment === value)
+function isGarmentType(value: unknown): value is CatalogProduct['garment'] {
+  return value === 'Co-ords' || GARMENT_TYPES.some((garment) => garment === value)
 }
 
 function isArtworkTheme(value: unknown): value is ArtworkTheme {
