@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: 'Kainchi Club — Wear Your Own Art',
   description: 'Independent streetwear, custom prints, and wearable art made personal. Find your next favourite at Kainchi Club.',
   generator: 'v0.app',
+  verification: {
+    google: 'I90Q38ksL2tDWIbg7cHxHA_kH5bK6sa1i8sUBc-0yQA',
+  },
   icons: {
     icon: [
       {
