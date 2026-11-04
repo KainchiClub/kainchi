@@ -1,14 +1,34 @@
 'use client'
 
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, Menu, X } from 'lucide-react'
+import { filterCatalog, openSizeGuide, type GarmentGroup } from './storefront-events'
 
 const navigation = [
   { label: 'Collection', href: '#collection' },
   { label: 'Artwork', href: '#artwork' },
   { label: 'Our story', href: '#story' },
   { label: 'Unboxing', href: '#unboxing' },
+]
+
+const STUDIO_WHATSAPP_URL = 'https://wa.me/918863075356?text=Hi%20Kainchi%20Club%2C%20I%20have%20an%20inquiry%20regarding%20your%20collection.'
+
+type DrawerCategory =
+  | { label: string; note: string; kind: 'scroll'; target: string }
+  | { label: string; note: string; kind: 'filter'; group: GarmentGroup }
+  | { label: string; note: string; kind: 'size-guide' }
+  | { label: string; note: string; kind: 'whatsapp' }
+
+const drawerCategories: DrawerCategory[] = [
+  { label: 'New Arrivals', note: 'Drop 01 preview', kind: 'scroll', target: 'collection' },
+  { label: 'Heavyweight Tees', note: '240 GSM drop-shoulder tees', kind: 'filter', group: 'tees' },
+  { label: 'Hoodies & Sweatshirts', note: '400+ GSM structured fleece', kind: 'filter', group: 'fleece' },
+  { label: 'Outerwear & Jackets', note: 'Bombers, leather & denim', kind: 'filter', group: 'outerwear' },
+  { label: 'Archive / Lookbook', note: 'Every original print', kind: 'filter', group: 'all' },
+  { label: 'Size Guide', note: 'Chest, length & shoulder', kind: 'size-guide' },
+  { label: 'About the Studio', note: 'Philosophy, fabrics & wax-seal unboxing', kind: 'scroll', target: 'story' },
+  { label: 'Talk to Studio', note: 'WhatsApp +91 88630 75356', kind: 'whatsapp' },
 ]
 
 type SocialNetwork = 'instagram' | 'facebook' | 'x'
@@ -25,12 +45,50 @@ const socialLinks: { id: string; label: string; href: string; network: SocialNet
   { id: 'social-x', label: 'X / Twitter', href: '#', network: 'x' },
 ]
 
+function scrollToSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 export function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const toggleRef = useRef<HTMLButtonElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!isMenuOpen) return
+    closeRef.current?.focus()
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMenuOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isMenuOpen])
+
+  function closeMenu() {
+    setIsMenuOpen(false)
+    toggleRef.current?.focus({ preventScroll: true })
+  }
+
+  function handleCategory(category: DrawerCategory) {
+    closeMenu()
+    if (category.kind === 'scroll') {
+      requestAnimationFrame(() => scrollToSection(category.target))
+    } else if (category.kind === 'filter') {
+      filterCatalog(category.group)
+      requestAnimationFrame(() => scrollToSection('artwork'))
+    } else if (category.kind === 'size-guide') {
+      openSizeGuide()
+    }
+  }
 
   return (
     <header className="site-header">
-      <button className="mobile-menu-toggle" type="button" aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={isMenuOpen} onClick={() => setIsMenuOpen((open) => !open)}>
+      <button ref={toggleRef} className="mobile-menu-toggle category-menu-toggle" type="button" aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={isMenuOpen} aria-controls="category-drawer" onClick={() => setIsMenuOpen((open) => !open)}>
         {isMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
       </button>
       <a className="wordmark" href="#top" aria-label="Kainchi Club home">
@@ -41,15 +99,39 @@ export function SiteHeader() {
         {navigation.map((item) => <a href={item.href} key={item.label}>{item.label}</a>)}
       </nav>
       <div className="header-actions">
-        <a className="header-cta" href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club,%20I%20have%20an%20inquiry%20regarding%20your%20collection." target="_blank" rel="noopener noreferrer">
+        <a className="header-cta" href={STUDIO_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
           <span>Talk to the studio</span>
           <span className="header-cta-status"><span className="header-cta-status-dot" aria-hidden="true" />Studio Active</span>
           <ArrowUpRight aria-hidden="true" />
         </a>
       </div>
-      <nav className={`mobile-drawer${isMenuOpen ? ' is-open' : ''}`} aria-label="Mobile navigation" aria-hidden={!isMenuOpen}>
-        {navigation.map((item) => <a href={item.href} key={item.label} onClick={() => setIsMenuOpen(false)}>{item.label}</a>)}
-        <div className="mobile-drawer-socials" aria-label="Social media">
+
+      <div className={`category-drawer-backdrop${isMenuOpen ? ' is-open' : ''}`} aria-hidden="true" onClick={closeMenu} />
+      <nav id="category-drawer" className={`category-drawer${isMenuOpen ? ' is-open' : ''}`} aria-label="Shop by category" aria-hidden={!isMenuOpen} inert={!isMenuOpen}>
+        <div className="category-drawer-top">
+          <p className="size-guide-kicker">KAINCHI CLUB · THE STUDIO</p>
+          <button ref={closeRef} type="button" className="size-guide-close" aria-label="Close menu" onClick={closeMenu}><X aria-hidden="true" /></button>
+        </div>
+        <ul className="category-drawer-list">
+          {drawerCategories.map((category, index) => (
+            <li key={category.label}>
+              {category.kind === 'whatsapp' ? (
+                <a className="category-drawer-item" href={STUDIO_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" onClick={closeMenu}>
+                  <span className="category-drawer-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="category-drawer-text"><strong>{category.label}</strong><small>{category.note}</small></span>
+                  <ArrowUpRight aria-hidden="true" />
+                </a>
+              ) : (
+                <button className="category-drawer-item" type="button" onClick={() => handleCategory(category)}>
+                  <span className="category-drawer-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="category-drawer-text"><strong>{category.label}</strong><small>{category.note}</small></span>
+                  <ArrowUpRight aria-hidden="true" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        <div className="mobile-drawer-socials category-drawer-socials" aria-label="Social media">
           {socialLinks.map(({ id, label, href, network }) => <a className="mobile-social-link" href={href} aria-label={label} key={id}><SocialIcon network={network} /></a>)}
         </div>
       </nav>

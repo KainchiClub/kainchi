@@ -1,7 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { CATALOG_FILTER_EVENT, GARMENT_GROUPS, type GarmentGroup } from './storefront-events'
 import { Archive, ArrowUpRight, Search, X } from 'lucide-react'
 import { fallbackImageOnError, isImageOptimizerSource, resolveDriveImageUrl } from '@/lib/utils'
 import { ARTWORK_THEMES, type CatalogProduct } from './catalog'
@@ -14,15 +15,31 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
   const [searchTerm, setSearchTerm] = useState('')
   const [isArchiveOpen, setIsArchiveOpen] = useState(false)
   const [visibleLimit, setVisibleLimit] = useState(ARCHIVE_PAGE_SIZE)
+  const [garmentGroup, setGarmentGroup] = useState<GarmentGroup>('all')
   const filters = ['All artwork', ...ARTWORK_THEMES]
   const filteredProducts = useMemo(() => {
     const query = searchTerm.trim().toLocaleLowerCase()
+    const garmentPattern = garmentGroup === 'all' ? null : GARMENT_GROUPS[garmentGroup].pattern
     return products.filter((product) => {
       const matchesTheme = activeTheme === 'All artwork' || product.theme === activeTheme
+      const matchesGarment = !garmentPattern || garmentPattern.test(product.garment)
       const searchableText = `${product.title} ${product.theme} ${product.garment}`.toLocaleLowerCase()
-      return matchesTheme && (!query || searchableText.includes(query))
+      return matchesTheme && matchesGarment && (!query || searchableText.includes(query))
     })
-  }, [activeTheme, products, searchTerm])
+  }, [activeTheme, garmentGroup, products, searchTerm])
+
+  useEffect(() => {
+    const handleFilter = (event: Event) => {
+      const group = (event as CustomEvent<GarmentGroup>).detail ?? 'all'
+      setGarmentGroup(group)
+      setActiveTheme('All artwork')
+      setSearchTerm('')
+      setVisibleLimit(ARCHIVE_PAGE_SIZE)
+      setIsArchiveOpen(true)
+    }
+    window.addEventListener(CATALOG_FILTER_EVENT, handleFilter)
+    return () => window.removeEventListener(CATALOG_FILTER_EVENT, handleFilter)
+  }, [])
   const visibleProducts = filteredProducts.slice(0, visibleLimit)
   const stickerArtworks = STICKER_ARTWORK_IDS.flatMap((id) => {
     const artwork = products.find((product) => product.id === id)
@@ -39,6 +56,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
     if (isArchiveOpen) {
       setIsArchiveOpen(false)
       setActiveTheme('All artwork')
+      setGarmentGroup('all')
       setSearchTerm('')
       setVisibleLimit(ARCHIVE_PAGE_SIZE)
       return
@@ -82,6 +100,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
             <div className="art-filters" role="group" aria-label="Filter artwork by theme">
               {filters.map((filter) => <button type="button" key={filter} className={`filter-pill${activeTheme === filter ? ' active' : ''}`} aria-pressed={activeTheme === filter} onClick={() => { setActiveTheme(filter); setVisibleLimit(ARCHIVE_PAGE_SIZE) }}>{filter}</button>)}
             </div>
+            {garmentGroup !== 'all' && <div className="garment-filter-chip-row"><button type="button" className="garment-filter-chip" onClick={() => { setGarmentGroup('all'); setVisibleLimit(ARCHIVE_PAGE_SIZE) }} aria-label={`Clear ${GARMENT_GROUPS[garmentGroup].label} filter`}>{GARMENT_GROUPS[garmentGroup].label} <X aria-hidden="true" /></button></div>}
             <p className="art-archive-count" aria-live="polite">Showing {Math.min(visibleLimit, filteredProducts.length)} of {filteredProducts.length} pieces</p>
             {visibleProducts.length > 0 ? <div className="art-grid" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}>{visibleProducts.map((product) => {
               const soldOut = product.stockStatus === 'sold-out'
