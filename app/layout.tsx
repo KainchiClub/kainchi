@@ -1,5 +1,6 @@
 import { DeferredAnalytics } from '@/components/kainchi/deferred-analytics'
 import { DM_Sans, Playfair_Display } from 'next/font/google'
+import Script from 'next/script'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
@@ -61,6 +62,18 @@ export default function RootLayout({
       </head>
       <body className={`antialiased ${bodyFont.variable} ${displayFont.variable}`}>
         {children}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-C0DFYC5KQH"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-C0DFYC5KQH');
+          `}
+        </Script>
         {process.env.NODE_ENV === 'production' && <DeferredAnalytics />}
       </body>
     </html>
