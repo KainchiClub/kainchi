@@ -171,7 +171,7 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
 
       const anchor = event.target.closest<HTMLAnchorElement>('a[href]')
       if (!anchor || !isWhatsAppUrl(anchor.href)) return
-      if (anchor.closest('.studio-intake-dialog, .diwali-combo-dialog, .diwali-welcome-popup, .diwali-welcome-dialog, .collector-vault, .visitor-lead-card')) return
+      if (anchor.closest('.studio-intake-dialog, .category-drawer, .collector-vault, .visitor-lead-card')) return
 
       event.preventDefault()
       event.stopImmediatePropagation()

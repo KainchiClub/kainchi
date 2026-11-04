@@ -11,14 +11,15 @@ import { HeroShowcase } from './hero-showcase'
 import { ProductCollection } from './product-collection'
 import { ProductCustomizer } from './product-customizer'
 import { OrderCart } from './order-cart'
-import { openWhatsAppOrder, type CartLineDetails, type CartLineItem } from './order'
+import { type CartLineDetails, type CartLineItem } from './order'
 import { PackagingShowcase } from './packaging-showcase'
 import { SiteHeader, SocialIcon } from './site-header'
 import { VisitorLeadPopup } from './visitor-lead-popup'
 import { PolicyModals } from './policy-modals'
 import { FAQSection } from './faq-section'
 import { FamilyCollectionBanner } from './family-collection-banner'
-import { DiwaliComboPopup } from './diwali-combo-popup'
+import { SizeGuideModal } from './size-guide-modal'
+import { DeliveryDetailsModal } from './delivery-details-modal'
 import { StudioIntakeModal } from './studio-intake-modal'
 import { StudioAllianceProgram } from './studio-alliance-program'
 
@@ -93,6 +94,7 @@ export function StorefrontClient() {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null)
   const [cartItems, setCartItems] = useState<CartLineItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [checkoutItems, setCheckoutItems] = useState<CartLineItem[] | null>(null)
   const [premiumPackagingDefault, setPremiumPackagingDefault] = useState(false)
   const overlayHistoryRef = useRef<StorefrontOverlayHistoryEntry | null>(null)
   const overlayScrollPositionRef = useRef(0)
@@ -215,7 +217,7 @@ export function StorefrontClient() {
 
   function orderCurrentProduct(details: CartLineDetails) {
     setPremiumPackagingDefault(details.includesGiftBox)
-    openWhatsAppOrder([...cartItems, createCartLine(details)])
+    setCheckoutItems([...cartItems, createCartLine(details)])
   }
 
   return (
@@ -246,10 +248,11 @@ export function StorefrontClient() {
         onQuantityChange={(cartId, quantity) => setCartItems((current) => current.map((item) => item.cartId === cartId ? { ...item, quantity } : item))}
         onGiftBoxChange={changeGiftBox}
         onRemove={(cartId) => setCartItems((current) => current.filter((item) => item.cartId !== cartId))}
-        onCheckout={() => openWhatsAppOrder(cartItems)}
+        onCheckout={() => { if (cartItems.length > 0) setCheckoutItems(cartItems) }}
       />
       <VisitorLeadPopup />
-      <DiwaliComboPopup />
+      <SizeGuideModal />
+      <DeliveryDetailsModal items={checkoutItems} onClose={() => setCheckoutItems(null)} />
       <StudioIntakeModal products={products} />
       {selectedProduct && <ProductCustomizer
         product={selectedProduct}
