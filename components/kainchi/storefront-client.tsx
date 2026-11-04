@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
@@ -34,18 +35,39 @@ function shuffleEssentials(products: CatalogProduct[]) {
 }
 
 type StorefrontOverlayHistoryEntry = { id: string; kind: 'product' | 'cart' }
+type HistoryStateRecord = Record<string, unknown>
 
-function mergeOverlayHistoryState(entry: StorefrontOverlayHistoryEntry) {
+function readHistoryState(): HistoryStateRecord {
   const currentState = window.history.state
-  const baseState = currentState && typeof currentState === 'object' && !Array.isArray(currentState)
-    ? currentState as Record<string, unknown>
+  return currentState && typeof currentState === 'object' && !Array.isArray(currentState)
+    ? currentState as HistoryStateRecord
     : {}
+}
 
-  return { ...baseState, [OVERLAY_HISTORY_KEY]: entry }
+function pickRouterInternals(state: HistoryStateRecord): HistoryStateRecord | null {
+  if (!state.__NA) return null
+  return { __NA: state.__NA, __PRIVATE_NEXTJS_INTERNALS_TREE: state.__PRIVATE_NEXTJS_INTERNALS_TREE }
+}
+
+// Next.js reloads the whole document when it pops an entry without its `__NA` marker,
+// so every overlay entry must carry the router internals, even if the current entry lost them.
+function mergeOverlayHistoryState(entry: StorefrontOverlayHistoryEntry | null, routerInternals: HistoryStateRecord | null) {
+  const baseState = readHistoryState()
+  const withRouter = baseState.__NA || !routerInternals ? baseState : { ...routerInternals, ...baseState }
+  const nextState: HistoryStateRecord = { ...withRouter }
+  if (entry) nextState[OVERLAY_HISTORY_KEY] = entry
+  else delete nextState[OVERLAY_HISTORY_KEY]
+  return nextState
+}
+
+function createEntryId() {
+  return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 }
 
 function createCartLine(details: CartLineDetails): CartLineItem {
-  return { ...details, cartId: crypto.randomUUID() }
+  return { ...details, cartId: createEntryId() }
 }
 
 export function StorefrontClient() {
@@ -119,65 +141,139 @@ export function StorefrontClient() {
     return () => window.removeEventListener('keydown', blockInspectionShortcuts, true)
   }, [])
 
+  const routerInternalsRef = useRef<HistoryStateRecord | null>(null)
+  const closingTimeoutRef = useRef<number | null>(null)
+
+  const captureRouterInternals = useCallback(() => {
+    const internals = pickRouterInternals(readHistoryState())
+    if (internals) routerInternalsRef.current = internals
+  }, [])
+
+  const finishOverlayClose = useCallback(() => {
+    if (closingTimeoutRef.current !== null) {
+      window.clearTimeout(closingTimeoutRef.current)
+      closingTimeoutRef.current = null
+    }
+    overlayHistoryRef.current = null
+    setSelectedProduct(null)
+    setIsCartOpen(false)
+    const scrollPosition = overlayScrollPositionRef.current
+    const returnFocusTarget = overlayReturnFocusRef.current
+    overlayReturnFocusRef.current = null
+
+    requestAnimationFrame(() => {
+      if (Math.abs(window.scrollY - scrollPosition) > 2) window.scrollTo({ top: scrollPosition, behavior: 'instant' })
+      if (returnFocusTarget?.isConnected) returnFocusTarget.focus({ preventScroll: true })
+    })
+  }, [])
+
   useEffect(() => {
+    captureRouterInternals()
+    // A reload while an overlay was open leaves a stale marker on the current entry.
+    if (readHistoryState()[OVERLAY_HISTORY_KEY]) {
+      try { window.history.replaceState(mergeOverlayHistoryState(null, routerInternalsRef.current), '', window.location.href) } catch {}
+    }
+
     const handlePopState = (event: PopStateEvent) => {
+      try {
+        const state = event.state && typeof event.state === 'object' ? event.state as HistoryStateRecord : null
+        if (state) {
+          const internals = pickRouterInternals(state)
+          if (internals) routerInternalsRef.current = internals
+        }
+        const activeEntry = overlayHistoryRef.current
+        if (!activeEntry) return
+
+        const poppedEntry = state?.[OVERLAY_HISTORY_KEY] as StorefrontOverlayHistoryEntry | undefined
+        if (poppedEntry?.id === activeEntry.id) {
+          overlayHistoryRef.current = poppedEntry
+          return
+        }
+        finishOverlayClose()
+      } catch (error) {
+        console.error('[kainchi] popstate handling failed', error)
+        finishOverlayClose()
+      }
+    }
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return
+      captureRouterInternals()
       const activeEntry = overlayHistoryRef.current
-      if (!activeEntry) return
+      const restoredEntry = readHistoryState()[OVERLAY_HISTORY_KEY] as StorefrontOverlayHistoryEntry | undefined
+      if (activeEntry && restoredEntry?.id !== activeEntry.id) finishOverlayClose()
+    }
 
-      const state = event.state && typeof event.state === 'object'
-        ? event.state as Record<string, unknown>
-        : null
-      const poppedEntry = state?.[OVERLAY_HISTORY_KEY] as StorefrontOverlayHistoryEntry | undefined
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('[kainchi] unhandled rejection', event.reason)
+      event.preventDefault()
+    }
 
-      if (poppedEntry?.id === activeEntry.id) {
-        overlayHistoryRef.current = poppedEntry
+    // In-page anchors would otherwise create router-less history entries that force a full reload on Back.
+    const handleAnchorClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const anchor = (event.target as Element | null)?.closest?.('a[href^="#"]')
+      if (!(anchor instanceof HTMLAnchorElement)) return
+      const hash = anchor.getAttribute('href') ?? '#'
+      event.preventDefault()
+      if (hash === '#') return
+      if (hash === '#top') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
-
-      overlayHistoryRef.current = null
-      setSelectedProduct(null)
-      setIsCartOpen(false)
-      const scrollPosition = overlayScrollPositionRef.current
-      const returnFocusTarget = overlayReturnFocusRef.current
-      overlayReturnFocusRef.current = null
-
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: scrollPosition, behavior: 'smooth' })
-        if (returnFocusTarget?.isConnected) returnFocusTarget.focus({ preventScroll: true })
-      })
+      const target = document.getElementById(decodeURIComponent(hash.slice(1)))
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
 
     window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
+    window.addEventListener('pageshow', handlePageShow)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+    document.addEventListener('click', handleAnchorClick)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('pageshow', handlePageShow)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+      document.removeEventListener('click', handleAnchorClick)
+      if (closingTimeoutRef.current !== null) window.clearTimeout(closingTimeoutRef.current)
+    }
+  }, [captureRouterInternals, finishOverlayClose])
 
   const updateOverlayHistory = useCallback((kind: StorefrontOverlayHistoryEntry['kind']) => {
+    captureRouterInternals()
     const currentEntry = overlayHistoryRef.current
-    const nextEntry = currentEntry
-      ? { ...currentEntry, kind }
-      : { id: crypto.randomUUID(), kind }
+    const nextEntry = currentEntry ? { ...currentEntry, kind } : { id: createEntryId(), kind }
 
-    if (currentEntry) {
-      window.history.replaceState(mergeOverlayHistoryState(nextEntry), '', window.location.href)
-    } else {
-      overlayScrollPositionRef.current = window.scrollY
-      const activeElement = document.activeElement
-      overlayReturnFocusRef.current = activeElement instanceof HTMLElement ? activeElement : null
-      window.history.pushState(mergeOverlayHistoryState(nextEntry), '', window.location.href)
+    try {
+      if (currentEntry) {
+        window.history.replaceState(mergeOverlayHistoryState(nextEntry, routerInternalsRef.current), '', window.location.href)
+      } else {
+        overlayScrollPositionRef.current = window.scrollY
+        const activeElement = document.activeElement
+        overlayReturnFocusRef.current = activeElement instanceof HTMLElement ? activeElement : null
+        window.history.pushState(mergeOverlayHistoryState(nextEntry, routerInternalsRef.current), '', window.location.href)
+      }
+      overlayHistoryRef.current = nextEntry
+    } catch (error) {
+      console.error('[kainchi] history update failed', error)
+      overlayHistoryRef.current = null
     }
-
-    overlayHistoryRef.current = nextEntry
-  }, [])
+  }, [captureRouterInternals])
 
   const closeActiveOverlay = useCallback(() => {
-    if (overlayHistoryRef.current) {
-      window.history.back()
+    if (!overlayHistoryRef.current) {
+      setSelectedProduct(null)
+      setIsCartOpen(false)
       return
     }
+    if (closingTimeoutRef.current !== null) return
 
-    setSelectedProduct(null)
-    setIsCartOpen(false)
-  }, [])
+    window.history.back()
+    // If the browser never delivers popstate, close locally instead of leaving the overlay stuck.
+    closingTimeoutRef.current = window.setTimeout(() => {
+      closingTimeoutRef.current = null
+      if (overlayHistoryRef.current) finishOverlayClose()
+    }, 700)
+  }, [finishOverlayClose])
 
   const openProduct = useCallback((product: CatalogProduct) => {
     updateOverlayHistory('product')
@@ -240,7 +336,7 @@ export function StorefrontClient() {
         <PackagingShowcase premiumPackagingSelected={premiumPackagingSelected} onPremiumPackagingChange={changePremiumPackaging} />
         <FAQSection />
       </main>
-      <footer className="site-footer"><a className="wordmark footer-wordmark" href="#top" aria-label="Kainchi Club home"><Image className="wordmark-logo" src={brandLogo} alt="" width={96} height={96} loading="lazy" decoding="async" /><span>KAINCHI <span className="wordmark-light">CLUB</span></span></a><p>Wear your own art. © 2026 Kainchi Club</p><div className="footer-socials" aria-label="Social media"><a id="social-instagram" href="#" aria-label="Instagram"><SocialIcon network="instagram" /></a><a id="social-facebook" href="#" aria-label="Facebook"><SocialIcon network="facebook" /></a><a id="social-x" href="#" aria-label="X / Twitter"><SocialIcon network="x" /></a></div><div className="footer-links"><a href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club" aria-label="Contact Kainchi Club on WhatsApp">WhatsApp <ArrowUpRight aria-hidden="true" /></a><a href="#top" aria-label="Back to top">Back to top <ArrowUpRight aria-hidden="true" /></a><a href="/admin">Admin Portal <ArrowUpRight aria-hidden="true" /></a><PolicyModals /></div></footer>
+      <footer className="site-footer"><a className="wordmark footer-wordmark" href="#top" aria-label="Kainchi Club home"><Image className="wordmark-logo" src={brandLogo} alt="" width={96} height={96} loading="lazy" decoding="async" /><span>KAINCHI <span className="wordmark-light">CLUB</span></span></a><p>Wear your own art. © 2026 Kainchi Club</p><div className="footer-socials" aria-label="Social media"><a id="social-instagram" href="#" aria-label="Instagram"><SocialIcon network="instagram" /></a><a id="social-facebook" href="#" aria-label="Facebook"><SocialIcon network="facebook" /></a><a id="social-x" href="#" aria-label="X / Twitter"><SocialIcon network="x" /></a></div><div className="footer-links"><a href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club" aria-label="Contact Kainchi Club on WhatsApp">WhatsApp <ArrowUpRight aria-hidden="true" /></a><a href="#top" aria-label="Back to top">Back to top <ArrowUpRight aria-hidden="true" /></a><Link href="/admin" prefetch={false}>Admin Portal <ArrowUpRight aria-hidden="true" /></Link><PolicyModals /></div></footer>
       <OrderCart
         items={cartItems}
         isOpen={isCartOpen}
