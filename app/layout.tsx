@@ -7,8 +7,16 @@ const bodyFont = DM_Sans({ subsets: ['latin'], display: 'swap', preload: true, v
 const displayFont = Playfair_Display({ subsets: ['latin'], display: 'swap', preload: true, variable: '--font-display-loaded' })
 
 export const metadata: Metadata = {
-  title: 'Kainchi Club — Wear Your Own Art',
-  description: 'Independent streetwear, custom prints, and wearable art made personal. Find your next favourite at Kainchi Club.',
+  title: 'KAINCHI CLUB | Luxury Streetwear & Heavyweight Architecture',
+  description: 'Shop luxury heavyweight streetwear crafted with 240+ GSM French Terry & 400 GSM fleece. Bespoke wearable art, numbered drops, and archival silhouettes.',
+  keywords: ['streetwear', 'kainchi club', 'heavyweight t-shirt', 'french terry', 'oversized hoodie', 'luxury apparel india'],
+  openGraph: {
+    title: 'KAINCHI CLUB | Wearable Art',
+    description: 'Bespoke Heavyweight Streetwear Architecture.',
+    url: 'https://kainchi-chi.vercel.app',
+    siteName: 'Kainchi Club',
+    type: 'website',
+  },
   generator: 'v0.app',
   verification: {
     google: 'I90Q38ksL2tDWIbg7cHxHA_kH5bK6sa1i8sUBc-0yQA',
