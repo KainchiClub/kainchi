@@ -108,6 +108,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
 
             <label className="giftbox-option"><input type="checkbox" checked={includesGiftBox} onChange={(event) => setIncludesGiftBox(event.target.checked)} /><span className="giftbox-check" aria-hidden="true"><Check /></span><span><strong>Collector&apos;s Vault premium packaging</strong><small>Hand-finished, ready to gift <b>(+₹99 per item)</b></small></span></label>
             <div className="customizer-total"><span>Final calculated price</span><strong aria-live="polite">{formatRupees(total)}</strong></div>
+            <p className="customizer-whatsapp-tip">Attach your artwork directly in WhatsApp via the paperclip icon.</p>
             <div className="customizer-order-actions">
               <button className="button button-outline-dark" type="button" onClick={() => onAddToCart(orderDetails)} disabled={soldOut}><ShoppingBag aria-hidden="true" /> Add to cart</button>
               <button className="button button-crimson" type="button" onClick={() => { onOrderNow(orderDetails); onClose() }} disabled={soldOut}>{soldOut ? 'Sold Out' : 'Order on WhatsApp'}{!soldOut && <ArrowUpRight aria-hidden="true" />}</button>

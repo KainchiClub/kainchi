@@ -128,6 +128,7 @@ function makeIntakeMessage(fields: IntakeFields, photoCount: number) {
     `• Budget: ${fields.budget || 'Left Blank'}`,
     `• Reference Photo Links: ${photoCount > 0 ? 'Attach selected photos directly in this WhatsApp chat.' : 'None'}`,
     '',
+    `Hello Kainchi Club, I would like to order a bespoke piece. Design Details: ${fields.productCodeOrName.trim() || 'Selected bespoke artwork'}${fields.sizes.length > 0 ? ` / ${fields.sizes.join(', ')}` : ''}. (I am attaching my artwork/reference image right below in this chat).`,
     '"Hi Kainchi Club! I have prepared my custom inquiry. Sharing details here for confirmation!"',
     ...(fields.partnerCode.trim() ? [`• Referred By Partner: ${fields.partnerCode.trim()}`] : []),
     '--------------------------------------------------',

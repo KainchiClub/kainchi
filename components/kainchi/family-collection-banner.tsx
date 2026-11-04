@@ -115,7 +115,8 @@ export function FamilyCollectionBanner() {
             alt={`Kainchi Club collection editorial, slide ${activeIndex + 1}`}
             width={1600}
             height={900}
-            sizes="100vw"
+            sizes="(max-width: 768px) 100vw, 1200px"
+            quality={80}
             loading="eager"
             fetchPriority="low"
             decoding="async"
