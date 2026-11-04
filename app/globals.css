@@ -1898,3 +1898,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .garment-filter-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--crimson); border-radius: 999px; color: var(--paper-light); background: var(--crimson); font-size: 11px; font-weight: 700; cursor: pointer; }
 .garment-filter-chip svg { width: 13px; height: 13px; }
 .garment-filter-chip:focus-visible { outline: 2px solid var(--crimson); outline-offset: 3px; }
+
+.storefront-recovery { min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 32px 24px; text-align: center; color: #f4e9db; background: #241713; }
+.storefront-recovery h1 { margin: 0; font-family: var(--font-display); font-size: clamp(28px, 7vw, 44px); font-weight: 500; }
+.storefront-recovery > p:not(.eyebrow) { max-width: 420px; margin: 0; color: #d8c7b2; line-height: 1.6; }
