@@ -1006,7 +1006,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .family-collection-frame { max-width: 1500px; margin: 0 auto; border: 1px solid #b7a189; padding: clamp(5px, .8vw, 10px); background: linear-gradient(135deg, #f7efe3, #e8d9c8); box-shadow: 0 15px 38px rgb(54 35 25 / 16%), inset 0 0 0 3px rgb(255 249 239 / 70%); }
 .family-collection-media { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; isolation: isolate; border: 1px solid rgb(74 49 36 / 15%); background: #d7c9b8; }
 .family-collection-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; object-position: center; opacity: 0; transition: opacity .75s ease; }
-.family-collection-image.is-current { opacity: 1; }
+.family-collection-image.is-current { opacity: 1; transform: translateZ(0); will-change: opacity; }
+.family-collection-arrow { position: absolute; z-index: 2; top: 50%; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgb(255 255 255 / 20%); color: #fff7eb; background: rgb(0 0 0 / 40%); backdrop-filter: blur(8px); cursor: pointer; transform: translateY(-50%); transition: background .2s ease, border-color .2s ease; }
+.family-collection-arrow:hover { border-color: rgb(255 255 255 / 45%); background: rgb(0 0 0 / 70%); }
+.family-collection-arrow:focus-visible { outline: 2px solid #d4af37; outline-offset: 3px; }
+.family-collection-arrow svg { width: 18px; height: 18px; }
+.family-collection-arrow-left { left: 12px; }
+.family-collection-arrow-right { right: 12px; }
 .family-collection-indicators { position: absolute; z-index: 1; inset: auto 0 8px; display: flex; justify-content: center; gap: 4px; }
 .family-collection-indicators button { width: 28px; height: 28px; display: grid; place-items: center; border: 0; padding: 0; background: transparent; cursor: pointer; }
 .family-collection-indicators button::before { width: 6px; height: 6px; border: 1px solid #fff7eb; border-radius: 50%; background: rgb(255 247 235 / 50%); box-shadow: 0 1px 4px rgb(0 0 0 / 48%); content: ''; transition: transform .2s ease, background .2s ease; }
@@ -1082,6 +1088,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width: 680px) {
   .family-collection-section { padding: 14px 12px 26px; }
   .family-collection-frame figcaption { padding: 11px 7px 5px; font-size: 12px; }
+  .family-collection-arrow { width: 34px; height: 34px; }
+  .family-collection-arrow-left { left: 8px; }
+  .family-collection-arrow-right { right: 8px; }
   .diwali-combo-dialog { width: calc(100% - 20px); max-height: calc(100dvh - 20px); }
   .diwali-combo-inner { padding: 19px 16px 20px; }
   .diwali-combo-inner h2 { max-width: 480px; font-size: clamp(28px, 8vw, 38px); }

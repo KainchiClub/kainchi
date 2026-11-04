@@ -8,18 +8,7 @@ export type BannerSlide = {
   caption: string
 }
 
-export const DEFAULT_BANNER_SLIDES: BannerSlide[] = [
-  {
-    id: 'kainchi-family-master',
-    image: '/images/banner/kainchi-family-master.webp',
-    active: true,
-    caption: 'Kainchi Club Collection · Crafted for Everyone. Wearable art for the entire circle.',
-  },
-  { id: 'editorial-one', image: '/images/banner/editorial-one.webp', active: true, caption: 'Made for the moments we share.' },
-  { id: 'editorial-two', image: '/images/banner/editorial-two.webp', active: true, caption: 'Good company. Better things to wear.' },
-  { id: 'editorial-three', image: '/images/banner/editorial-three.webp', active: true, caption: 'A little different, together.' },
-  { id: 'editorial-four', image: '/images/banner/editorial-four.webp', active: true, caption: 'Find your people. Wear your art.' },
-]
+export const DEFAULT_BANNER_SLIDES: BannerSlide[] = []
 
 export function isBannerSlideList(value: unknown): value is BannerSlide[] {
   return Array.isArray(value)

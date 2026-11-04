@@ -1,28 +1,33 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type TouchEvent } from 'react'
 import { fallbackImageOnError, isImageOptimizerSource, resolveDriveImageUrl } from '@/lib/utils'
-import { DEFAULT_BANNER_SLIDES, BANNER_SLIDES_STORAGE_KEY, isBannerSlideList } from './banner-slides'
+import { BANNER_SLIDES_STORAGE_KEY, isBannerSlideList } from './banner-slides'
 import { useLocalBrowserStore } from './local-browser-store'
 
 const ROTATION_INTERVAL_MS = 3000
-const LEGACY_FAMILY_IMAGE_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793520180941.png-TsGiiAjHcqIIiPAfjKxhHxtGhYG0ND.jpeg'
-const OPTIMIZED_FAMILY_IMAGE_URL = '/images/banner/kainchi-family-master.webp'
+const INTERACTION_PAUSE_MS = 5000
 
 export function FamilyCollectionBanner() {
-  const [savedSlides] = useLocalBrowserStore(BANNER_SLIDES_STORAGE_KEY, DEFAULT_BANNER_SLIDES, isBannerSlideList)
+  const [savedSlides] = useLocalBrowserStore(BANNER_SLIDES_STORAGE_KEY, [], isBannerSlideList)
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [isWindowLoaded, setIsWindowLoaded] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
-  const touchResumeTimeout = useRef<number | null>(null)
-  const slides = useMemo(() => {
-    const activeSlides = savedSlides.filter((slide) => slide.active && slide.image.trim())
-    if (activeSlides.length) return activeSlides
-    return DEFAULT_BANNER_SLIDES
-  }, [savedSlides])
+  const resumeTimeout = useRef<number | null>(null)
+  const touchStartX = useRef<number | null>(null)
+  const slides = useMemo(() => savedSlides.filter((slide) => slide.active && slide.image.trim()), [savedSlides])
+
+  useEffect(() => {
+    if (slides.length < 1) {
+      setActiveIndex(0)
+      return
+    }
+    setActiveIndex(Math.floor(Math.random() * slides.length))
+  }, [slides.length])
 
   useEffect(() => {
     if (document.readyState === 'complete') {
@@ -49,10 +54,6 @@ export function FamilyCollectionBanner() {
   }, [])
 
   useEffect(() => {
-    setActiveIndex((current) => current % slides.length)
-  }, [slides.length])
-
-  useEffect(() => {
     if (!isWindowLoaded || !isVisible || isPaused || slides.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % slides.length)
@@ -61,14 +62,38 @@ export function FamilyCollectionBanner() {
   }, [isPaused, isVisible, isWindowLoaded, slides.length])
 
   useEffect(() => () => {
-    if (touchResumeTimeout.current) window.clearTimeout(touchResumeTimeout.current)
+    if (resumeTimeout.current) window.clearTimeout(resumeTimeout.current)
   }, [])
 
-  function pauseForTouch() {
+  function pauseForInteraction() {
     setIsPaused(true)
-    if (touchResumeTimeout.current) window.clearTimeout(touchResumeTimeout.current)
-    touchResumeTimeout.current = window.setTimeout(() => setIsPaused(false), 5000)
+    if (resumeTimeout.current) window.clearTimeout(resumeTimeout.current)
+    resumeTimeout.current = window.setTimeout(() => setIsPaused(false), INTERACTION_PAUSE_MS)
   }
+
+  function move(direction: -1 | 1) {
+    if (slides.length < 2) return
+    pauseForInteraction()
+    setActiveIndex((current) => (current + direction + slides.length) % slides.length)
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
+    touchStartX.current = event.changedTouches[0]?.clientX ?? null
+    pauseForInteraction()
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    const startX = touchStartX.current
+    const endX = event.changedTouches[0]?.clientX ?? null
+    touchStartX.current = null
+    if (startX === null || endX === null || Math.abs(endX - startX) < 40) return
+    move(endX < startX ? 1 : -1)
+  }
+
+  if (!slides.length) return null
+
+  const currentSlide = slides[activeIndex]
+  const imageSrc = resolveDriveImageUrl(currentSlide.image, 1200)
 
   return (
     <section ref={sectionRef} className="family-collection-section" aria-label="Kainchi Club collection for everyone">
@@ -80,47 +105,40 @@ export function FamilyCollectionBanner() {
           aria-label="Kainchi Club editorial collection"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
-          onTouchStart={pauseForTouch}
-          onTouchEnd={() => {
-            if (touchResumeTimeout.current) window.clearTimeout(touchResumeTimeout.current)
-            touchResumeTimeout.current = window.setTimeout(() => setIsPaused(false), 5000)
-          }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
-          {slides.map((slide, index) => {
-            if (index !== activeIndex) return null
-
-            const imageSrc = resolveDriveImageUrl(
-              slide.image === LEGACY_FAMILY_IMAGE_URL ? OPTIMIZED_FAMILY_IMAGE_URL : slide.image,
-              1200,
-            )
-            return <Image
-              key={slide.id}
-              className="family-collection-image is-current"
-              src={imageSrc}
-              alt={`Kainchi Club collection editorial, slide ${index + 1}`}
-              width={1600}
-              height={900}
-              sizes="100vw"
-              loading={index === 0 ? 'eager' : 'lazy'}
-              fetchPriority="low"
-              decoding="async"
-              unoptimized={!isImageOptimizerSource(imageSrc)}
-              draggable={false}
-              onError={fallbackImageOnError}
-            />
-          })}
-          {slides.length > 1 && <div className="family-collection-indicators" role="group" aria-label="Choose a collection slide">
-            {slides.map((slide, index) => <button
-              key={slide.id}
-              type="button"
-              className={index === activeIndex ? 'is-current' : ''}
-              aria-label={`Show slide ${index + 1}`}
-              aria-pressed={index === activeIndex}
-              onClick={() => setActiveIndex(index)}
-            />)}
-          </div>}
+          <Image
+            key={currentSlide.id}
+            className="family-collection-image is-current"
+            src={imageSrc}
+            alt={`Kainchi Club collection editorial, slide ${activeIndex + 1}`}
+            width={1600}
+            height={900}
+            sizes="100vw"
+            loading="eager"
+            fetchPriority="low"
+            decoding="async"
+            unoptimized={!isImageOptimizerSource(imageSrc)}
+            draggable={false}
+            onError={fallbackImageOnError}
+          />
+          {slides.length > 1 && <>
+            <button type="button" className="family-collection-arrow family-collection-arrow-left" aria-label="Previous collection slide" onClick={() => move(-1)}><ChevronLeft aria-hidden="true" /></button>
+            <button type="button" className="family-collection-arrow family-collection-arrow-right" aria-label="Next collection slide" onClick={() => move(1)}><ChevronRight aria-hidden="true" /></button>
+            <div className="family-collection-indicators" role="group" aria-label="Choose a collection slide">
+              {slides.map((slide, index) => <button
+                key={slide.id}
+                type="button"
+                className={index === activeIndex ? 'is-current' : ''}
+                aria-label={`Show slide ${index + 1}`}
+                aria-pressed={index === activeIndex}
+                onClick={() => { pauseForInteraction(); setActiveIndex(index) }}
+              />)}
+            </div>
+          </>}
         </div>
-        <figcaption>{slides[activeIndex]?.caption ?? DEFAULT_BANNER_SLIDES[0].caption}</figcaption>
+        <figcaption>{currentSlide.caption}</figcaption>
       </figure>
     </section>
   )
