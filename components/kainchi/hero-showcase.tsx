@@ -24,11 +24,11 @@ export function HeroShowcase(_props: { products?: CatalogProduct[] }) {
           alt="Kainchi Club editorial poster featuring a hoodie, leather jacket, sweatshirt, and embroidered jeans."
           width={1200}
           height={896}
-          sizes="(max-width: 640px) 94vw, (max-width: 900px) 45vw, 42vw"
+          sizes="(max-width: 768px) 100vw, 1200px"
+          quality={80}
           loading="eager"
           fetchPriority="high"
-          decoding="sync"
-          unoptimized
+          decoding="async"
         />
       </div>
       <a className="scroll-cue" href="#collection" aria-label="Scroll to the collection"><span>SCROLL TO EXPLORE</span><ArrowDownRight aria-hidden="true" /></a>
