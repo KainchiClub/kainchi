@@ -5,6 +5,8 @@ import { X } from 'lucide-react'
 import { FitSizeGuide } from './fit-size-guide'
 import { SIZE_GUIDE_EVENT } from './storefront-events'
 
+const SIZE_GUIDE_HISTORY_KEY = '__kainchiSizeGuide'
+
 const oversizedFit = [
   { size: 'S', chest: 42, length: 28, shoulder: 20 },
   { size: 'M', chest: 44, length: 29, shoulder: 21 },
@@ -13,16 +15,46 @@ const oversizedFit = [
   { size: 'XXL', chest: 50, length: 32, shoulder: 24 },
 ]
 
+type SizeGuideHistoryState = Record<string, unknown>
+
+function isSizeGuideEntry() {
+  const state = window.history.state as SizeGuideHistoryState | null
+  return Boolean(state && state[SIZE_GUIDE_HISTORY_KEY])
+}
+
 export function SizeGuideModal() {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    const open = () => setIsOpen(true)
+    const open = () => {
+      if (!isSizeGuideEntry()) {
+        try {
+          window.history.pushState({ ...(window.history.state ?? {}), [SIZE_GUIDE_HISTORY_KEY]: true }, '', window.location.href)
+        } catch {}
+      }
+      setIsOpen(true)
+    }
+    const handlePopState = () => setIsOpen(isSizeGuideEntry())
+    const clearStaleEntry = () => {
+      if (!isSizeGuideEntry()) return
+      const { [SIZE_GUIDE_HISTORY_KEY]: _stale, ...rest } = window.history.state as SizeGuideHistoryState
+      window.history.replaceState(rest, '', window.location.href)
+    }
+    clearStaleEntry()
     window.addEventListener(SIZE_GUIDE_EVENT, open)
-    return () => window.removeEventListener(SIZE_GUIDE_EVENT, open)
+    window.addEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener(SIZE_GUIDE_EVENT, open)
+      window.removeEventListener('popstate', handlePopState)
+    }
   }, [])
+
+  const requestClose = () => {
+    if (isSizeGuideEntry()) window.history.back()
+    else setIsOpen(false)
+  }
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -40,9 +72,9 @@ export function SizeGuideModal() {
       ref={dialogRef}
       className="size-guide-dialog"
       aria-labelledby="size-guide-title"
-      onCancel={(event) => { event.preventDefault(); setIsOpen(false) }}
+      onCancel={(event) => { event.preventDefault(); requestClose() }}
       onClose={() => setIsOpen(false)}
-      onMouseDown={(event) => { if (event.target === event.currentTarget) setIsOpen(false) }}
+      onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose() }}
     >
       <div className="size-guide-inner">
         <div className="size-guide-topline">
@@ -50,7 +82,7 @@ export function SizeGuideModal() {
             <p className="size-guide-kicker">KAINCHI CLUB · FIT NOTES</p>
             <h2 id="size-guide-title">Size Guide</h2>
           </div>
-          <button ref={closeButtonRef} aria-label="Close size guide" className="size-guide-close" onClick={() => setIsOpen(false)} type="button"><X aria-hidden="true" /></button>
+          <button ref={closeButtonRef} aria-label="Close size guide" className="size-guide-close" onClick={requestClose} type="button"><X aria-hidden="true" /></button>
         </div>
         <p className="size-guide-intro">Streetwear oversized fit. All measurements are garment measurements in inches.</p>
 

@@ -15,7 +15,6 @@ import { OrderCart } from './order-cart'
 import { type CartLineDetails, type CartLineItem } from './order'
 import { PackagingShowcase } from './packaging-showcase'
 import { SiteHeader, SocialIcon } from './site-header'
-import { VisitorLeadPopup } from './visitor-lead-popup'
 import { PolicyModals } from './policy-modals'
 import { FAQSection } from './faq-section'
 import { FamilyCollectionBanner } from './family-collection-banner'
@@ -346,7 +345,6 @@ export function StorefrontClient() {
         onRemove={(cartId) => setCartItems((current) => current.filter((item) => item.cartId !== cartId))}
         onCheckout={() => { if (cartItems.length > 0) setCheckoutItems(cartItems) }}
       />
-      <VisitorLeadPopup />
       <SizeGuideModal />
       <DeliveryDetailsModal items={checkoutItems} onClose={() => setCheckoutItems(null)} />
       <StudioIntakeModal products={products} />
