@@ -25,10 +25,9 @@ export function HeroShowcase(_props: { products?: CatalogProduct[] }) {
           width={1200}
           height={896}
           sizes="(max-width: 768px) 100vw, 1200px"
-          quality={80}
-          loading="eager"
+          quality={75}
+          priority
           fetchPriority="high"
-          decoding="async"
         />
       </div>
       <a className="scroll-cue" href="#collection" aria-label="Scroll to the collection"><span>SCROLL TO EXPLORE</span><ArrowDownRight aria-hidden="true" /></a>

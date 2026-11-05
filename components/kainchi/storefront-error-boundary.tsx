@@ -36,7 +36,10 @@ export class StorefrontErrorBoundary extends Component<StorefrontErrorBoundaryPr
   }
 
   recover = () => {
-    this.setState((state) => ({ hasError: false, resetKey: state.resetKey + 1 }))
+    const scrollY = typeof window === 'undefined' ? 0 : window.scrollY
+    this.setState((state) => ({ hasError: false, resetKey: state.resetKey + 1 }), () => {
+      if (scrollY > 0) requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: 'instant' }))
+    })
   }
 
   handleManualRecover = () => {

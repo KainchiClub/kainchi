@@ -125,7 +125,7 @@ button { color: inherit; }
 .product-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 17px; }
 .product-card { min-width: 0; }
 .product-image-link { display: block; }
-.product-image { aspect-ratio: .93; position: relative; overflow: hidden; }
+.product-image { display: block; width: 100%; aspect-ratio: 3 / 4; position: relative; overflow: hidden; }
 .product-number { position: absolute; top: 13px; left: 13px; color: #fff0df; font: italic 12px var(--font-display); text-shadow: 0 1px 4px #30221d; }
 .product-image-arrow, .art-image-arrow { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: var(--ink); background: #f3ede4; transition: color .2s ease, background .2s ease, transform .2s ease; }
 .product-image-arrow { position: absolute; right: 12px; bottom: 12px; }
@@ -167,7 +167,7 @@ button { color: inherit; }
 .art-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
 .art-card { min-width: 0; }
 .art-image-link { display: block; }
-.art-image-wrap { aspect-ratio: .9; overflow: hidden; position: relative; }
+.art-image-wrap { display: block; width: 100%; aspect-ratio: 3 / 4; overflow: hidden; position: relative; }
 .art-image { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
 .art-image-link:hover .art-image { transform: none; }
 .art-card-sticker { position: absolute; left: 11px; top: 11px; padding: 7px 8px; color: #442c24; background: #eee5d8; font-size: 7px; font-weight: 700; letter-spacing: .12em; }
@@ -314,7 +314,7 @@ button { color: inherit; }
 .site-footer { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 15px clamp(22px, 5vw, 80px); background: var(--paper-light); }
 .footer-wordmark { font-size: 14px; flex: 0 0 auto; }
 .footer-wordmark .wordmark-mark { width: 28px; height: 28px; }
-.site-footer > p { color: #907e6d; font-size: 9px; }
+.site-footer > p { color: #705c4c; font-size: 9px; }
 .footer-links { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px 18px; color: #705c4c; font-size: 9px; }
 .footer-links a { display: inline-flex; align-items: center; gap: 5px; }
 .footer-links svg { width: 13px; height: 13px; }
