@@ -54,7 +54,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="preload" as="image" href="/images/kainchi-hero-editorial-1200.webp" fetchPriority="high" />
         <link rel="preconnect" href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com" />
         <link rel="dns-prefetch" href="//hebbkx1anhila5yf.public.blob.vercel-storage.com" />
         <link rel="preconnect" href="https://lh3.googleusercontent.com" />
@@ -63,10 +62,10 @@ export default function RootLayout({
       <body className={`antialiased ${bodyFont.variable} ${displayFont.variable}`}>
         {children}
         <Script
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           src="https://www.googletagmanager.com/gtag/js?id=G-C0DFYC5KQH"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script id="google-analytics" strategy="lazyOnload">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}

@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -10,7 +11,6 @@ import { useCatalogProducts } from './catalog-store'
 import { LetterboxFeedback } from './letterbox-feedback'
 import { HeroShowcase } from './hero-showcase'
 import { ProductCollection } from './product-collection'
-import { ProductCustomizer } from './product-customizer'
 import { OrderCart } from './order-cart'
 import { type CartLineDetails, type CartLineItem } from './order'
 import { PackagingShowcase } from './packaging-showcase'
@@ -18,10 +18,12 @@ import { SiteHeader, SocialIcon } from './site-header'
 import { PolicyModals } from './policy-modals'
 import { FAQSection } from './faq-section'
 import { FamilyCollectionBanner } from './family-collection-banner'
-import { SizeGuideModal } from './size-guide-modal'
 import { DeliveryDetailsModal } from './delivery-details-modal'
 import { StudioIntakeModal } from './studio-intake-modal'
 import { StudioAllianceProgram } from './studio-alliance-program'
+
+const ProductCustomizer = dynamic(() => import('./product-customizer').then((module) => module.ProductCustomizer), { ssr: false })
+const SizeGuideModal = dynamic(() => import('./size-guide-modal').then((module) => module.SizeGuideModal), { ssr: false })
 
 const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg'
 const OVERLAY_HISTORY_KEY = '__kainchiClubOverlay'

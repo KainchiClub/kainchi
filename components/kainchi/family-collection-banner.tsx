@@ -4,14 +4,15 @@ import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type TouchEvent } from 'react'
 import { fallbackImageOnError, isImageOptimizerSource, resolveDriveImageUrl } from '@/lib/utils'
-import { BANNER_SLIDES_STORAGE_KEY, isBannerSlideList } from './banner-slides'
+import { BANNER_SLIDES_STORAGE_KEY, isBannerSlideList, type BannerSlide } from './banner-slides'
 import { useLocalBrowserStore } from './local-browser-store'
 
 const ROTATION_INTERVAL_MS = 3000
 const INTERACTION_PAUSE_MS = 5000
+const NO_SAVED_SLIDES: BannerSlide[] = []
 
 export function FamilyCollectionBanner() {
-  const [savedSlides] = useLocalBrowserStore(BANNER_SLIDES_STORAGE_KEY, [], isBannerSlideList)
+  const [savedSlides] = useLocalBrowserStore(BANNER_SLIDES_STORAGE_KEY, NO_SAVED_SLIDES, isBannerSlideList)
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [isVisible, setIsVisible] = useState(false)

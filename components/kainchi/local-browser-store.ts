@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const STORE_CHANGE_EVENT = 'kainchi:browser-store-change'
 
@@ -27,7 +27,11 @@ export function useLocalBrowserStore<T>(
   validate: StoreValidator<T>,
 ) {
   const [value, setValue] = useState<T>(fallback)
-  const readCurrentValue = useCallback(() => readValue(key, fallback, validate), [fallback, key, validate])
+  // Inline fallbacks (e.g. `[]`) change identity every render; keeping them in a ref
+  // prevents the sync effect from re-running and looping on its own setState.
+  const fallbackRef = useRef(fallback)
+  fallbackRef.current = fallback
+  const readCurrentValue = useCallback(() => readValue(key, fallbackRef.current, validate), [key, validate])
 
   useEffect(() => {
     const syncValue = () => setValue(readCurrentValue())
