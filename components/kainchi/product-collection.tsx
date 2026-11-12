@@ -28,6 +28,7 @@ export function ProductCollection({ products, onCustomize }: { products: Catalog
           </article>
         })}
       </div>
+      {products.length === 0 && <p className="section-intro py-10 text-center">No pieces in this collection right now. Tap Custom Studio above to have one made just for you.</p>}
       <div className="collection-note"><span>{String(products.length).padStart(2, '0')} PIECES</span><span>Designed to be worn. Made to be remembered.</span><a href="#artwork">Find your print <ArrowUpRight aria-hidden="true" /></a></div>
     </section>
   )
