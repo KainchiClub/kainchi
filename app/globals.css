@@ -1309,6 +1309,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .studio-intake-partner-field { margin-top: 16px; }
 .studio-intake-partner-input { width: 100%; min-height: 44px; border: 1px solid #d1c2af; padding: 0 12px; color: #403027; background: #fbf7f0; font: inherit; font-size: 11px; }
 .studio-intake-partner-input:focus-visible { border-color: var(--crimson); outline: 2px solid rgb(121 35 51 / 12%); outline-offset: 1px; }
+.studio-intake-notes-field { margin-top: 16px; }
+.studio-intake-notes-field textarea { width: 100%; min-height: 76px; resize: vertical; border: 1px solid #d1c2af; padding: 10px 12px; color: #403027; background: #fbf7f0; font: inherit; font-size: 11px; line-height: 1.5; }
+.studio-intake-notes-field textarea:focus-visible { border-color: var(--crimson); outline: 2px solid rgb(121 35 51 / 12%); outline-offset: 1px; }
+.studio-intake-photo-state { position: absolute; left: 3px; right: 3px; bottom: 3px; padding: 3px 4px; color: #fff7ee; background: rgb(43 28 23 / 82%); font-size: 7px; font-weight: 700; letter-spacing: .04em; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.studio-intake-photo-state.ready { background: rgb(28 77 45 / 88%); }
+.studio-intake-photo-state.local { background: rgb(121 35 51 / 88%); }
 @media (max-width: 760px) {
   .studio-alliance-intro-row { grid-template-columns: 1fr; gap: 22px; }
   .studio-alliance-intro-copy h2, .studio-alliance-intro-copy .studio-alliance-subtitle { margin-inline: auto; text-align: center; }

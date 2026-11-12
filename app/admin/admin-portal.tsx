@@ -16,6 +16,7 @@ import { BulkInventoryManager } from './bulk-inventory-manager'
 import { SmartPricingEngine } from './smart-pricing-engine'
 import { IMAGE_FALLBACK, fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
 import { BannerSlidesPanel } from './banner-slides-panel'
+import { CustomInquiriesPanel } from './custom-inquiries-panel'
 
 const initialLoginState = { error: '' }
 const RETIRED_SKU_KEY = 'kainchi-retired-sku-vault-v1'
@@ -25,6 +26,7 @@ const ADMIN_TABS = [
   { id: 'feedback', label: 'Feedback' },
   { id: 'faqs', label: 'Manage FAQs' },
   { id: 'leads', label: 'Studio leads' },
+  { id: 'inquiries', label: 'Custom Inquiries' },
   { id: 'alliance', label: 'Alliance & Referrals' },
   { id: 'wallet', label: 'Studio Wallet' },
   { id: 'banner-slides', label: 'Banner Slides' },
@@ -275,6 +277,9 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
         </div>
         <div className="admin-tab-panel" id="admin-panel-leads" role="tabpanel" aria-labelledby="admin-tab-leads" tabIndex={0} hidden={activeAdminTab !== 'leads'}>
           <VisitorLeadsPanel />
+        </div>
+        <div className="admin-tab-panel" id="admin-panel-inquiries" role="tabpanel" aria-labelledby="admin-tab-inquiries" tabIndex={0} hidden={activeAdminTab !== 'inquiries'}>
+          <CustomInquiriesPanel />
         </div>
         <div className="admin-tab-panel" id="admin-panel-alliance" role="tabpanel" aria-labelledby="admin-tab-alliance" tabIndex={0} hidden={activeAdminTab !== 'alliance'}>
           <AllianceReferralsPanel />

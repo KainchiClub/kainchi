@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 import type { CatalogProduct } from './catalog'
 import { FitSizeGuide } from './fit-size-guide'
 import { requestStudioIntake, STUDIO_INTAKE_EVENT, type StudioIntakeRequest } from './studio-intake'
+import { compressForUpload, makeLocalPreview, saveLocalInquiry, type CustomInquiryInput } from './custom-inquiries'
 
 const garmentOptions = [
   'Oversized Tee',
@@ -45,15 +46,58 @@ type IntakeFields = {
   sizes: string[]
   budget: string
   partnerCode: string
+  notes: string
 }
 
 type ReferencePhoto = {
   id: string
   file: File
   previewUrl: string
+  status: 'uploading' | 'ready' | 'local'
+  uploadedUrl?: string
 }
 
-const emptyFields: IntakeFields = { productCodeOrName: '', garments: [], colors: [], customColor: '', sizes: [], budget: '', partnerCode: '' }
+const emptyFields: IntakeFields = { productCodeOrName: '', garments: [], colors: [], customColor: '', sizes: [], budget: '', partnerCode: '', notes: '' }
+
+function selectedColorsFor(fields: IntakeFields) {
+  return fields.colors.map((color) => (
+    color === 'Custom Color' && fields.customColor.trim()
+      ? `Custom Color: ${fields.customColor.trim()}`
+      : color
+  ))
+}
+
+async function uploadReferencePhoto(file: File) {
+  try {
+    const body = new FormData()
+    body.append('file', await compressForUpload(file))
+    const response = await fetch('/api/upload-reference', { method: 'POST', body })
+    if (!response.ok) return null
+    const result: unknown = await response.json()
+    return typeof result === 'object' && result !== null && 'url' in result && typeof result.url === 'string' ? result.url : null
+  } catch {
+    return null
+  }
+}
+
+async function saveInquiry(inquiry: CustomInquiryInput, photos: ReferencePhoto[]) {
+  try {
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), 4000)
+    const response = await fetch('/api/inquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(inquiry),
+      signal: controller.signal,
+      keepalive: true,
+    })
+    window.clearTimeout(timeout)
+    if (response.ok) return
+  } catch {}
+
+  const localPreviews = await Promise.all(photos.filter((photo) => photo.status === 'local').map((photo) => makeLocalPreview(photo.file)))
+  saveLocalInquiry({ ...inquiry, referenceImageUrls: [...inquiry.referenceImageUrls, ...localPreviews.filter(Boolean)] })
+}
 
 function garmentOptionFor(garment: string, productName: string) {
   const value = `${garment} ${productName}`.toLowerCase()
@@ -98,6 +142,7 @@ function initialFieldsFor(request: StudioIntakeRequest): IntakeFields {
     sizes,
     budget: items.length > 0 ? budgetOptionFor(items[0].price) : '',
     partnerCode: '',
+    notes: '',
   }
 }
 
@@ -110,14 +155,19 @@ function isWhatsAppUrl(value: string) {
   }
 }
 
-function makeIntakeMessage(fields: IntakeFields, photoCount: number) {
-  const selectedColors = fields.colors.map((color) => (
-    color === 'Custom Color' && fields.customColor.trim()
-      ? `Custom Color: ${fields.customColor.trim()}`
-      : color
-  ))
+function makeIntakeMessage(fields: IntakeFields, photoCount: number, uploadedUrls: string[]) {
+  const selectedColors = selectedColorsFor(fields)
+  const hasUploads = uploadedUrls.length > 0
+  const localPhotoCount = photoCount - uploadedUrls.length
+  const photoLine = hasUploads
+    ? `${uploadedUrls.length} uploaded (links below)${localPhotoCount > 0 ? ` + ${localPhotoCount} to attach in this chat` : ''}`
+    : photoCount > 0 ? 'Attach selected photos directly in this WhatsApp chat.' : 'None'
+  const attachmentSentence = hasUploads && localPhotoCount === 0
+    ? '(My reference photo links are included below.)'
+    : '(I am attaching my artwork/reference image right below in this chat).'
 
   return [
+    ...(hasUploads ? ['🚨 NEW CUSTOM ORDER + REFERENCE PHOTO UPLOADED 🚨', ''] : []),
     '--------------------------------------------------',
     '✂️ *KAINCHI CLUB — CUSTOM STUDIO INTAKE* ✂️',
     '--------------------------------------------------',
@@ -126,9 +176,11 @@ function makeIntakeMessage(fields: IntakeFields, photoCount: number) {
     `• Color: ${selectedColors.join(', ') || 'None'}`,
     `• Size: ${fields.sizes.join(', ') || 'None'}`,
     `• Budget: ${fields.budget || 'Left Blank'}`,
-    `• Reference Photo Links: ${photoCount > 0 ? 'Attach selected photos directly in this WhatsApp chat.' : 'None'}`,
+    ...(fields.notes.trim() ? [`• Notes: ${fields.notes.trim()}`] : []),
+    `• Reference Photo Links: ${photoLine}`,
+    ...uploadedUrls.map((url, index) => `📸 View Photo${uploadedUrls.length > 1 ? ` ${index + 1}` : ''}: ${url}`),
     '',
-    `Hello Kainchi Club, I would like to order a bespoke piece. Design Details: ${fields.productCodeOrName.trim() || 'Selected bespoke artwork'}${fields.sizes.length > 0 ? ` / ${fields.sizes.join(', ')}` : ''}. (I am attaching my artwork/reference image right below in this chat).`,
+    `Hello Kainchi Club, I would like to order a bespoke piece. Design Details: ${fields.productCodeOrName.trim() || 'Selected bespoke artwork'}${fields.sizes.length > 0 ? ` / ${fields.sizes.join(', ')}` : ''}. ${attachmentSentence}`,
     '"Hi Kainchi Club! I have prepared my custom inquiry. Sharing details here for confirmation!"',
     ...(fields.partnerCode.trim() ? [`• Referred By Partner: ${fields.partnerCode.trim()}`] : []),
     '--------------------------------------------------',
@@ -145,6 +197,21 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
   const [photos, setPhotos] = useState<ReferencePhoto[]>([])
   const [uploadStatus, setUploadStatus] = useState('')
   const [isDragging, setIsDragging] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const isUploading = photos.some((photo) => photo.status === 'uploading')
+
+  function updatePhoto(photoId: string, patch: Partial<ReferencePhoto>) {
+    if (!photosRef.current.some((photo) => photo.id === photoId)) return
+    const nextPhotos = photosRef.current.map((photo) => photo.id === photoId ? { ...photo, ...patch } : photo)
+    photosRef.current = nextPhotos
+    setPhotos(nextPhotos)
+  }
+
+  async function startUpload(photo: ReferencePhoto) {
+    const uploadedUrl = await uploadReferencePhoto(photo.file)
+    updatePhoto(photo.id, uploadedUrl ? { status: 'ready', uploadedUrl } : { status: 'local' })
+    setUploadStatus(uploadedUrl ? '✅ Photo Ready — a direct link will be shared with the studio.' : 'Photo saved on this device. Please attach it in the WhatsApp chat as well.')
+  }
 
   function clearSelectedPhotos() {
     photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.previewUrl))
@@ -217,20 +284,22 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
     const availableSlots = Math.max(0, maxReferencePhotos - photosRef.current.length)
     const acceptedFiles = sizeValidFiles.slice(0, availableSlots)
     const skippedForLimit = sizeValidFiles.length - acceptedFiles.length
-    const addedPhotos = acceptedFiles.map((file) => ({
+    const addedPhotos: ReferencePhoto[] = acceptedFiles.map((file) => ({
       id: crypto.randomUUID(),
       file,
       previewUrl: URL.createObjectURL(file),
+      status: 'uploading',
     }))
 
     if (addedPhotos.length > 0) {
       const nextPhotos = [...photosRef.current, ...addedPhotos]
       photosRef.current = nextPhotos
       setPhotos(nextPhotos)
+      addedPhotos.forEach((photo) => { void startUpload(photo) })
     }
 
     const messages = [
-      addedPhotos.length > 0 ? `${addedPhotos.length} photo${addedPhotos.length === 1 ? '' : 's'} added.` : '',
+      addedPhotos.length > 0 ? `Uploading ${addedPhotos.length} photo${addedPhotos.length === 1 ? '' : 's'}…` : '',
       invalidTypeCount > 0 ? `${invalidTypeCount} file${invalidTypeCount === 1 ? '' : 's'} skipped. Use JPG, PNG, or WEBP images.` : '',
       oversizedCount > 0 ? 'Each photo must be 10MB or smaller.' : '',
       skippedForLimit > 0 ? 'You can attach up to 5 photos.' : '',
@@ -249,10 +318,28 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
     setUploadStatus('Reference photo removed.')
   }
 
-  function proceedToWhatsApp() {
-    const finalIntakeMessage = makeIntakeMessage(fields, photos.length)
-    const waUrl = `https://wa.me/918863075356?text=${encodeURIComponent(finalIntakeMessage)}`
-    window.location.href = waUrl
+  async function proceedToWhatsApp() {
+    if (isSubmitting || isUploading) return
+    setIsSubmitting(true)
+    const currentPhotos = photosRef.current
+    const uploadedUrls = currentPhotos.flatMap((photo) => photo.status === 'ready' && photo.uploadedUrl ? [photo.uploadedUrl] : [])
+    const finalIntakeMessage = makeIntakeMessage(fields, currentPhotos.length, uploadedUrls)
+
+    await saveInquiry({
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      productCode: fields.productCodeOrName.trim(),
+      garment: fields.garments.join(', '),
+      color: selectedColorsFor(fields).join(', '),
+      size: fields.sizes.join(', '),
+      budget: fields.budget,
+      notes: fields.notes.trim(),
+      partnerCode: fields.partnerCode.trim(),
+      referenceImageUrls: uploadedUrls,
+    }, currentPhotos)
+
+    setIsSubmitting(false)
+    window.location.href = `https://wa.me/918863075356?text=${encodeURIComponent(finalIntakeMessage)}`
   }
 
   return (
@@ -413,15 +500,30 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
               {photos.map((photo, index) => (
                 <li className="studio-intake-photo" key={photo.id}>
                   <img src={photo.previewUrl} alt={`Reference photo ${index + 1}: ${photo.file.name}`} />
+                  <span className={`studio-intake-photo-state ${photo.status}`}>
+                    {photo.status === 'uploading' ? 'Uploading…' : photo.status === 'ready' ? '✅ Photo Ready' : 'Attach in chat'}
+                  </span>
                   <button type="button" aria-label={`Remove ${photo.file.name}`} onClick={() => removePhoto(photo.id)}>✕</button>
                 </li>
               ))}
             </ul>
           )}
           {uploadStatus && <p className="studio-intake-upload-status" role="status" aria-live="polite">{uploadStatus}</p>}
-          <p className="studio-intake-upload-note">Photos are not uploaded as links. Tap below to chat on WhatsApp — you can attach your photos directly in the chat with the studio!</p>
+          <p className="studio-intake-upload-note">Photos upload instantly and a direct link is added to your WhatsApp message. If a photo can&apos;t be uploaded, you can attach it directly in the chat with the studio.</p>
           <p className="studio-intake-upload-tip">Tip: You can also tap the 📎 paperclip in WhatsApp to send your photos directly in chat.</p>
         </section>
+
+        <label className="studio-intake-field studio-intake-notes-field" htmlFor="studio-intake-notes">
+          <span>Notes for the Studio (Optional)</span>
+          <textarea
+            id="studio-intake-notes"
+            rows={3}
+            maxLength={1000}
+            value={fields.notes}
+            placeholder="Placement, artwork ideas, deadlines, or anything else"
+            onChange={(event) => setFields((current) => ({ ...current, notes: event.target.value }))}
+          />
+        </label>
 
         <label className="studio-intake-field studio-intake-partner-field" htmlFor="studio-intake-partner-code">
           <span>Referred by a Studio Partner? Enter their Code (Optional)</span>
@@ -437,8 +539,8 @@ export function StudioIntakeModal({ products }: { products: CatalogProduct[] }) 
         </label>
 
         <div className="studio-intake-actions">
-          <button className="studio-intake-proceed" type="button" onClick={proceedToWhatsApp}>
-            Proceed to Studio WhatsApp →
+          <button className="studio-intake-proceed" type="button" onClick={proceedToWhatsApp} disabled={isSubmitting || isUploading} aria-busy={isSubmitting || isUploading}>
+            {isUploading ? 'Uploading photo…' : isSubmitting ? 'Opening WhatsApp…' : 'Proceed to Studio WhatsApp →'}
           </button>
           <a
             className="studio-intake-skip"

@@ -21,6 +21,7 @@ import { FamilyCollectionBanner } from './family-collection-banner'
 import { DeliveryDetailsModal } from './delivery-details-modal'
 import { StudioIntakeModal } from './studio-intake-modal'
 import { StudioAllianceProgram } from './studio-alliance-program'
+import { CollectionStories, matchesStoryFilter, type StoryFilter } from './collection-stories'
 
 const ProductCustomizer = dynamic(() => import('./product-customizer').then((module) => module.ProductCustomizer), { ssr: false })
 const SizeGuideModal = dynamic(() => import('./size-guide-modal').then((module) => module.SizeGuideModal), { ssr: false })
@@ -114,6 +115,11 @@ export function StorefrontClient() {
       if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle)
     }
   }, [availableProducts, featuredProducts])
+  const [storyFilter, setStoryFilter] = useState<StoryFilter>('all')
+  const collectionProducts = useMemo(
+    () => storyFilter === 'all' ? essentials : availableProducts.filter((product) => matchesStoryFilter(product, storyFilter)),
+    [availableProducts, essentials, storyFilter],
+  )
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null)
   const [cartItems, setCartItems] = useState<CartLineItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
@@ -322,9 +328,10 @@ export function StorefrontClient() {
       <SiteHeader />
       <main>
         <HeroShowcase products={availableProducts} />
+        <CollectionStories products={availableProducts} activeFilter={storyFilter} onFilterChange={setStoryFilter} />
         <div className="canvas-band" aria-label="Made with care, worn with feeling"><span>MADE WITH CARE</span><span className="canvas-band-mark"><Scissors aria-hidden="true" /></span><span>WORN WITH FEELING</span></div>
         <FamilyCollectionBanner />
-        <ProductCollection products={essentials} onCustomize={openProduct} />
+        <ProductCollection products={collectionProducts} onCustomize={openProduct} />
         <LetterboxFeedback />
         <ArtworkLibrary products={availableProducts} onCustomize={openProduct} />
         <StudioAllianceProgram />
