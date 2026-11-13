@@ -19,6 +19,14 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return ['kainchi-chi.vercel.app', 'kainchi-psi.vercel.app'].map((legacyHost) => ({
+      source: '/:path*',
+      has: [{ type: 'host', value: legacyHost }],
+      destination: 'https://kainchi-iota.vercel.app/:path*',
+      statusCode: 301,
+    }))
+  },
   async headers() {
     return [
       {

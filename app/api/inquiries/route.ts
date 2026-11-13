@@ -3,7 +3,7 @@ import { isAdminSessionActive } from '@/app/admin/auth'
 import type { CustomInquiry } from '@/components/kainchi/custom-inquiries'
 
 const INQUIRY_PREFIX = 'inquiries/'
-const MAX_LISTED = 200
+const MAX_LISTED = 500
 
 function text(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
@@ -45,7 +45,8 @@ export async function POST(request: Request) {
     storage: 'cloud',
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN
+  if (!token) {
     return Response.json({ fallback: true, error: 'Inquiry storage is not configured yet.' }, { status: 503 })
   }
 
@@ -54,6 +55,8 @@ export async function POST(request: Request) {
       access: 'public',
       addRandomSuffix: true,
       contentType: 'application/json',
+      cacheControlMaxAge: 60,
+      token,
     })
     return Response.json({ ok: true, id })
   } catch (error) {
@@ -66,13 +69,24 @@ export async function GET() {
   if (!(await isAdminSessionActive())) {
     return Response.json({ error: 'Admin access required.' }, { status: 401 })
   }
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return Response.json({ inquiries: [], configured: false })
+  const token = process.env.BLOB_READ_WRITE_TOKEN
+  if (!token) {
+    return Response.json({ inquiries: [], configured: false }, { headers: { 'Cache-Control': 'no-store' } })
   }
 
   try {
-    const { blobs } = await list({ prefix: INQUIRY_PREFIX, limit: MAX_LISTED })
-    const results = await Promise.all(blobs.map(async (blob) => {
+    const blobs: Awaited<ReturnType<typeof list>>['blobs'] = []
+    let cursor: string | undefined
+    do {
+      const page = await list({ prefix: INQUIRY_PREFIX, limit: 1000, cursor, token })
+      blobs.push(...page.blobs)
+      cursor = page.hasMore ? page.cursor : undefined
+    } while (cursor && blobs.length < MAX_LISTED)
+
+    const newestBlobs = blobs
+      .sort((first, second) => new Date(second.uploadedAt).getTime() - new Date(first.uploadedAt).getTime())
+      .slice(0, MAX_LISTED)
+    const results = await Promise.all(newestBlobs.map(async (blob) => {
       try {
         const response = await fetch(blob.url, { cache: 'no-store' })
         return response.ok ? await response.json() as CustomInquiry : null
@@ -83,7 +97,7 @@ export async function GET() {
     const inquiries = results
       .filter((entry): entry is CustomInquiry => entry !== null)
       .sort((first, second) => second.createdAt.localeCompare(first.createdAt))
-    return Response.json({ inquiries, configured: true })
+    return Response.json({ inquiries, configured: true }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('[kainchi] inquiry list failed', error)
     return Response.json({ inquiries: [], configured: true, error: 'Unable to load cloud inquiries.' })
