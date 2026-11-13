@@ -4,7 +4,8 @@ const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MAX_UPLOAD_BYTES = 4_400_000
 
 export async function POST(request: Request) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN
+  if (!token) {
     return Response.json({ fallback: true, error: 'Photo storage is not configured yet.' }, { status: 503 })
   }
 
@@ -32,8 +33,10 @@ export async function POST(request: Request) {
       access: 'public',
       addRandomSuffix: true,
       contentType: file.type,
+      cacheControlMaxAge: 31_536_000,
+      token,
     })
-    return Response.json({ url: blob.url })
+    return Response.json({ url: blob.url }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('[kainchi] reference upload failed', error)
     return Response.json({ fallback: true, error: 'Photo storage is unavailable.' }, { status: 503 })

@@ -5,19 +5,21 @@ import { fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
 import type { CatalogProduct } from './catalog'
 import { requestStudioIntake } from './studio-intake'
 
-export type StoryFilter = 'all' | 'hoodies' | 'tees' | 'polos'
+export type StoryFilter = 'all' | 'hoodies' | 'tees' | 'shirts' | 'jeans'
 
 export const STORY_FILTER_PATTERNS: Record<Exclude<StoryFilter, 'all'>, RegExp> = {
   hoodies: /hoodie/i,
   tees: /tee|t-shirt/i,
-  polos: /polo|\bshirts\b/i,
+  shirts: /^shirts?$/i,
+  jeans: /jean/i,
 }
 
 const STORIES: { id: StoryFilter | 'studio'; label: string }[] = [
   { id: 'all', label: 'All Pieces' },
   { id: 'hoodies', label: 'Hoodies' },
   { id: 'tees', label: 'Oversized Tees' },
-  { id: 'polos', label: 'Polos' },
+  { id: 'shirts', label: 'Shirts' },
+  { id: 'jeans', label: 'Jeans' },
   { id: 'studio', label: 'Custom Studio' },
 ]
 
