@@ -10,7 +10,7 @@ import { getFeaturedProducts, type CatalogProduct } from './catalog'
 import { useCatalogProducts } from './catalog-store'
 import { LetterboxFeedback } from './letterbox-feedback'
 import { HeroShowcase } from './hero-showcase'
-import { ProductCollection } from './product-collection'
+import VirtualLookbook from '../VirtualLookbook'
 import { OrderCart } from './order-cart'
 import { type CartLineDetails, type CartLineItem } from './order'
 import { PackagingShowcase } from './packaging-showcase'
@@ -331,7 +331,7 @@ export function StorefrontClient() {
         <CollectionStories products={availableProducts} activeFilter={storyFilter} onFilterChange={setStoryFilter} />
         <div className="canvas-band" aria-label="Made with care, worn with feeling"><span>MADE WITH CARE</span><span className="canvas-band-mark"><Scissors aria-hidden="true" /></span><span>WORN WITH FEELING</span></div>
         <FamilyCollectionBanner />
-        <ProductCollection products={collectionProducts} onCustomize={openProduct} />
+        <VirtualLookbook />
         <LetterboxFeedback />
         <ArtworkLibrary products={availableProducts} onCustomize={openProduct} />
         <StudioAllianceProgram />
