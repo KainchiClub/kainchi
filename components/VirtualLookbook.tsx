@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, RotateCw, MessageCircle } from "lucide-react";
 
 interface LookbookItem {
@@ -162,7 +162,11 @@ export default function VirtualLookbook() {
   const totalSlides = LOOKBOOK_ITEMS.length + 1;
   const [activeIndex, setActiveIndex] = useState(0);
   const [showAltAngle, setShowAltAngle] = useState(false);
-  const [tilt, setTilt] = useState({ rotateY: 0, rotateX: 0, glareX: 50 });
+
+  // Direct DOM refs for 60fps GPU-accelerated inner model rotation (zero React re-renders)
+  const modelStageRef = useRef<HTMLDivElement | null>(null);
+  const glareRef = useRef<HTMLDivElement | null>(null);
+  const rafIdRef = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
 
   const isExploreSlide = activeIndex === LOOKBOOK_ITEMS.length;
@@ -171,51 +175,94 @@ export default function VirtualLookbook() {
   const nextItem =
     activeIndex + 1 < LOOKBOOK_ITEMS.length ? LOOKBOOK_ITEMS[activeIndex + 1] : null;
 
+  const resetInnerModel = () => {
+    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    if (modelStageRef.current) {
+      modelStageRef.current.style.transform =
+        "perspective(900px) scale(1.04) rotateY(0deg) rotateX(0deg) translateX(0px)";
+    }
+    if (glareRef.current) {
+      glareRef.current.style.opacity = "0";
+    }
+  };
+
+  useEffect(() => {
+    resetInnerModel();
+    return () => {
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, [activeIndex, showAltAngle]);
+
   const goPrev = () => {
     setShowAltAngle(false);
-    setTilt({ rotateY: 0, rotateX: 0, glareX: 50 });
     setActiveIndex((prev) => (prev === 0 ? totalSlides - 1 : prev - 1));
   };
 
   const goNext = () => {
     setShowAltAngle(false);
-    setTilt({ rotateY: 0, rotateX: 0, glareX: 50 });
     setActiveIndex((prev) => (prev === totalSlides - 1 ? 0 : prev + 1));
   };
 
+  // Smoothly rotates ONLY the inner model/subject up to ~32° while keeping outer card frame rock-steady
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!modelStageRef.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    const rotateY = (x - 0.5) * 80;
-    const rotateX = (0.5 - y) * 16;
-    setTilt({ rotateY, rotateX, glareX: x * 100 });
-  };
+    const normX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const normY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
 
-  const resetTilt = () => {
-    setTilt({ rotateY: 0, rotateX: 0, glareX: 50 });
+    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    rafIdRef.current = requestAnimationFrame(() => {
+      if (!modelStageRef.current) return;
+      const offset = normX - 0.5; // -0.5 to +0.5
+      const rotateY = offset * 64; // Smooth ±32° 3D subject turn
+      const rotateX = (0.5 - normY) * 10;
+      const shiftX = -offset * 22; // Parallax depth shift so edges never clip
+      const zoom = 1.12 + Math.abs(offset) * 0.08; // Subtle detail zoom as model turns
+
+      modelStageRef.current.style.transform = `perspective(900px) scale(${zoom.toFixed(3)}) rotateY(${rotateY.toFixed(2)}deg) rotateX(${rotateX.toFixed(2)}deg) translateX(${shiftX.toFixed(1)}px)`;
+
+      if (glareRef.current) {
+        glareRef.current.style.opacity = "0.28";
+        glareRef.current.style.background = `radial-gradient(circle at ${(normX * 100).toFixed(0)}% 30%, rgba(212,175,55,0.55), transparent 65%)`;
+      }
+    });
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
 
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartX.current === null || !modelStageRef.current) return;
+    const diff = e.touches[0].clientX - touchStartX.current;
+    const clamped = Math.max(-120, Math.min(120, diff));
+    const norm = clamped / 240; // -0.5 to +0.5
+    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    rafIdRef.current = requestAnimationFrame(() => {
+      if (!modelStageRef.current) return;
+      const rotateY = norm * 64;
+      const shiftX = -norm * 20;
+      modelStageRef.current.style.transform = `perspective(900px) scale(1.12) rotateY(${rotateY.toFixed(2)}deg) translateX(${shiftX.toFixed(1)}px)`;
+    });
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 45) {
+    if (Math.abs(diff) > 55) {
       if (diff > 0) goNext();
       else goPrev();
+    } else {
+      resetInnerModel();
     }
     touchStartX.current = null;
-    resetTilt();
   };
 
   const handleOrderClick = (item: LookbookItem) => {
     const msg = encodeURIComponent(
       `Hi Kainchi Club! I saw "${item.name}" (${item.price}) in the Virtual Lookbook and would like to order / check available sizes.`
     );
-    window.open(`https://wa.me/?text=${msg}`, "_blank");
+    window.open(`https://wa.me/918863075356?text=${msg}`, "_blank");
   };
 
   const scrollToCatalog = () => {
@@ -234,24 +281,27 @@ export default function VirtualLookbook() {
           Your Next <span className="text-[#D4AF37]">Favorite</span>
         </h2>
         <p className="text-xs md:text-sm text-neutral-400 mt-2">
-          Swipe left or right to switch outfits • Move across card to rotate 40° in 3D
+          Swipe to switch outfits • Glide across the look to turn & zoom the outfit in 3D
         </p>
       </div>
 
       <div
         className="relative max-w-5xl mx-auto flex items-center justify-center min-h-[470px] md:min-h-[560px]"
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         {prevItem && (
           <button
             onClick={goPrev}
             aria-label="Previous piece"
-            className="hidden md:flex flex-col items-center w-44 p-2.5 rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/10 opacity-55 hover:opacity-90 hover:border-[#D4AF37]/50 transition-all -mr-6 z-10 cursor-pointer"
+            className="hidden md:flex flex-col items-center w-44 p-2.5 rounded-2xl bg-white/[0.03] border border-white/10 opacity-55 hover:opacity-90 hover:border-[#D4AF37]/50 transition-all -mr-6 z-10 cursor-pointer"
           >
             <img
               src={encodeURI(prevItem.image)}
               alt={prevItem.name}
+              loading="lazy"
+              decoding="async"
               className="w-full h-52 object-cover rounded-xl mb-2"
             />
             <span className="text-xs font-medium text-neutral-200 truncate w-full">
@@ -261,58 +311,64 @@ export default function VirtualLookbook() {
           </button>
         )}
 
-        <div
-          className="relative z-20 w-full max-w-[330px] md:max-w-[380px] mx-auto select-none"
-          style={{ perspective: "1000px" }}
-          onPointerMove={handlePointerMove}
-          onPointerLeave={resetTilt}
-        >
+        {/* Outer Card Frame stays 100% straight and rock-steady */}
+        <div className="relative z-20 w-full max-w-[330px] md:max-w-[380px] mx-auto select-none">
           {!isExploreSlide && currentItem ? (
-            <div
-              className="relative rounded-3xl overflow-hidden border border-[#D4AF37]/50 bg-[#121212] shadow-[0_20px_60px_rgba(0,0,0,0.85)] transition-transform duration-150 ease-out"
-              style={{
-                transform: `rotateY(${tilt.rotateY}deg) rotateX(${tilt.rotateX}deg)`,
-                transformStyle: "preserve-3d",
-              }}
-            >
-              <div className="absolute top-3 left-3 z-30 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/40 text-[10px] tracking-widest text-[#D4AF37] font-semibold">
+            <div className="relative rounded-3xl overflow-hidden border border-[#D4AF37]/55 bg-[#121212] shadow-[0_20px_60px_rgba(0,0,0,0.85)]">
+              <div className="absolute top-3 left-3 z-30 px-2.5 py-1 rounded-full bg-black/75 border border-[#D4AF37]/40 text-[10px] tracking-widest text-[#D4AF37] font-semibold">
                 {currentItem.viewBadge}
               </div>
 
-              <div className="absolute top-3 right-3 z-30 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-[11px] text-neutral-300">
+              <div className="absolute top-3 right-3 z-30 px-2.5 py-1 rounded-full bg-black/75 text-[11px] text-neutral-300">
                 {activeIndex + 1} / {LOOKBOOK_ITEMS.length}
               </div>
 
               {currentItem.secondImage && (
                 <button
                   onClick={() => setShowAltAngle((s) => !s)}
-                  className="absolute bottom-24 right-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/80 border border-[#D4AF37] text-[#D4AF37] text-xs font-medium shadow-lg hover:bg-[#D4AF37] hover:text-black transition cursor-pointer"
+                  className="absolute bottom-24 right-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/85 border border-[#D4AF37] text-[#D4AF37] text-xs font-medium shadow-lg hover:bg-[#D4AF37] hover:text-black transition cursor-pointer"
                 >
                   <RotateCw className="w-3.5 h-3.5" />
                   {showAltAngle ? "Front View" : "Turn Back"}
                 </button>
               )}
 
-              <div className="relative aspect-[3/4] w-full bg-neutral-900">
-                <img
-                  src={encodeURI(
-                    showAltAngle && currentItem.secondImage
-                      ? currentItem.secondImage
-                      : currentItem.image
-                  )}
-                  alt={currentItem.name}
-                  className="w-full h-full object-cover transition-opacity duration-300"
-                />
+              {/* Inner Viewport: Only the model photo turns & zooms inside the fixed frame */}
+              <div
+                className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden cursor-grab active:cursor-grabbing"
+                onPointerMove={handlePointerMove}
+                onPointerLeave={resetInnerModel}
+              >
                 <div
-                  className="pointer-events-none absolute inset-0 opacity-30 transition-opacity"
+                  ref={modelStageRef}
+                  className="w-full h-full will-change-transform transition-transform duration-150 ease-out"
                   style={{
-                    background: `radial-gradient(circle at ${tilt.glareX}% 30%, rgba(212,175,55,0.5), transparent 65%)`,
+                    transform:
+                      "perspective(900px) scale(1.04) rotateY(0deg) rotateX(0deg) translateX(0px)",
+                    transformStyle: "preserve-3d",
                   }}
+                >
+                  <img
+                    src={encodeURI(
+                      showAltAngle && currentItem.secondImage
+                        ? currentItem.secondImage
+                        : currentItem.image
+                    )}
+                    alt={currentItem.name}
+                    decoding="async"
+                    className="w-full h-full object-cover pointer-events-none"
+                  />
+                </div>
+
+                <div
+                  ref={glareRef}
+                  className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
                 />
-                <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
               </div>
 
-              <div className="relative -mt-16 mx-3 mb-3 p-3.5 rounded-2xl bg-[#141414]/95 backdrop-blur-xl border border-[#D4AF37]/40 flex items-center justify-between gap-3">
+              {/* Fixed Bottom Info & WhatsApp Order Bar */}
+              <div className="relative z-30 -mt-16 mx-3 mb-3 p-3.5 rounded-2xl bg-[#141414]/95 border border-[#D4AF37]/40 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-wider text-neutral-400">
                     {currentItem.category}
@@ -362,11 +418,13 @@ export default function VirtualLookbook() {
           <button
             onClick={goNext}
             aria-label="Next piece"
-            className="hidden md:flex flex-col items-center w-44 p-2.5 rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/10 opacity-55 hover:opacity-90 hover:border-[#D4AF37]/50 transition-all -ml-6 z-10 cursor-pointer"
+            className="hidden md:flex flex-col items-center w-44 p-2.5 rounded-2xl bg-white/[0.03] border border-white/10 opacity-55 hover:opacity-90 hover:border-[#D4AF37]/50 transition-all -ml-6 z-10 cursor-pointer"
           >
             <img
               src={encodeURI(nextItem.image)}
               alt={nextItem.name}
+              loading="lazy"
+              decoding="async"
               className="w-full h-52 object-cover rounded-xl mb-2"
             />
             <span className="text-xs font-medium text-neutral-200 truncate w-full">
