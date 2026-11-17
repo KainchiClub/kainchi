@@ -169,10 +169,16 @@ export default function VirtualLookbook() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showAltAngle, setShowAltAngle] = useState(false);
 
+  const cardTrackRef = useRef<HTMLDivElement | null>(null);
   const modelStageRef = useRef<HTMLDivElement | null>(null);
   const glareRef = useRef<HTMLDivElement | null>(null);
   const rafIdRef = useRef<number | null>(null);
-  const touchStartX = useRef<number | null>(null);
+
+  // Unified Finger / Trackpad / Mouse Drag State
+  const dragStartX = useRef<number | null>(null);
+  const dragCurrentX = useRef<number>(0);
+  const isDragging = useRef<boolean>(false);
+  const wheelLockRef = useRef<number>(0);
 
   const isExploreSlide = activeIndex === LOOKBOOK_ITEMS.length;
   const currentItem = !isExploreSlide ? LOOKBOOK_ITEMS[activeIndex] : null;
@@ -180,8 +186,12 @@ export default function VirtualLookbook() {
   const nextItem =
     activeIndex + 1 < LOOKBOOK_ITEMS.length ? LOOKBOOK_ITEMS[activeIndex + 1] : null;
 
-  const resetInnerModel = () => {
+  const resetTransforms = () => {
     if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    if (cardTrackRef.current) {
+      cardTrackRef.current.style.transition = "transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)";
+      cardTrackRef.current.style.transform = "translate3d(0px, 0, 0) rotate(0deg)";
+    }
     if (modelStageRef.current) {
       modelStageRef.current.style.transform =
         "perspective(900px) scale(1.04) rotateY(0deg) rotateX(0deg) translateX(0px)";
@@ -192,7 +202,7 @@ export default function VirtualLookbook() {
   };
 
   useEffect(() => {
-    resetInnerModel();
+    resetTransforms();
     return () => {
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
@@ -208,8 +218,55 @@ export default function VirtualLookbook() {
     setActiveIndex((prev) => (prev === totalSlides - 1 ? 0 : prev + 1));
   };
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!modelStageRef.current) return;
+  // Start finger touch or mouse/trackpad press-drag anywhere on the carousel
+  const handleSwipeStart = (clientX: number) => {
+    dragStartX.current = clientX;
+    dragCurrentX.current = 0;
+    isDragging.current = true;
+    if (cardTrackRef.current) {
+      cardTrackRef.current.style.transition = "none";
+    }
+  };
+
+  const handleSwipeMove = (clientX: number) => {
+    if (!isDragging.current || dragStartX.current === null) return;
+    const deltaX = clientX - dragStartX.current;
+    dragCurrentX.current = deltaX;
+
+    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    rafIdRef.current = requestAnimationFrame(() => {
+      const clamped = Math.max(-140, Math.min(140, deltaX));
+      if (cardTrackRef.current) {
+        const tilt = (clamped / 140) * 3.5;
+        cardTrackRef.current.style.transform = `translate3d(${(clamped * 0.55).toFixed(1)}px, 0, 0) rotate(${tilt.toFixed(2)}deg)`;
+      }
+      if (modelStageRef.current) {
+        const norm = clamped / 240;
+        const rotateY = norm * 64;
+        const shiftX = -norm * 20;
+        modelStageRef.current.style.transform = `perspective(900px) scale(1.12) rotateY(${rotateY.toFixed(2)}deg) translateX(${shiftX.toFixed(1)}px)`;
+      }
+    });
+  };
+
+  const handleSwipeEnd = () => {
+    if (!isDragging.current) return;
+    const deltaX = dragCurrentX.current;
+    isDragging.current = false;
+    dragStartX.current = null;
+    dragCurrentX.current = 0;
+
+    if (Math.abs(deltaX) > 42) {
+      if (deltaX < 0) goNext();
+      else goPrev();
+    } else {
+      resetTransforms();
+    }
+  };
+
+  // Hover 3D tilt when moving cursor without pressing
+  const handleModelHoverMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging.current || !modelStageRef.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const normX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const normY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
@@ -232,34 +289,15 @@ export default function VirtualLookbook() {
     });
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (touchStartX.current === null || !modelStageRef.current) return;
-    const diff = e.touches[0].clientX - touchStartX.current;
-    const clamped = Math.max(-120, Math.min(120, diff));
-    const norm = clamped / 240;
-    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
-    rafIdRef.current = requestAnimationFrame(() => {
-      if (!modelStageRef.current) return;
-      const rotateY = norm * 64;
-      const shiftX = -norm * 20;
-      modelStageRef.current.style.transform = `perspective(900px) scale(1.12) rotateY(${rotateY.toFixed(2)}deg) translateX(${shiftX.toFixed(1)}px)`;
-    });
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 55) {
-      if (diff > 0) goNext();
+  // Two-finger laptop trackpad horizontal swipe support
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(e.deltaX) > 28 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      const now = Date.now();
+      if (now - wheelLockRef.current < 450) return;
+      wheelLockRef.current = now;
+      if (e.deltaX > 0) goNext();
       else goPrev();
-    } else {
-      resetInnerModel();
     }
-    touchStartX.current = null;
   };
 
   const handleOrderClick = (item: LookbookItem) => {
@@ -286,15 +324,24 @@ export default function VirtualLookbook() {
           Your Next <span className="text-[#D4AF37]">Favorite</span>
         </h2>
         <p className="text-xs md:text-sm text-neutral-400 mt-2">
-          Swipe to switch outfits • Glide across the look to turn & zoom the outfit in 3D
+          Swipe or drag with your finger to switch outfits • Glide across the look to turn &amp; zoom in 3D
         </p>
       </div>
 
       <div
         className="relative max-w-5xl mx-auto flex items-center justify-center min-h-[470px] md:min-h-[560px]"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: "pan-y" }}
+        onWheel={handleWheel}
+        onTouchStart={(e) => handleSwipeStart(e.touches[0].clientX)}
+        onTouchMove={(e) => handleSwipeMove(e.touches[0].clientX)}
+        onTouchEnd={handleSwipeEnd}
+        onMouseDown={(e) => {
+          if ((e.target as HTMLElement).closest("button")) return;
+          handleSwipeStart(e.clientX);
+        }}
+        onMouseMove={(e) => handleSwipeMove(e.clientX)}
+        onMouseUp={handleSwipeEnd}
+        onMouseLeave={handleSwipeEnd}
       >
         {prevItem && (
           <button
@@ -307,7 +354,8 @@ export default function VirtualLookbook() {
               alt={prevItem.name}
               loading="lazy"
               decoding="async"
-              className="w-full h-52 object-cover rounded-xl mb-2"
+              draggable={false}
+              className="w-full h-52 object-cover rounded-xl mb-2 pointer-events-none"
             />
             <span className="text-xs font-medium text-neutral-200 truncate w-full">
               {prevItem.name}
@@ -316,7 +364,10 @@ export default function VirtualLookbook() {
           </button>
         )}
 
-        <div className="relative z-20 w-full max-w-[330px] md:max-w-[380px] mx-auto select-none">
+        <div
+          ref={cardTrackRef}
+          className="relative z-20 w-full max-w-[330px] md:max-w-[380px] mx-auto select-none will-change-transform"
+        >
           {!isExploreSlide && currentItem ? (
             <div className="relative rounded-3xl overflow-hidden border border-[#D4AF37]/55 bg-[#121212] shadow-[0_20px_60px_rgba(0,0,0,0.85)]">
               <div className="absolute top-3 left-3 z-30 px-2.5 py-1 rounded-full bg-black/75 border border-[#D4AF37]/40 text-[10px] tracking-widest text-[#D4AF37] font-semibold">
@@ -339,8 +390,10 @@ export default function VirtualLookbook() {
 
               <div
                 className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden cursor-grab active:cursor-grabbing"
-                onPointerMove={handlePointerMove}
-                onPointerLeave={resetInnerModel}
+                onPointerMove={handleModelHoverMove}
+                onPointerLeave={() => {
+                  if (!isDragging.current) resetTransforms();
+                }}
               >
                 <div
                   ref={modelStageRef}
@@ -359,6 +412,7 @@ export default function VirtualLookbook() {
                     )}
                     alt={currentItem.name}
                     decoding="async"
+                    draggable={false}
                     onError={(e) => {
                       const fallback = currentItem.fallbackImage || "/lookbook/Red Flora Shirt.png";
                       if (!e.currentTarget.src.endsWith(encodeURI(fallback))) {
@@ -433,7 +487,8 @@ export default function VirtualLookbook() {
               alt={nextItem.name}
               loading="lazy"
               decoding="async"
-              className="w-full h-52 object-cover rounded-xl mb-2"
+              draggable={false}
+              className="w-full h-52 object-cover rounded-xl mb-2 pointer-events-none"
             />
             <span className="text-xs font-medium text-neutral-200 truncate w-full">
               {nextItem.name}
