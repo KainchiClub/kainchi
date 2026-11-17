@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
+import { AtelierLuxuryLayer } from './atelier-luxury-layer'
 import { getFeaturedProducts, type CatalogProduct } from './catalog'
 import { useCatalogProducts } from './catalog-store'
 import { LetterboxFeedback } from './letterbox-feedback'
@@ -51,8 +52,6 @@ function pickRouterInternals(state: HistoryStateRecord): HistoryStateRecord | nu
   return { __NA: state.__NA, __PRIVATE_NEXTJS_INTERNALS_TREE: state.__PRIVATE_NEXTJS_INTERNALS_TREE }
 }
 
-// Next.js reloads the whole document when it pops an entry without its `__NA` marker,
-// so every overlay entry must carry the router internals, even if the current entry lost them.
 function mergeOverlayHistoryState(entry: StorefrontOverlayHistoryEntry | null, routerInternals: HistoryStateRecord | null) {
   const baseState = readHistoryState()
   const withRouter = baseState.__NA || !routerInternals ? baseState : { ...routerInternals, ...baseState }
@@ -176,7 +175,6 @@ export function StorefrontClient() {
 
   useEffect(() => {
     captureRouterInternals()
-    // A reload while an overlay was open leaves a stale marker on the current entry.
     if (readHistoryState()[OVERLAY_HISTORY_KEY]) {
       try { window.history.replaceState(mergeOverlayHistoryState(null, routerInternalsRef.current), '', window.location.href) } catch {}
     }
@@ -216,7 +214,6 @@ export function StorefrontClient() {
       event.preventDefault()
     }
 
-    // In-page anchors would otherwise create router-less history entries that force a full reload on Back.
     const handleAnchorClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
       const anchor = (event.target as Element | null)?.closest?.('a[href^="#"]')
@@ -275,7 +272,6 @@ export function StorefrontClient() {
     if (closingTimeoutRef.current !== null) return
 
     window.history.back()
-    // If the browser never delivers popstate, close locally instead of leaving the overlay stuck.
     closingTimeoutRef.current = window.setTimeout(() => {
       closingTimeoutRef.current = null
       if (overlayHistoryRef.current) finishOverlayClose()
@@ -325,6 +321,7 @@ export function StorefrontClient() {
 
   return (
     <>
+      <AtelierLuxuryLayer />
       <SiteHeader />
       <main>
         <HeroShowcase products={availableProducts} />
