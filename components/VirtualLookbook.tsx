@@ -85,9 +85,9 @@ const LOOKBOOK_ITEMS: LookbookItem[] = [
     category: "Dual-View Archive",
     price: "₹5,999",
     viewBadge: "FULL FIT",
-    image: "https://lh3.googleusercontent.com/d/1vpKzAquvP-AwT255suUuiI0_P0lDFz30=w1000-rw",
+    image: "https://lh3.googleusercontent.com/d/1vpKzAquvP-AwT255suUuiI0_P0lDFz30=w720-rw",
     fallbackImage: "/lookbook/Red Flora Shirt.png",
-    secondImage: "https://lh3.googleusercontent.com/d/1B9Y5czqId8nT_AA9ZieE8SZBSjJfmh8I=w1000-rw",
+    secondImage: "https://lh3.googleusercontent.com/d/1B9Y5czqId8nT_AA9ZieE8SZBSjJfmh8I=w720-rw",
   },
   {
     id: "the-royal-derby",
@@ -156,7 +156,8 @@ const LOOKBOOK_ITEMS: LookbookItem[] = [
 ];
 
 function resolveItemSrc(src: string) {
-  return src.startsWith("http") ? src : encodeURI(src);
+  if (src.startsWith("http")) return src;
+  return `/_next/image?url=${encodeURIComponent(src)}&w=640&q=75`;
 }
 
 export default function VirtualLookbook() {
@@ -168,6 +169,7 @@ export default function VirtualLookbook() {
   const modelStageRef = useRef<HTMLDivElement | null>(null);
   const glareRef = useRef<HTMLDivElement | null>(null);
   const rafIdRef = useRef<number | null>(null);
+  const stageRectRef = useRef<DOMRect | null>(null);
 
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
@@ -184,6 +186,7 @@ export default function VirtualLookbook() {
 
   const resetTransforms = () => {
     if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    stageRectRef.current = null;
     if (cardTrackRef.current) {
       cardTrackRef.current.style.transition = "transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)";
       cardTrackRef.current.style.transform = "translate3d(0px, 0, 0) rotate(0deg)";
@@ -232,7 +235,6 @@ export default function VirtualLookbook() {
     });
   };
 
-  // Dedicated Mobile Finger Touch Handlers
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length !== 1) return;
     touchStartX.current = e.touches[0].clientX;
@@ -272,7 +274,6 @@ export default function VirtualLookbook() {
     }
   };
 
-  // Desktop Mouse Drag Handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest("button")) return;
     mouseDownX.current = e.clientX;
@@ -299,10 +300,14 @@ export default function VirtualLookbook() {
     }
   };
 
-  // Desktop Hover 3D Tilt (only when not dragging)
   const handleModelHoverMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "touch" || mouseDownX.current !== null || !modelStageRef.current) return;
-    const rect = e.currentTarget.getBoundingClientRect();
+    if (!stageRectRef.current) {
+      stageRectRef.current = e.currentTarget.getBoundingClientRect();
+    }
+    const rect = stageRectRef.current;
+    if (!rect || rect.width <= 0 || rect.height <= 0) return;
+
     const normX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const normY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
 
@@ -383,6 +388,8 @@ export default function VirtualLookbook() {
             <img
               src={resolveItemSrc(prevItem.image)}
               alt={prevItem.name}
+              width={160}
+              height={208}
               loading="lazy"
               decoding="async"
               draggable={false}
@@ -421,6 +428,9 @@ export default function VirtualLookbook() {
 
               <div
                 className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden cursor-grab active:cursor-grabbing"
+                onPointerEnter={(e) => {
+                  stageRectRef.current = e.currentTarget.getBoundingClientRect();
+                }}
                 onPointerMove={handleModelHoverMove}
                 onPointerLeave={() => {
                   if (mouseDownX.current === null && touchStartX.current === null) resetTransforms();
@@ -442,12 +452,15 @@ export default function VirtualLookbook() {
                         : currentItem.image
                     )}
                     alt={currentItem.name}
+                    width={380}
+                    height={507}
+                    loading="lazy"
                     decoding="async"
                     draggable={false}
                     onError={(e) => {
                       const fallback = currentItem.fallbackImage || "/lookbook/Red Flora Shirt.png";
-                      if (!e.currentTarget.src.endsWith(encodeURI(fallback))) {
-                        e.currentTarget.src = encodeURI(fallback);
+                      if (!e.currentTarget.src.includes(encodeURIComponent(fallback))) {
+                        e.currentTarget.src = resolveItemSrc(fallback);
                       }
                     }}
                     className="w-full h-full object-cover pointer-events-none"
@@ -516,6 +529,8 @@ export default function VirtualLookbook() {
             <img
               src={resolveItemSrc(nextItem.image)}
               alt={nextItem.name}
+              width={160}
+              height={208}
               loading="lazy"
               decoding="async"
               draggable={false}
