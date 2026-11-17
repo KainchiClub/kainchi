@@ -10,6 +10,7 @@ interface LookbookItem {
   price: string;
   viewBadge: "FRONT ART" | "FULL FIT" | "BACK MASTERPIECE";
   image: string;
+  fallbackImage?: string;
   secondImage?: string;
 }
 
@@ -87,8 +88,9 @@ const LOOKBOOK_ITEMS: LookbookItem[] = [
     category: "Dual-View Archive",
     price: "₹5,999",
     viewBadge: "FULL FIT",
-    image: "/lookbook/The Red Velvet.png",
-    secondImage: "/lookbook/The Red Velvet Back.png",
+    image: "https://lh3.googleusercontent.com/d/1vpKzAquvP-AwT255suUuiI0_P0lDFz30=w1000-rw",
+    fallbackImage: "/lookbook/Red Flora Shirt.png",
+    secondImage: "https://lh3.googleusercontent.com/d/1B9Y5czqId8nT_AA9ZieE8SZBSjJfmh8I=w1000-rw",
   },
 
   // --- STAGE 3: OVER-THE-SHOULDER BACK MASTERPIECES ---
@@ -157,6 +159,10 @@ const LOOKBOOK_ITEMS: LookbookItem[] = [
     image: "/lookbook/Imperial Peackock.png",
   },
 ];
+
+function resolveItemSrc(src: string) {
+  return src.startsWith("http") ? src : encodeURI(src);
+}
 
 export default function VirtualLookbook() {
   const totalSlides = LOOKBOOK_ITEMS.length + 1;
@@ -297,7 +303,7 @@ export default function VirtualLookbook() {
             className="hidden md:flex flex-col items-center w-44 p-2.5 rounded-2xl bg-white/[0.03] border border-white/10 opacity-55 hover:opacity-90 hover:border-[#D4AF37]/50 transition-all -mr-6 z-10 cursor-pointer"
           >
             <img
-              src={encodeURI(prevItem.image)}
+              src={resolveItemSrc(prevItem.image)}
               alt={prevItem.name}
               loading="lazy"
               decoding="async"
@@ -346,13 +352,19 @@ export default function VirtualLookbook() {
                   }}
                 >
                   <img
-                    src={encodeURI(
+                    src={resolveItemSrc(
                       showAltAngle && currentItem.secondImage
                         ? currentItem.secondImage
                         : currentItem.image
                     )}
                     alt={currentItem.name}
                     decoding="async"
+                    onError={(e) => {
+                      const fallback = currentItem.fallbackImage || "/lookbook/Red Flora Shirt.png";
+                      if (!e.currentTarget.src.endsWith(encodeURI(fallback))) {
+                        e.currentTarget.src = encodeURI(fallback);
+                      }
+                    }}
                     className="w-full h-full object-cover pointer-events-none"
                   />
                 </div>
@@ -417,7 +429,7 @@ export default function VirtualLookbook() {
             className="hidden md:flex flex-col items-center w-44 p-2.5 rounded-2xl bg-white/[0.03] border border-white/10 opacity-55 hover:opacity-90 hover:border-[#D4AF37]/50 transition-all -ml-6 z-10 cursor-pointer"
           >
             <img
-              src={encodeURI(nextItem.image)}
+              src={resolveItemSrc(nextItem.image)}
               alt={nextItem.name}
               loading="lazy"
               decoding="async"
