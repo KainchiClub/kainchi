@@ -5,6 +5,7 @@ import { Volume2, VolumeX } from 'lucide-react'
 
 export function AtelierLuxuryLayer() {
   const [introVisible, setIntroVisible] = useState(true)
+  const [vaultOpened, setVaultOpened] = useState(false)
   const [introFading, setIntroFading] = useState(false)
   const [soundOn, setSoundOn] = useState(false)
 
@@ -13,11 +14,13 @@ export function AtelierLuxuryLayer() {
   const audioCtxRef = useRef<AudioContext | null>(null)
   const masterGainRef = useRef<GainNode | null>(null)
 
-  // 1. Signature Golden Atelier Curtain Reveal (2.5s readable hold + smooth fade)
+  // 1. 3D Collector's Vault Lid Open + KAINCHI CLUB Reveal (Mobile + Desktop)
   useEffect(() => {
-    const fadeTimer = window.setTimeout(() => setIntroFading(true), 2400)
-    const hideTimer = window.setTimeout(() => setIntroVisible(false), 3150)
+    const openTimer = window.setTimeout(() => setVaultOpened(true), 320)
+    const fadeTimer = window.setTimeout(() => setIntroFading(true), 2550)
+    const hideTimer = window.setTimeout(() => setIntroVisible(false), 3250)
     return () => {
+      window.clearTimeout(openTimer)
       window.clearTimeout(fadeTimer)
       window.clearTimeout(hideTimer)
     }
@@ -47,7 +50,7 @@ export function AtelierLuxuryLayer() {
           }
         }
       },
-      { threshold: 0.08, rootMargin: '0px 0px -30px 0px' },
+      { threshold: 0.06, rootMargin: '0px 0px -20px 0px' },
     )
 
     revealTargets.forEach((el) => {
@@ -61,7 +64,7 @@ export function AtelierLuxuryLayer() {
     }
   }, [])
 
-  // 3. Interactive 3D Card Tilt + Golden Spotlight + Luxury Ring Cursor
+  // 3. Desktop 3D Card Tilt + Luxury Ring Cursor
   useEffect(() => {
     const isTouch = window.matchMedia('(pointer: coarse)').matches
     if (isTouch) return
@@ -105,7 +108,6 @@ export function AtelierLuxuryLayer() {
         cursorRingRef.current.style.marginTop = interactive ? '-21px' : '-11px'
       }
 
-      // Live 3D Perspective Tilt & Golden Spotlight on Product Cards
       const card = el?.closest('.art-card') as HTMLElement | null
       if (card) {
         if (activeTiltCard && activeTiltCard !== card) resetTiltCard()
@@ -195,18 +197,14 @@ export function AtelierLuxuryLayer() {
   return (
     <>
       <style>{`
-        @keyframes kcThreadDraw {
-          0% { transform: scaleX(0); opacity: 0.3; }
-          100% { transform: scaleX(1); opacity: 1; }
-        }
-        @keyframes kcTitleRise {
-          0% { opacity: 0; transform: translateY(14px); letter-spacing: 0.16em; }
-          100% { opacity: 1; transform: translateY(0); letter-spacing: 0.26em; }
-        }
         @keyframes kcHeroCinemaDrift {
           0% { transform: scale(1) translate3d(0, 0, 0); }
           50% { transform: scale(1.05) translate3d(-0.7%, -0.7%, 0); }
           100% { transform: scale(1) translate3d(0, 0, 0); }
+        }
+        @keyframes kcSealPulse {
+          0%, 100% { box-shadow: 0 0 18px rgba(212, 175, 55, 0.45); }
+          50% { box-shadow: 0 0 32px rgba(212, 175, 55, 0.85); }
         }
         .hero-gallery {
           overflow: hidden;
@@ -246,10 +244,6 @@ export function AtelierLuxuryLayer() {
         .art-card:hover {
           box-shadow: 0 24px 48px rgba(0, 0, 0, 0.16);
         }
-        .button-crimson, .product-order {
-          position: relative;
-          overflow: hidden;
-        }
       `}</style>
 
       {/* Top Golden Scroll Progress Thread */}
@@ -278,7 +272,7 @@ export function AtelierLuxuryLayer() {
         />
       </div>
 
-      {/* Subtle Golden Ring Cursor */}
+      {/* Subtle Golden Ring Cursor (Desktop) */}
       <div
         ref={cursorRingRef}
         aria-hidden="true"
@@ -307,30 +301,30 @@ export function AtelierLuxuryLayer() {
         aria-label={soundOn ? 'Mute Atelier Ambient Sound' : 'Play Atelier Ambient Sound'}
         style={{
           position: 'fixed',
-          bottom: '18px',
-          left: '18px',
+          bottom: '16px',
+          left: '16px',
           zIndex: 9990,
           display: 'inline-flex',
           alignItems: 'center',
           gap: '7px',
-          padding: '8px 14px',
+          padding: '8px 13px',
           borderRadius: '9999px',
-          background: 'rgba(12, 12, 12, 0.86)',
+          background: 'rgba(12, 12, 12, 0.88)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(212, 175, 55, 0.45)',
           color: '#f5e29f',
           fontSize: '10px',
-          letterSpacing: '0.18em',
+          letterSpacing: '0.16em',
           textTransform: 'uppercase',
           cursor: 'pointer',
           boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
         }}
       >
         {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
-        <span>{soundOn ? 'Atelier Sound · On' : 'Atelier Sound'}</span>
+        <span>{soundOn ? 'Sound · On' : 'Atelier Sound'}</span>
       </button>
 
-      {/* Signature Atelier Curtain Intro (2.5s readable hold) */}
+      {/* 3D Collector's Vault Unboxing Curtain (Works on Mobile & Desktop) */}
       {introVisible && (
         <div
           aria-hidden="true"
@@ -338,57 +332,155 @@ export function AtelierLuxuryLayer() {
             position: 'fixed',
             inset: 0,
             zIndex: 9999,
-            background: 'radial-gradient(circle at center, #14110b 0%, #070707 100%)',
+            background: 'radial-gradient(circle at center, #1b0c10 0%, #070707 100%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '14px',
+            padding: '20px',
             opacity: introFading ? 0 : 1,
-            transition: 'opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1)',
+            transition: 'opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
             pointerEvents: 'none',
           }}
         >
-          <span
-            style={{
-              fontSize: '10px',
-              letterSpacing: '0.38em',
-              textTransform: 'uppercase',
-              color: '#d4af37',
-              animation: 'kcTitleRise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards',
-            }}
-          >
-            WEARABLE ART ATELIER
-          </span>
+          {/* 3D Rigid Gift Vault Box */}
           <div
             style={{
-              fontFamily: 'serif',
-              fontSize: 'clamp(1.75rem, 4.5vw, 2.75rem)',
-              letterSpacing: '0.26em',
-              color: '#ffffff',
-              animation: 'kcTitleRise 1s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+              position: 'relative',
+              width: 'min(310px, 84vw)',
+              height: '210px',
+              perspective: '1100px',
             }}
           >
-            KAINCHI <span style={{ color: '#d4af37', fontWeight: 300 }}>CLUB</span>
+            {/* Inner Crimson Silk Vault Base */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '20px',
+                background: 'linear-gradient(145deg, #2b0d14 0%, #14070a 65%, #0c0a0a 100%)',
+                border: '1px solid rgba(212, 175, 55, 0.55)',
+                boxShadow: '0 28px 70px rgba(0, 0, 0, 0.85), inset 0 0 36px rgba(139, 30, 36, 0.45)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '18px',
+                textAlign: 'center',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '9px',
+                  letterSpacing: '0.32em',
+                  textTransform: 'uppercase',
+                  color: '#d4af37',
+                  marginBottom: '8px',
+                  opacity: vaultOpened ? 1 : 0,
+                  transform: vaultOpened ? 'translateY(0)' : 'translateY(10px)',
+                  transition: 'all 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.25s',
+                }}
+              >
+                THE COLLECTOR&apos;S VAULT
+              </span>
+
+              <div
+                style={{
+                  fontFamily: 'serif',
+                  fontSize: 'clamp(1.45rem, 6vw, 2.05rem)',
+                  letterSpacing: '0.22em',
+                  color: '#ffffff',
+                  textShadow: '0 6px 24px rgba(212, 175, 55, 0.35)',
+                  opacity: vaultOpened ? 1 : 0,
+                  transform: vaultOpened
+                    ? 'translate3d(0, -4px, 35px) scale(1.03)'
+                    : 'translate3d(0, 14px, 0px) scale(0.94)',
+                  transition: 'all 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.3s',
+                }}
+              >
+                KAINCHI <span style={{ color: '#d4af37', fontWeight: 300 }}>CLUB</span>
+              </div>
+
+              <div
+                style={{
+                  width: '120px',
+                  height: '1px',
+                  margin: '10px auto',
+                  background: 'linear-gradient(90deg, transparent, #d4af37, transparent)',
+                  opacity: vaultOpened ? 1 : 0,
+                  transition: 'opacity 0.9s ease 0.45s',
+                }}
+              />
+
+              <span
+                style={{
+                  fontSize: '9px',
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255, 255, 255, 0.65)',
+                  opacity: vaultOpened ? 1 : 0,
+                  transition: 'opacity 0.9s ease 0.55s',
+                }}
+              >
+                WEAR YOUR OWN ART
+              </span>
+            </div>
+
+            {/* 3D Hinged Top Lid with Golden Wax Seal */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '20px',
+                background: 'linear-gradient(160deg, #4b121d 0%, #24090f 100%)',
+                border: '1px solid rgba(212, 175, 55, 0.75)',
+                transformOrigin: 'top center',
+                transform: vaultOpened ? 'rotateX(118deg)' : 'rotateX(0deg)',
+                opacity: vaultOpened ? 0.12 : 1,
+                transition: 'transform 1.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.9s ease 0.35s',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backfaceVisibility: 'hidden',
+              }}
+            >
+              {/* Crimson Silk Ribbon Line */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  height: '18px',
+                  background: 'rgba(139, 30, 36, 0.75)',
+                  borderTop: '1px solid rgba(212, 175, 55, 0.35)',
+                  borderBottom: '1px solid rgba(212, 175, 55, 0.35)',
+                }}
+              />
+              {/* Golden Wax Seal */}
+              <div
+                style={{
+                  position: 'relative',
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '9999px',
+                  background: 'radial-gradient(circle at 35% 35%, #f7e39c, #c99b2e 70%, #8c6714 100%)',
+                  border: '2px solid #f5e29f',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'serif',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  letterSpacing: '0.1em',
+                  color: '#24090f',
+                  animation: 'kcSealPulse 1.4s ease-in-out infinite',
+                }}
+              >
+                K·C
+              </div>
+            </div>
           </div>
-          <div
-            style={{
-              width: '160px',
-              height: '1px',
-              background: 'linear-gradient(90deg, transparent, #d4af37, transparent)',
-              animation: 'kcThreadDraw 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards',
-            }}
-          />
-          <span
-            style={{
-              fontSize: '11px',
-              letterSpacing: '0.18em',
-              color: 'rgba(255,255,255,0.55)',
-              marginTop: '4px',
-            }}
-          >
-            SMALL-BATCH · HAND-CRAFTED
-          </span>
         </div>
       )}
     </>
