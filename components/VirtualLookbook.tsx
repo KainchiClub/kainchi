@@ -155,15 +155,42 @@ const LOOKBOOK_ITEMS: LookbookItem[] = [
   },
 ];
 
+// Group items by their contiguous segment (FRONT ART, FULL FIT, BACK MASTERPIECE)
+// and shuffle the order of segments while keeping every segment's internal sequence intact.
+function buildShuffledLookbookSegments(items: LookbookItem[]): LookbookItem[] {
+  const segments: LookbookItem[][] = [];
+  for (const item of items) {
+    const lastSegment = segments[segments.length - 1];
+    if (lastSegment && lastSegment[0].viewBadge === item.viewBadge) {
+      lastSegment.push(item);
+    } else {
+      segments.push([item]);
+    }
+  }
+
+  for (let i = segments.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [segments[i], segments[j]] = [segments[j], segments[i]];
+  }
+
+  return segments.flat();
+}
+
 function resolveItemSrc(src: string) {
   if (src.startsWith("http")) return src;
   return `/_next/image?url=${encodeURIComponent(src)}&w=640&q=75`;
 }
 
 export default function VirtualLookbook() {
-  const totalSlides = LOOKBOOK_ITEMS.length + 1;
+  const [orderedItems, setOrderedItems] = useState<LookbookItem[]>(LOOKBOOK_ITEMS);
+  const totalSlides = orderedItems.length + 1;
   const [activeIndex, setActiveIndex] = useState(0);
   const [showAltAngle, setShowAltAngle] = useState(false);
+
+  // Shuffle segment blocks on client mount so every visit starts with a fresh segment sequence
+  useEffect(() => {
+    setOrderedItems(buildShuffledLookbookSegments(LOOKBOOK_ITEMS));
+  }, []);
 
   const cardTrackRef = useRef<HTMLDivElement | null>(null);
   const modelStageRef = useRef<HTMLDivElement | null>(null);
@@ -178,11 +205,11 @@ export default function VirtualLookbook() {
   const mouseDownX = useRef<number | null>(null);
   const wheelLockRef = useRef<number>(0);
 
-  const isExploreSlide = activeIndex === LOOKBOOK_ITEMS.length;
-  const currentItem = !isExploreSlide ? LOOKBOOK_ITEMS[activeIndex] : null;
-  const prevItem = activeIndex > 0 ? LOOKBOOK_ITEMS[activeIndex - 1] : null;
+  const isExploreSlide = activeIndex === orderedItems.length;
+  const currentItem = !isExploreSlide ? orderedItems[activeIndex] : null;
+  const prevItem = activeIndex > 0 ? orderedItems[activeIndex - 1] : null;
   const nextItem =
-    activeIndex + 1 < LOOKBOOK_ITEMS.length ? LOOKBOOK_ITEMS[activeIndex + 1] : null;
+    activeIndex + 1 < orderedItems.length ? orderedItems[activeIndex + 1] : null;
 
   const resetTransforms = () => {
     if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
@@ -413,7 +440,7 @@ export default function VirtualLookbook() {
               </div>
 
               <div className="absolute top-3 right-3 z-30 px-2.5 py-1 rounded-full bg-black/75 text-[11px] text-neutral-300">
-                {activeIndex + 1} / {LOOKBOOK_ITEMS.length}
+                {activeIndex + 1} / {orderedItems.length}
               </div>
 
               {currentItem.secondImage && (
