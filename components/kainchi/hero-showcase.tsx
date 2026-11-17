@@ -11,7 +11,7 @@ export function HeroShowcase(_props: { products?: CatalogProduct[] }) {
         <h1 id="hero-title">Wear your<br /><em>own art.</em></h1>
         <p className="hero-description">A little bit wild. A whole lot you. Discover wearable art made for the ones who never quite fit the frame.</p>
         <div className="hero-actions">
-          <a className="button button-crimson" href="#collection">Explore the collection <ArrowRight aria-hidden="true" /></a>
+          <a className="button button-crimson" href="#artwork" data-open-archive="true">Explore the collection <ArrowRight aria-hidden="true" /></a>
           <a className="text-link" href="#artwork">See the artwork <ArrowDownRight aria-hidden="true" /></a>
         </div>
         <div className="hero-note"><span className="note-rule" /> Small-batch pieces, made to feel like yours.</div>
@@ -30,7 +30,7 @@ export function HeroShowcase(_props: { products?: CatalogProduct[] }) {
           fetchPriority="high"
         />
       </div>
-      <a className="scroll-cue" href="#collection" aria-label="Scroll to the collection"><span>SCROLL TO EXPLORE</span><ArrowDownRight aria-hidden="true" /></a>
+      <a className="scroll-cue" href="#artwork" aria-label="Scroll to the collection"><span>SCROLL TO EXPLORE</span><ArrowDownRight aria-hidden="true" /></a>
     </section>
   )
 }
