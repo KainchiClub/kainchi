@@ -163,7 +163,6 @@ export default function VirtualLookbook() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showAltAngle, setShowAltAngle] = useState(false);
 
-  // Direct DOM refs for 60fps GPU-accelerated inner model rotation (zero React re-renders)
   const modelStageRef = useRef<HTMLDivElement | null>(null);
   const glareRef = useRef<HTMLDivElement | null>(null);
   const rafIdRef = useRef<number | null>(null);
@@ -203,7 +202,6 @@ export default function VirtualLookbook() {
     setActiveIndex((prev) => (prev === totalSlides - 1 ? 0 : prev + 1));
   };
 
-  // Smoothly rotates ONLY the inner model/subject up to ~32° while keeping outer card frame rock-steady
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!modelStageRef.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -213,11 +211,11 @@ export default function VirtualLookbook() {
     if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     rafIdRef.current = requestAnimationFrame(() => {
       if (!modelStageRef.current) return;
-      const offset = normX - 0.5; // -0.5 to +0.5
-      const rotateY = offset * 64; // Smooth ±32° 3D subject turn
+      const offset = normX - 0.5;
+      const rotateY = offset * 64;
       const rotateX = (0.5 - normY) * 10;
-      const shiftX = -offset * 22; // Parallax depth shift so edges never clip
-      const zoom = 1.12 + Math.abs(offset) * 0.08; // Subtle detail zoom as model turns
+      const shiftX = -offset * 22;
+      const zoom = 1.12 + Math.abs(offset) * 0.08;
 
       modelStageRef.current.style.transform = `perspective(900px) scale(${zoom.toFixed(3)}) rotateY(${rotateY.toFixed(2)}deg) rotateX(${rotateX.toFixed(2)}deg) translateX(${shiftX.toFixed(1)}px)`;
 
@@ -236,7 +234,7 @@ export default function VirtualLookbook() {
     if (touchStartX.current === null || !modelStageRef.current) return;
     const diff = e.touches[0].clientX - touchStartX.current;
     const clamped = Math.max(-120, Math.min(120, diff));
-    const norm = clamped / 240; // -0.5 to +0.5
+    const norm = clamped / 240;
     if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     rafIdRef.current = requestAnimationFrame(() => {
       if (!modelStageRef.current) return;
@@ -266,8 +264,9 @@ export default function VirtualLookbook() {
   };
 
   const scrollToCatalog = () => {
-    const grid = document.getElementById("collection-grid") || document.querySelector("main");
-    if (grid) grid.scrollIntoView({ behavior: "smooth" });
+    window.dispatchEvent(new CustomEvent("kainchi:open-archive"));
+    const target = document.getElementById("artwork") || document.querySelector("main");
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -311,7 +310,6 @@ export default function VirtualLookbook() {
           </button>
         )}
 
-        {/* Outer Card Frame stays 100% straight and rock-steady */}
         <div className="relative z-20 w-full max-w-[330px] md:max-w-[380px] mx-auto select-none">
           {!isExploreSlide && currentItem ? (
             <div className="relative rounded-3xl overflow-hidden border border-[#D4AF37]/55 bg-[#121212] shadow-[0_20px_60px_rgba(0,0,0,0.85)]">
@@ -333,7 +331,6 @@ export default function VirtualLookbook() {
                 </button>
               )}
 
-              {/* Inner Viewport: Only the model photo turns & zooms inside the fixed frame */}
               <div
                 className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden cursor-grab active:cursor-grabbing"
                 onPointerMove={handlePointerMove}
@@ -367,7 +364,6 @@ export default function VirtualLookbook() {
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
               </div>
 
-              {/* Fixed Bottom Info & WhatsApp Order Bar */}
               <div className="relative z-30 -mt-16 mx-3 mb-3 p-3.5 rounded-2xl bg-[#141414]/95 border border-[#D4AF37]/40 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-wider text-neutral-400">
