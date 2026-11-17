@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Volume2, VolumeX } from 'lucide-react'
+import { Ruler, Volume2, VolumeX } from 'lucide-react'
 
 function isAutomatedAudit() {
   if (typeof navigator === 'undefined') return false
@@ -25,7 +25,6 @@ export function AtelierLuxuryLayer() {
     window.setTimeout(() => setIntroVisible(false), 380)
   }
 
-  // 1. 3D Collector's Vault Lid Open + KAINCHI CLUB Reveal (Skipped only for PageSpeed bots)
   useEffect(() => {
     if (isAutomatedAudit()) {
       setIntroVisible(false)
@@ -41,7 +40,40 @@ export function AtelierLuxuryLayer() {
     }
   }, [])
 
-  // 2. Zero-Reflow Scroll Progress Thread + Smooth Reveal
+  // Inject compact "FIND YOUR FIT" square icon card right next to CUSTOM STUDIO in the category strip
+  useEffect(() => {
+    const injectFitSquare = () => {
+      if (document.getElementById('kc-story-fit-card')) return
+      const storyButtons = Array.from(document.querySelectorAll('button')).filter((btn) =>
+        /CUSTOM STUDIO/i.test(btn.textContent || ''),
+      )
+      const customStudioBtn = storyButtons[0]
+      const container = customStudioBtn?.parentElement
+      if (!customStudioBtn || !container) return
+
+      const fitBtn = document.createElement('button')
+      fitBtn.id = 'kc-story-fit-card'
+      fitBtn.type = 'button'
+      fitBtn.className = customStudioBtn.className
+      fitBtn.setAttribute('aria-label', 'Find Your Exact Atelier Fit')
+      fitBtn.innerHTML = `
+        <span style="width:52px;height:52px;border-radius:14px;border:1.5px solid #d4af37;background:linear-gradient(145deg,#1d140c,#0c0b0a);display:inline-flex;align-items:center;justify-content:center;color:#d4af37;box-shadow:0 6px 18px rgba(212,175,55,0.22);margin:0 auto 6px auto;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>
+        </span>
+        <span style="display:block;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#8b1e24;">FIND YOUR FIT</span>
+      `
+      fitBtn.onclick = () => {
+        window.dispatchEvent(new CustomEvent('kainchi:open-fit-concierge'))
+      }
+      container.appendChild(fitBtn)
+    }
+
+    injectFitSquare()
+    const timer = window.setTimeout(injectFitSquare, 600)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  // Zero-Reflow Scroll Progress Thread + Smooth Reveal
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth'
     let scrollTicking = false
@@ -107,7 +139,7 @@ export function AtelierLuxuryLayer() {
     }
   }, [])
 
-  // 3. Zero-Forced-Reflow Desktop 3D Card Tilt + Luxury Ring Cursor
+  // Zero-Forced-Reflow Desktop 3D Card Tilt + Luxury Ring Cursor
   useEffect(() => {
     const isTouch = window.matchMedia('(pointer: coarse)').matches
     if (isTouch || isAutomatedAudit()) return
@@ -172,7 +204,6 @@ export function AtelierLuxuryLayer() {
     }
   }, [])
 
-  // 4. Optional Atelier Ambient Chord
   const toggleAtelierSound = () => {
     if (soundOn) {
       if (masterGainRef.current && audioCtxRef.current) {
@@ -323,12 +354,8 @@ export function AtelierLuxuryLayer() {
         }}
       />
 
-      {/* Floating Atelier Ambient Sound Toggle */}
-      <button
-        type="button"
-        onClick={toggleAtelierSound}
-        aria-pressed={soundOn}
-        aria-label={soundOn ? 'Mute Atelier Ambient Sound' : 'Play Atelier Ambient Sound'}
+      {/* Floating Bottom-Left Controls: Atelier Sound + Quick Size Fit */}
+      <div
         style={{
           position: 'fixed',
           bottom: '16px',
@@ -336,22 +363,58 @@ export function AtelierLuxuryLayer() {
           zIndex: 9990,
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '7px',
-          padding: '8px 13px',
-          borderRadius: '9999px',
-          background: 'rgba(12, 12, 12, 0.88)',
-          border: '1px solid rgba(212, 175, 55, 0.45)',
-          color: '#f5e29f',
-          fontSize: '10px',
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          cursor: 'pointer',
-          boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
+          gap: '8px',
         }}
       >
-        {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
-        <span>{soundOn ? 'Sound · On' : 'Atelier Sound'}</span>
-      </button>
+        <button
+          type="button"
+          onClick={toggleAtelierSound}
+          aria-pressed={soundOn}
+          aria-label={soundOn ? 'Mute Atelier Ambient Sound' : 'Play Atelier Ambient Sound'}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            borderRadius: '9999px',
+            background: 'rgba(12, 12, 12, 0.88)',
+            border: '1px solid rgba(212, 175, 55, 0.45)',
+            color: '#f5e29f',
+            fontSize: '10px',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
+          }}
+        >
+          {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
+          <span>{soundOn ? 'Sound · On' : 'Sound'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent('kainchi:open-fit-concierge'))}
+          aria-label="Open Exact Size & Fit Concierge"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            borderRadius: '9999px',
+            background: 'rgba(26, 12, 15, 0.92)',
+            border: '1px solid rgba(212, 175, 55, 0.55)',
+            color: '#f5e29f',
+            fontSize: '10px',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
+          }}
+        >
+          <Ruler size={13} />
+          <span>Find Fit</span>
+        </button>
+      </div>
 
       {/* 3D Collector's Vault Unboxing Curtain */}
       {introVisible && (
@@ -389,7 +452,6 @@ export function AtelierLuxuryLayer() {
               perspective: '1100px',
             }}
           >
-            {/* Inner Crimson Silk Vault Base */}
             <div
               style={{
                 position: 'absolute',
@@ -462,7 +524,6 @@ export function AtelierLuxuryLayer() {
               </span>
             </div>
 
-            {/* 3D Hinged Top Lid with Golden Wax Seal */}
             <div
               style={{
                 position: 'absolute',
