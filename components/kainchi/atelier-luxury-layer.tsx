@@ -1,23 +1,56 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Ruler, Volume2, VolumeX } from 'lucide-react'
+import { Ruler, Sparkles } from 'lucide-react'
 
 function isAutomatedAudit() {
   if (typeof navigator === 'undefined') return false
   return Boolean(navigator.webdriver || /Lighthouse|Chrome-Lighthouse|PageSpeed/i.test(navigator.userAgent))
 }
 
+function getOutfitPairingAdvice(titleAndGarment: string) {
+  const text = titleAndGarment.toLowerCase()
+  if (text.includes('hoodie') || text.includes('sweatshirt')) {
+    return {
+      bottom: 'Relaxed Charcoal Cargo or Wide-Leg Raw Selvedge Denim',
+      footwear: 'Chunky Monochrome Leather Runners or High-Top Court Sneakers',
+      accent: 'Brushed Sterling Silver Curb Chain + Structured Cap',
+    }
+  }
+  if (text.includes('shirt') || text.includes('shacket')) {
+    return {
+      bottom: 'Pleated Off-White Linen Trousers or Tailored Black Denim',
+      footwear: 'Suede Penny Loafers or Minimalist Low-Top Leather Sneakers',
+      accent: 'Vintage Tortoiseshell Frames + Minimalist Signet Ring',
+    }
+  }
+  if (text.includes('polo')) {
+    return {
+      bottom: 'Pleated Espresso Chino Trousers or Tailored Shorts',
+      footwear: 'Classic Leather Loafers or Clean White Court Trainers',
+      accent: 'Woven Leather Belt + Classic Chronograph Watch',
+    }
+  }
+  if (text.includes('denim') || text.includes('leather')) {
+    return {
+      bottom: 'Heavyweight Washed Black Tee + Straight-Fit Vintage Denim',
+      footwear: 'Distressed Leather Chelsea Boots or Retro Runners',
+      accent: 'Oxidized Silver Cuff + Crossbody Leather Sling',
+    }
+  }
+  return {
+    bottom: 'Baggy Parachute Cargos or Distressed Vintage Straight Denim',
+    footwear: 'Retro Suede Sneakers or Chunky Studio Trainers',
+    accent: 'Layered Silver Chain + Ribbed Crew Socks',
+  }
+}
+
 export function AtelierLuxuryLayer() {
   const [introVisible, setIntroVisible] = useState(() => !isAutomatedAudit())
   const [vaultOpened, setVaultOpened] = useState(false)
   const [introFading, setIntroFading] = useState(false)
-  const [soundOn, setSoundOn] = useState(false)
 
   const progressRef = useRef<HTMLDivElement | null>(null)
-  const cursorRingRef = useRef<HTMLDivElement | null>(null)
-  const audioCtxRef = useRef<AudioContext | null>(null)
-  const masterGainRef = useRef<GainNode | null>(null)
 
   const dismissIntroNow = () => {
     setVaultOpened(true)
@@ -25,6 +58,7 @@ export function AtelierLuxuryLayer() {
     window.setTimeout(() => setIntroVisible(false), 380)
   }
 
+  // 1. 3D Collector's Vault Lid Open + KAINCHI CLUB Reveal (Kept intact)
   useEffect(() => {
     if (isAutomatedAudit()) {
       setIntroVisible(false)
@@ -40,7 +74,7 @@ export function AtelierLuxuryLayer() {
     }
   }, [])
 
-  // Inject compact "FIND YOUR FIT" square icon card right next to CUSTOM STUDIO in the category strip
+  // 2. Inject compact "FIND YOUR FIT" square icon card right next to CUSTOM STUDIO
   useEffect(() => {
     const injectFitSquare = () => {
       if (document.getElementById('kc-story-fit-card')) return
@@ -73,7 +107,47 @@ export function AtelierLuxuryLayer() {
     return () => window.clearTimeout(timer)
   }, [])
 
-  // Zero-Reflow Scroll Progress Thread + Smooth Reveal
+  // 3. AI Style & Outfit Pairing Injector inside Product Customizer Modal
+  useEffect(() => {
+    const injectAiStylistCard = () => {
+      const dialog = document.querySelector('dialog[open], [role="dialog"]')
+      if (!dialog || dialog.querySelector('#kc-ai-stylist-card')) return
+      if (dialog.id === 'bespoke-fit-modal-title' || dialog.querySelector('#bespoke-fit-modal-title')) return
+
+      const heading = dialog.querySelector('h2, h3')
+      const titleText = heading?.textContent?.trim() || ''
+      if (!titleText || /Delivery|Size Guide/i.test(titleText)) return
+
+      const advice = getOutfitPairingAdvice(dialog.textContent || titleText)
+      const card = document.createElement('div')
+      card.id = 'kc-ai-stylist-card'
+      card.style.cssText =
+        'margin:14px 0;padding:12px 14px;border-radius:14px;border:1px solid rgba(212,175,55,0.45);background:linear-gradient(135deg,rgba(26,18,11,0.96),rgba(14,14,14,0.96));color:#f5f5f4;font-size:12px;line-height:1.5;'
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#d4af37;font-weight:700;margin-bottom:6px;">
+          <span>✦ AI ATELIER STYLIST · COMPLETE THE LOOK</span>
+        </div>
+        <div style="display:grid;gap:4px;font-size:11.5px;color:#e7e5e4;">
+          <div><strong style="color:#f5e29f;">Pair With:</strong> ${advice.bottom}</div>
+          <div><strong style="color:#f5e29f;">Footwear:</strong> ${advice.footwear}</div>
+          <div><strong style="color:#f5e29f;">Accent:</strong> ${advice.accent}</div>
+        </div>
+      `
+
+      const actionBtn = dialog.querySelector('button[type="submit"], .customizer-actions')
+      if (actionBtn && actionBtn.parentElement) {
+        actionBtn.parentElement.insertBefore(card, actionBtn)
+      } else {
+        dialog.appendChild(card)
+      }
+    }
+
+    const observer = new MutationObserver(() => injectAiStylistCard())
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true })
+    return () => observer.disconnect()
+  }, [])
+
+  // 4. Zero-Reflow Scroll Progress Thread + Clean Reveal (No custom cursor lag)
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth'
     let scrollTicking = false
@@ -139,124 +213,6 @@ export function AtelierLuxuryLayer() {
     }
   }, [])
 
-  // Zero-Forced-Reflow Desktop 3D Card Tilt + Luxury Ring Cursor
-  useEffect(() => {
-    const isTouch = window.matchMedia('(pointer: coarse)').matches
-    if (isTouch || isAutomatedAudit()) return
-
-    let rafId: number | null = null
-    let activeTiltCard: HTMLElement | null = null
-    let activeCardRect: DOMRect | null = null
-
-    const resetTiltCard = () => {
-      if (!activeTiltCard) return
-      activeTiltCard.style.transform = ''
-      activeTiltCard = null
-      activeCardRect = null
-    }
-
-    const onPointerMove = (e: PointerEvent) => {
-      const target = e.target as Element | null
-      if (rafId) cancelAnimationFrame(rafId)
-
-      rafId = requestAnimationFrame(() => {
-        const interactive = target?.closest('a, button, [role="button"]')
-
-        if (cursorRingRef.current) {
-          cursorRingRef.current.style.opacity = '1'
-          cursorRingRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) scale(${interactive ? 1.8 : 1})`
-        }
-
-        const card = target?.closest('.art-card') as HTMLElement | null
-        if (card) {
-          if (activeTiltCard !== card) {
-            resetTiltCard()
-            activeTiltCard = card
-            activeCardRect = card.getBoundingClientRect()
-          }
-          if (activeCardRect && activeCardRect.width > 0 && activeCardRect.height > 0) {
-            const relX = (e.clientX - activeCardRect.left) / activeCardRect.width - 0.5
-            const relY = (e.clientY - activeCardRect.top) / activeCardRect.height - 0.5
-            const rotateY = relX * 8
-            const rotateX = -relY * 8
-            card.style.transform = `perspective(900px) translate3d(0, -5px, 0) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`
-            card.style.setProperty('--kc-spot-x', `${((relX + 0.5) * 100).toFixed(1)}%`)
-            card.style.setProperty('--kc-spot-y', `${((relY + 0.5) * 100).toFixed(1)}%`)
-          }
-        } else if (activeTiltCard) {
-          resetTiltCard()
-        }
-      })
-    }
-
-    const onPointerLeave = () => {
-      if (cursorRingRef.current) cursorRingRef.current.style.opacity = '0'
-      resetTiltCard()
-    }
-
-    window.addEventListener('pointermove', onPointerMove, { passive: true })
-    document.addEventListener('pointerleave', onPointerLeave)
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId)
-      window.removeEventListener('pointermove', onPointerMove)
-      document.removeEventListener('pointerleave', onPointerLeave)
-      resetTiltCard()
-    }
-  }, [])
-
-  const toggleAtelierSound = () => {
-    if (soundOn) {
-      if (masterGainRef.current && audioCtxRef.current) {
-        masterGainRef.current.gain.setTargetAtTime(0.0001, audioCtxRef.current.currentTime, 0.35)
-      }
-      setSoundOn(false)
-      return
-    }
-
-    try {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-      if (!audioCtxRef.current) {
-        const ctx = new AudioContextClass()
-        const master = ctx.createGain()
-        master.gain.value = 0.0001
-        master.connect(ctx.destination)
-
-        const freqs = [73.42, 110.0, 185.0, 329.63]
-        freqs.forEach((freq, i) => {
-          const osc = ctx.createOscillator()
-          const noteGain = ctx.createGain()
-          osc.type = i % 2 === 0 ? 'sine' : 'triangle'
-          osc.frequency.value = freq
-          noteGain.gain.value = i === 0 ? 0.35 : 0.14 / i
-          osc.connect(noteGain)
-          noteGain.connect(master)
-          osc.start()
-        })
-
-        audioCtxRef.current = ctx
-        masterGainRef.current = master
-      }
-
-      if (audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume()
-      }
-      if (masterGainRef.current && audioCtxRef.current) {
-        masterGainRef.current.gain.setTargetAtTime(0.045, audioCtxRef.current.currentTime, 0.6)
-      }
-      setSoundOn(true)
-    } catch {
-      setSoundOn(false)
-    }
-  }
-
-  useEffect(() => {
-    return () => {
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close().catch(() => {})
-      }
-    }
-  }, [])
-
   return (
     <>
       <style>{`
@@ -286,23 +242,11 @@ export function AtelierLuxuryLayer() {
           transform: translate3d(0, 0, 0) !important;
         }
         .art-card {
-          position: relative;
-          overflow: hidden;
-          transform-style: preserve-3d;
-          transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+          transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
         }
-        .art-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(circle 180px at var(--kc-spot-x, 50%) var(--kc-spot-y, 50%), rgba(212, 175, 55, 0.18), transparent 75%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          pointer-events: none;
-          z-index: 2;
-        }
-        .art-card:hover::before {
-          opacity: 1;
+        .art-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 18px 36px rgba(0, 0, 0, 0.14);
         }
       `}</style>
 
@@ -332,30 +276,11 @@ export function AtelierLuxuryLayer() {
         />
       </div>
 
-      {/* GPU-Accelerated Golden Ring Cursor (Desktop) */}
-      <div
-        ref={cursorRingRef}
-        aria-hidden="true"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '22px',
-          height: '22px',
-          marginLeft: '-11px',
-          marginTop: '-11px',
-          borderRadius: '9999px',
-          border: '1px solid rgba(212, 175, 55, 0.7)',
-          pointerEvents: 'none',
-          zIndex: 9996,
-          opacity: 0,
-          transition: 'transform 0.12s ease-out, opacity 0.2s ease',
-          willChange: 'transform',
-        }}
-      />
-
-      {/* Floating Bottom-Left Controls: Atelier Sound + Quick Size Fit */}
-      <div
+      {/* Single Clean Bottom-Left Quick Size Concierge Pill (Sound button removed) */}
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new CustomEvent('kainchi:open-fit-concierge'))}
+        aria-label="Open Exact Size & Fit Concierge"
         style={{
           position: 'fixed',
           bottom: '16px',
@@ -363,60 +288,24 @@ export function AtelierLuxuryLayer() {
           zIndex: 9990,
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '6px',
+          padding: '8px 13px',
+          borderRadius: '9999px',
+          background: 'rgba(18, 12, 13, 0.9)',
+          border: '1px solid rgba(212, 175, 55, 0.55)',
+          color: '#f5e29f',
+          fontSize: '10px',
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          cursor: 'pointer',
+          boxShadow: '0 10px 26px rgba(0,0,0,0.32)',
         }}
       >
-        <button
-          type="button"
-          onClick={toggleAtelierSound}
-          aria-pressed={soundOn}
-          aria-label={soundOn ? 'Mute Atelier Ambient Sound' : 'Play Atelier Ambient Sound'}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 12px',
-            borderRadius: '9999px',
-            background: 'rgba(12, 12, 12, 0.88)',
-            border: '1px solid rgba(212, 175, 55, 0.45)',
-            color: '#f5e29f',
-            fontSize: '10px',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
-          }}
-        >
-          {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
-          <span>{soundOn ? 'Sound · On' : 'Sound'}</span>
-        </button>
+        <Ruler size={13} />
+        <span>Find Your Fit</span>
+      </button>
 
-        <button
-          type="button"
-          onClick={() => window.dispatchEvent(new CustomEvent('kainchi:open-fit-concierge'))}
-          aria-label="Open Exact Size & Fit Concierge"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 12px',
-            borderRadius: '9999px',
-            background: 'rgba(26, 12, 15, 0.92)',
-            border: '1px solid rgba(212, 175, 55, 0.55)',
-            color: '#f5e29f',
-            fontSize: '10px',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
-          }}
-        >
-          <Ruler size={13} />
-          <span>Find Fit</span>
-        </button>
-      </div>
-
-      {/* 3D Collector's Vault Unboxing Curtain */}
+      {/* 3D Collector's Vault Unboxing Curtain (Kept intact) */}
       {introVisible && (
         <div
           onClick={dismissIntroNow}
