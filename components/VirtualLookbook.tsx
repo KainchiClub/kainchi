@@ -15,7 +15,6 @@ interface LookbookItem {
 }
 
 const LOOKBOOK_ITEMS: LookbookItem[] = [
-  // --- STAGE 1: FRONT-FACING ARTISANAL SHIRTS & SWEATSHIRTS ---
   {
     id: "paris-crest-polo",
     name: "Paris Crest Polo",
@@ -64,8 +63,6 @@ const LOOKBOOK_ITEMS: LookbookItem[] = [
     viewBadge: "FRONT ART",
     image: "/lookbook/The Cosmic Era.png",
   },
-
-  // --- STAGE 2: FULL-FIT CO-ORDS & LAYERED DENIM ---
   {
     id: "wild-bloom-cordset",
     name: "Wild Bloom Co-ord Set",
@@ -92,8 +89,6 @@ const LOOKBOOK_ITEMS: LookbookItem[] = [
     fallbackImage: "/lookbook/Red Flora Shirt.png",
     secondImage: "https://lh3.googleusercontent.com/d/1B9Y5czqId8nT_AA9ZieE8SZBSjJfmh8I=w1000-rw",
   },
-
-  // --- STAGE 3: OVER-THE-SHOULDER BACK MASTERPIECES ---
   {
     id: "the-royal-derby",
     name: "The Royal Derby",
@@ -174,10 +169,11 @@ export default function VirtualLookbook() {
   const glareRef = useRef<HTMLDivElement | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
-  // Unified Finger / Trackpad / Mouse Drag State
-  const dragStartX = useRef<number | null>(null);
-  const dragCurrentX = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const swipeDeltaX = useRef<number>(0);
+  const isHorizontalSwipe = useRef<boolean>(false);
+  const mouseDownX = useRef<number | null>(null);
   const wheelLockRef = useRef<number>(0);
 
   const isExploreSlide = activeIndex === LOOKBOOK_ITEMS.length;
@@ -218,27 +214,14 @@ export default function VirtualLookbook() {
     setActiveIndex((prev) => (prev === totalSlides - 1 ? 0 : prev + 1));
   };
 
-  // Start finger touch or mouse/trackpad press-drag anywhere on the carousel
-  const handleSwipeStart = (clientX: number) => {
-    dragStartX.current = clientX;
-    dragCurrentX.current = 0;
-    isDragging.current = true;
-    if (cardTrackRef.current) {
-      cardTrackRef.current.style.transition = "none";
-    }
-  };
-
-  const handleSwipeMove = (clientX: number) => {
-    if (!isDragging.current || dragStartX.current === null) return;
-    const deltaX = clientX - dragStartX.current;
-    dragCurrentX.current = deltaX;
-
+  const applySwipeVisual = (deltaX: number) => {
     if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     rafIdRef.current = requestAnimationFrame(() => {
-      const clamped = Math.max(-140, Math.min(140, deltaX));
+      const clamped = Math.max(-150, Math.min(150, deltaX));
       if (cardTrackRef.current) {
-        const tilt = (clamped / 140) * 3.5;
-        cardTrackRef.current.style.transform = `translate3d(${(clamped * 0.55).toFixed(1)}px, 0, 0) rotate(${tilt.toFixed(2)}deg)`;
+        cardTrackRef.current.style.transition = "none";
+        const tilt = (clamped / 150) * 4;
+        cardTrackRef.current.style.transform = `translate3d(${(clamped * 0.65).toFixed(1)}px, 0, 0) rotate(${tilt.toFixed(2)}deg)`;
       }
       if (modelStageRef.current) {
         const norm = clamped / 240;
@@ -249,24 +232,76 @@ export default function VirtualLookbook() {
     });
   };
 
-  const handleSwipeEnd = () => {
-    if (!isDragging.current) return;
-    const deltaX = dragCurrentX.current;
-    isDragging.current = false;
-    dragStartX.current = null;
-    dragCurrentX.current = 0;
+  // Dedicated Mobile Finger Touch Handlers
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length !== 1) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    swipeDeltaX.current = 0;
+    isHorizontalSwipe.current = false;
+  };
 
-    if (Math.abs(deltaX) > 42) {
-      if (deltaX < 0) goNext();
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.touches[0].clientX - touchStartX.current;
+    const dy = e.touches[0].clientY - touchStartY.current;
+
+    if (!isHorizontalSwipe.current && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+      isHorizontalSwipe.current = true;
+    }
+
+    if (isHorizontalSwipe.current) {
+      swipeDeltaX.current = dx;
+      applySwipeVisual(dx);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    const dx = swipeDeltaX.current;
+    const wasSwipe = isHorizontalSwipe.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+    swipeDeltaX.current = 0;
+    isHorizontalSwipe.current = false;
+
+    if (wasSwipe && Math.abs(dx) > 32) {
+      if (dx < 0) goNext();
       else goPrev();
     } else {
       resetTransforms();
     }
   };
 
-  // Hover 3D tilt when moving cursor without pressing
+  // Desktop Mouse Drag Handlers
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    mouseDownX.current = e.clientX;
+    swipeDeltaX.current = 0;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (mouseDownX.current === null) return;
+    const dx = e.clientX - mouseDownX.current;
+    swipeDeltaX.current = dx;
+    applySwipeVisual(dx);
+  };
+
+  const handleMouseUp = () => {
+    if (mouseDownX.current === null) return;
+    const dx = swipeDeltaX.current;
+    mouseDownX.current = null;
+    swipeDeltaX.current = 0;
+    if (Math.abs(dx) > 40) {
+      if (dx < 0) goNext();
+      else goPrev();
+    } else {
+      resetTransforms();
+    }
+  };
+
+  // Desktop Hover 3D Tilt (only when not dragging)
   const handleModelHoverMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isDragging.current || !modelStageRef.current) return;
+    if (e.pointerType === "touch" || mouseDownX.current !== null || !modelStageRef.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const normX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const normY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
@@ -289,11 +324,10 @@ export default function VirtualLookbook() {
     });
   };
 
-  // Two-finger laptop trackpad horizontal swipe support
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (Math.abs(e.deltaX) > 28 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+    if (Math.abs(e.deltaX) > 25 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
       const now = Date.now();
-      if (now - wheelLockRef.current < 450) return;
+      if (now - wheelLockRef.current < 420) return;
       wheelLockRef.current = now;
       if (e.deltaX > 0) goNext();
       else goPrev();
@@ -324,7 +358,7 @@ export default function VirtualLookbook() {
           Your Next <span className="text-[#D4AF37]">Favorite</span>
         </h2>
         <p className="text-xs md:text-sm text-neutral-400 mt-2">
-          Swipe or drag with your finger to switch outfits • Glide across the look to turn &amp; zoom in 3D
+          Swipe with your finger to switch outfits • Glide across the look to turn &amp; zoom in 3D
         </p>
       </div>
 
@@ -332,16 +366,13 @@ export default function VirtualLookbook() {
         className="relative max-w-5xl mx-auto flex items-center justify-center min-h-[470px] md:min-h-[560px]"
         style={{ touchAction: "pan-y" }}
         onWheel={handleWheel}
-        onTouchStart={(e) => handleSwipeStart(e.touches[0].clientX)}
-        onTouchMove={(e) => handleSwipeMove(e.touches[0].clientX)}
-        onTouchEnd={handleSwipeEnd}
-        onMouseDown={(e) => {
-          if ((e.target as HTMLElement).closest("button")) return;
-          handleSwipeStart(e.clientX);
-        }}
-        onMouseMove={(e) => handleSwipeMove(e.clientX)}
-        onMouseUp={handleSwipeEnd}
-        onMouseLeave={handleSwipeEnd}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
         {prevItem && (
           <button
@@ -392,7 +423,7 @@ export default function VirtualLookbook() {
                 className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden cursor-grab active:cursor-grabbing"
                 onPointerMove={handleModelHoverMove}
                 onPointerLeave={() => {
-                  if (!isDragging.current) resetTransforms();
+                  if (mouseDownX.current === null && touchStartX.current === null) resetTransforms();
                 }}
               >
                 <div
