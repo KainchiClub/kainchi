@@ -1,20 +1,23 @@
 'use client'
 
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowUpRight, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { ArrowUpRight, Check, Copy, QrCode, Smartphone, X } from 'lucide-react'
 import { formatRupees } from './catalog'
 import { GIFT_BOX_PRICE, WHATSAPP_PHONE, getCartLineTotal, getCartTotal, type CartLineItem } from './order'
+
+const GATEWAY_CLOUD_SETTINGS_KEY = 'kainchi-store-gateway-cloud-v1'
 
 type DeliveryFields = {
   fullName: string
   address: string
   cityState: string
   pincode: string
+  utrNumber: string
 }
 
 type FieldErrors = Partial<Record<keyof DeliveryFields, string>>
 
-const emptyFields: DeliveryFields = { fullName: '', address: '', cityState: '', pincode: '' }
+const emptyFields: DeliveryFields = { fullName: '', address: '', cityState: '', pincode: '', utrNumber: '' }
 const PINCODE_PATTERN = /^[1-9][0-9]{5}$/
 
 function validate(fields: DeliveryFields): FieldErrors {
@@ -26,7 +29,11 @@ function validate(fields: DeliveryFields): FieldErrors {
   return errors
 }
 
-export function createDeliveryOrderMessage(items: readonly CartLineItem[], fields: DeliveryFields) {
+export function createDeliveryOrderMessage(
+  items: readonly CartLineItem[],
+  fields: DeliveryFields,
+  brandName = 'Kainchi Club Studio',
+) {
   const productBlocks = items.map((item) => [
     `- Product: ${item.product.title}${item.product.productCode ? ` (${item.product.productCode})` : ''}`,
     `- Size: ${item.size}`,
@@ -36,8 +43,10 @@ export function createDeliveryOrderMessage(items: readonly CartLineItem[], field
     `- Price: ${formatRupees(getCartLineTotal(item))}`,
   ].join('\n'))
 
+  const utr = fields.utrNumber.trim()
+
   return [
-    'Hello Kainchi Club Studio, I would like to place an order for:',
+    `Hello ${brandName}, I would like to place an order for:`,
     productBlocks.join('\n\n'),
     ...(items.length > 1 ? ['', `- Order Total: ${formatRupees(getCartTotal(items))}`] : []),
     '',
@@ -47,7 +56,9 @@ export function createDeliveryOrderMessage(items: readonly CartLineItem[], field
     `- City/State: ${fields.cityState.trim()}`,
     `- Pincode: ${fields.pincode.trim()}`,
     '',
-    'Please share payment QR / UPI details to confirm my order.',
+    utr
+      ? `Payment Status: Paid via UPI (UTR / Ref: ${utr})`
+      : 'Please share payment QR / UPI details to confirm my order.',
   ].join('\n')
 }
 
@@ -66,7 +77,28 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
   const firstFieldRef = useRef<HTMLInputElement>(null)
   const [fields, setFields] = useState<DeliveryFields>(emptyFields)
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [configuredUpiId, setConfiguredUpiId] = useState('')
+  const [configuredBrand, setConfiguredBrand] = useState('KAINCHI CLUB')
+  const [configuredWhatsapp, setConfiguredWhatsapp] = useState(WHATSAPP_PHONE)
+  const [showQrBox, setShowQrBox] = useState(true)
+  const [copiedUpi, setCopiedUpi] = useState(false)
+
   const isOpen = Boolean(items && items.length > 0)
+
+  useEffect(() => {
+    if (!isOpen) return
+    try {
+      const raw = window.localStorage.getItem(GATEWAY_CLOUD_SETTINGS_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (typeof parsed.upiId === 'string') setConfiguredUpiId(parsed.upiId.trim())
+        if (typeof parsed.brandName === 'string' && parsed.brandName.trim()) setConfiguredBrand(parsed.brandName.trim())
+        if (typeof parsed.whatsappNumber === 'string' && parsed.whatsappNumber.trim()) {
+          setConfiguredWhatsapp(parsed.whatsappNumber.replace(/\D/g, '') || WHATSAPP_PHONE)
+        }
+      }
+    } catch {}
+  }, [isOpen])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -85,6 +117,33 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
     if (errors[name]) setErrors((current) => ({ ...current, [name]: undefined }))
   }
 
+  const total = items ? getCartTotal(items) : 0
+  const itemCount = items?.reduce((count, item) => count + item.quantity, 0) ?? 0
+
+  const upiDeepLink = useMemo(() => {
+    if (!configuredUpiId || total <= 0) return ''
+    const params = new URLSearchParams({
+      pa: configuredUpiId,
+      pn: configuredBrand,
+      am: total.toFixed(2),
+      cu: 'INR',
+      tn: `${configuredBrand} Order`,
+    })
+    return `upi://pay?${params.toString()}`
+  }, [configuredUpiId, configuredBrand, total])
+
+  const upiQrImageUrl = useMemo(() => {
+    if (!upiDeepLink) return ''
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(upiDeepLink)}`
+  }, [upiDeepLink])
+
+  function handleCopyUpi() {
+    if (!configuredUpiId) return
+    navigator.clipboard?.writeText(configuredUpiId).catch(() => {})
+    setCopiedUpi(true)
+    window.setTimeout(() => setCopiedUpi(false), 2000)
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!items?.length) return
@@ -95,13 +154,10 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
       dialogRef.current?.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)?.focus()
       return
     }
-    const message = createDeliveryOrderMessage(items, fields)
-    openWhatsApp(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`)
+    const message = createDeliveryOrderMessage(items, fields, configuredBrand)
+    openWhatsApp(`https://wa.me/${configuredWhatsapp}?text=${encodeURIComponent(message)}`)
     onClose()
   }
-
-  const total = items ? getCartTotal(items) : 0
-  const itemCount = items?.reduce((count, item) => count + item.quantity, 0) ?? 0
 
   return (
     <dialog
@@ -116,12 +172,16 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
       <form className="delivery-inner" onSubmit={handleSubmit} noValidate>
         <div className="size-guide-topline">
           <div>
-            <p className="size-guide-kicker">KAINCHI CLUB · CHECKOUT</p>
-            <h2 id="delivery-title">Delivery Details</h2>
+            <p className="size-guide-kicker">{configuredBrand} · CHECKOUT</p>
+            <h2 id="delivery-title">Delivery &amp; Express Payment</h2>
           </div>
           <button aria-label="Close delivery details" className="size-guide-close" onClick={onClose} type="button"><X aria-hidden="true" /></button>
         </div>
-        <p className="size-guide-intro" id="delivery-subtitle">One step. We&apos;ll send your order straight to the studio on WhatsApp.</p>
+        <p className="size-guide-intro" id="delivery-subtitle">
+          {configuredUpiId
+            ? 'Pay instantly via UPI / QR or confirm your order straight on WhatsApp.'
+            : "One step. We'll send your order straight to the studio on WhatsApp."}
+        </p>
 
         {items && items.length > 0 && (
           <ul className="delivery-summary" aria-label="Order summary">
@@ -133,6 +193,93 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
             ))}
             {items.length > 1 && <li className="delivery-summary-total"><span>Total · {itemCount} pieces</span><span>{formatRupees(total)}</span></li>}
           </ul>
+        )}
+
+        {/* DIRECT BANK UPI / QR EXPRESS CHECKOUT (Activated when UPI ID is saved in Admin) */}
+        {configuredUpiId && total > 0 && (
+          <div
+            style={{
+              margin: '14px 0',
+              padding: '14px',
+              borderRadius: '16px',
+              border: '1px solid rgba(212, 175, 55, 0.45)',
+              background: 'rgba(212, 175, 55, 0.06)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 700, color: '#8b1e24' }}>
+                Instant Bank UPI · {formatRupees(total)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowQrBox((s) => !s)}
+                style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none' }}
+              >
+                <QrCode size={13} /> {showQrBox ? 'Hide QR' : 'Show QR'}
+              </button>
+            </div>
+
+            {showQrBox && upiQrImageUrl && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '10px', gap: '8px' }}>
+                <img
+                  src={upiQrImageUrl}
+                  alt={`UPI QR Code for ${formatRupees(total)}`}
+                  width={156}
+                  height={156}
+                  style={{ borderRadius: '12px', border: '1px solid rgba(0,0,0,0.12)', background: '#fff', padding: '6px' }}
+                />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                  <a
+                    href={upiDeepLink}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '9999px',
+                      background: '#111111',
+                      color: '#f5e29f',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <Smartphone size={14} /> Pay {formatRupees(total)} via UPI App
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleCopyUpi}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '8px 12px',
+                      borderRadius: '9999px',
+                      border: '1px solid rgba(0,0,0,0.2)',
+                      background: '#fff',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {copiedUpi ? <Check size={13} /> : <Copy size={13} />}
+                    {copiedUpi ? 'Copied UPI ID' : configuredUpiId}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <label className="delivery-field" style={{ marginTop: '10px' }}>
+              <span style={{ fontSize: '12px' }}>UPI Transaction ID / 12-Digit UTR (Optional if paid above)</span>
+              <input
+                name="utrNumber"
+                type="text"
+                maxLength={32}
+                value={fields.utrNumber}
+                onChange={(event) => updateField('utrNumber', event.target.value)}
+                placeholder="e.g. 432198765432"
+              />
+            </label>
+          </div>
         )}
 
         <div className="delivery-fields">
@@ -161,9 +308,15 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
         </div>
 
         <button className="delivery-submit" type="submit">
-          Proceed to WhatsApp (+91 88630 75356) <ArrowUpRight aria-hidden="true" />
+          {fields.utrNumber.trim()
+            ? 'Confirm Paid Order on WhatsApp'
+            : `Proceed to WhatsApp (+${configuredWhatsapp})`} <ArrowUpRight aria-hidden="true" />
         </button>
-        <p className="delivery-footnote">Payment is confirmed on WhatsApp via UPI / QR. Your details are only used to ship your order.</p>
+        <p className="delivery-footnote">
+          {configuredUpiId
+            ? 'Direct bank UPI transfer with instant WhatsApp receipt. Your details are only used to ship your order.'
+            : 'Payment is confirmed on WhatsApp via UPI / QR. Your details are only used to ship your order.'}
+        </p>
       </form>
     </dialog>
   )
