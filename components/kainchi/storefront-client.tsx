@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
 import { AtelierLuxuryLayer } from './atelier-luxury-layer'
-import { LuxuryAtelierSuite } from './luxury-atelier-suite'
+import { BespokeFitConciergeModal, VaultInteractiveUnboxer } from './luxury-atelier-suite'
 import { getFeaturedProducts, type CatalogProduct } from './catalog'
 import { useCatalogProducts } from './catalog-store'
 import { LetterboxFeedback } from './letterbox-feedback'
@@ -340,7 +340,9 @@ export function StorefrontClient() {
           <div className="story-texture" aria-hidden="true" />
         </section>
         <PackagingShowcase premiumPackagingSelected={premiumPackagingSelected} onPremiumPackagingChange={changePremiumPackaging} />
-        <LuxuryAtelierSuite />
+        <div className="px-4 pb-10">
+          <VaultInteractiveUnboxer products={availableProducts} onSelectProduct={openProduct} />
+        </div>
         <FAQSection />
       </main>
       <footer className="site-footer"><a className="wordmark footer-wordmark" href="#top" aria-label="Kainchi Club home"><Image className="wordmark-logo" src={brandLogo} alt="" width={96} height={96} loading="lazy" decoding="async" /><span>KAINCHI <span className="wordmark-light">CLUB</span></span></a><p>Wear your own art. © 2026 Kainchi Club</p><div className="footer-socials" aria-label="Social media"><a id="social-instagram" href="#" aria-label="Instagram"><SocialIcon network="instagram" /></a><a id="social-facebook" href="#" aria-label="Facebook"><SocialIcon network="facebook" /></a><a id="social-x" href="#" aria-label="X / Twitter"><SocialIcon network="x" /></a></div><div className="footer-links"><a href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club" aria-label="Contact Kainchi Club on WhatsApp">WhatsApp <ArrowUpRight aria-hidden="true" /></a><a href="#top" aria-label="Back to top">Back to top <ArrowUpRight aria-hidden="true" /></a><Link href="/admin" prefetch={false}>Admin Portal <ArrowUpRight aria-hidden="true" /></Link><PolicyModals /></div></footer>
@@ -354,6 +356,7 @@ export function StorefrontClient() {
         onCheckout={() => { if (cartItems.length > 0) setCheckoutItems(cartItems) }}
       />
       <SizeGuideModal />
+      <BespokeFitConciergeModal />
       <DeliveryDetailsModal items={checkoutItems} onClose={() => setCheckoutItems(null)} />
       <StudioIntakeModal products={products} />
       {selectedProduct && <ProductCustomizer
