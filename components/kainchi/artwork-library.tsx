@@ -26,8 +26,8 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
     let women = 0
     for (const product of products) {
       const gender = getProductGender(product)
-      if (gender === 'men' || gender === 'unisex') men += 1
-      if (gender === 'women' || gender === 'unisex') women += 1
+      if (gender === 'women') women += 1
+      else men += 1
     }
     return { all: products.length, men, women }
   }, [products])
@@ -39,8 +39,8 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
       const gender = getProductGender(product)
       const matchesGender =
         activeGender === 'all' ||
-        (activeGender === 'men' && (gender === 'men' || gender === 'unisex')) ||
-        (activeGender === 'women' && (gender === 'women' || gender === 'unisex'))
+        (activeGender === 'women' && gender === 'women') ||
+        (activeGender === 'men' && gender !== 'women')
       const matchesTheme = activeTheme === 'All artwork' || product.theme === activeTheme
       const matchesGarment = !garmentPattern || garmentPattern.test(product.garment)
       const searchableText = `${product.title} ${product.theme} ${product.garment}`.toLocaleLowerCase()
@@ -127,7 +127,6 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
         </div>
       </div>
 
-      {/* Prominent Men & Women Section Switcher */}
       <div className="art-filters" role="group" aria-label="Shop by Men or Women" style={{ marginBottom: '0.85rem' }}>
         <button
           type="button"
@@ -180,12 +179,12 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
             {garmentGroup !== 'all' && <div className="garment-filter-chip-row"><button type="button" className="garment-filter-chip" onClick={() => { setGarmentGroup('all'); setVisibleLimit(ARCHIVE_PAGE_SIZE) }} aria-label={`Clear ${GARMENT_GROUPS[garmentGroup].label} filter`}>{GARMENT_GROUPS[garmentGroup].label} <X aria-hidden="true" /></button></div>}
             <p className="art-archive-count" aria-live="polite">
               Showing {Math.min(visibleLimit, filteredProducts.length)} of {filteredProducts.length} pieces
-              {activeGender === 'men' ? " · Men's Edit (includes Unisex)" : activeGender === 'women' ? " · Women's Edit (includes Unisex)" : ''}
+              {activeGender === 'men' ? " · Men's Edit" : activeGender === 'women' ? " · Women's Edit" : ''}
             </p>
             {visibleProducts.length > 0 ? <div className="art-grid" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}>{visibleProducts.map((product) => {
               const soldOut = product.stockStatus === 'sold-out'
               const gender = getProductGender(product)
-              const sectionTag = gender === 'women' ? 'WOMEN' : gender === 'men' ? 'MEN' : 'MEN & WOMEN'
+              const sectionTag = gender === 'women' ? 'WOMEN' : 'MEN'
               return <article className="art-card" key={product.id} style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
                 <button className="art-image-link" type="button" onClick={() => onCustomize(product)} aria-label={`View ${product.title}`}>
                   <span className="art-image-wrap"><Image className="art-image" src={resolveDriveImageUrl(product.image, 500)} alt={`${product.title} — ${product.garment} in the ${product.theme} theme`} width={600} height={800} quality={75} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" loading="lazy" fetchPriority="low" decoding="async" unoptimized={!isImageOptimizerSource(resolveDriveImageUrl(product.image, 500))} draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} /><span className={`stock-badge${soldOut ? ' sold-out' : ''}`} aria-label={`Stock status: ${soldOut ? 'Sold Out' : 'In Stock'}`}>{soldOut ? 'Sold Out' : 'In Stock'}</span><span className="art-card-sticker">{sectionTag}</span><span className="art-image-arrow"><ArrowUpRight aria-hidden="true" /></span></span>
