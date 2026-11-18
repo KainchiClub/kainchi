@@ -2,35 +2,42 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const FALLBACK_SUPABASE_URL = 'https://wmuuontaetovajkfsond.supabase.co'
 
+function isValidHttpUrl(value: string | undefined | null): value is string {
+  if (!value) return false
+  const trimmed = value.trim()
+  return /^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(trimmed)
+}
+
 function getSupabaseConfig() {
   const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
   const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
 
-  if (envUrl && envKey) {
-    return { url: envUrl, key: envKey }
-  }
+  let localUrl = ''
+  let localKey = ''
 
   if (typeof window !== 'undefined') {
     try {
       const raw = window.localStorage.getItem('kainchi-cloud-config-v1')
       if (raw) {
         const parsed = JSON.parse(raw) as { supabaseUrl?: string; supabaseAnonKey?: string }
-        if (parsed.supabaseUrl?.trim() && parsed.supabaseAnonKey?.trim()) {
-          return {
-            url: parsed.supabaseUrl.trim(),
-            key: parsed.supabaseAnonKey.trim(),
-          }
-        }
+        localUrl = parsed.supabaseUrl?.trim() ?? ''
+        localKey = parsed.supabaseAnonKey?.trim() ?? ''
       }
     } catch {
       // ignore storage read errors
     }
   }
 
-  return {
-    url: envUrl || FALLBACK_SUPABASE_URL,
-    key: envKey || '',
-  }
+  // सिर्फ़ वही URL चुनें जो सचमुच वैध https:// URL हो
+  const url = isValidHttpUrl(envUrl)
+    ? envUrl
+    : isValidHttpUrl(localUrl)
+      ? localUrl
+      : FALLBACK_SUPABASE_URL
+
+  const key = envKey || localKey || ''
+
+  return { url, key }
 }
 
 let cachedClient: SupabaseClient | null = null
@@ -38,18 +45,23 @@ let cachedSignature = ''
 
 export function getSupabaseClient(): SupabaseClient | null {
   const { url, key } = getSupabaseConfig()
-  if (!url || !key) return null
+  if (!isValidHttpUrl(url) || !key) return null
 
   const signature = `${url}::${key}`
   if (cachedClient && cachedSignature === signature) {
     return cachedClient
   }
 
-  cachedClient = createClient(url, key, {
-    auth: { persistSession: false },
-  })
-  cachedSignature = signature
-  return cachedClient
+  try {
+    cachedClient = createClient(url, key, {
+      auth: { persistSession: false },
+    })
+    cachedSignature = signature
+    return cachedClient
+  } catch (err) {
+    console.error('Supabase client init skipped:', err)
+    return null
+  }
 }
 
 export async function uploadProductImageToSupabase(fileOrDataUrl: File | string, productId: string): Promise<string | null> {
