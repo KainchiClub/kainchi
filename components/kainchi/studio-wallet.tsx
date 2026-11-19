@@ -23,6 +23,8 @@ type UnifiedWalletView = {
   referrals: number
   ordersCompleted: number
   redemptions: number
+  isPartnerUnlocked: boolean
+  lifetimePercent: number
 }
 
 function maskPhone(phone: string) {
@@ -35,8 +37,9 @@ function maskPhone(phone: string) {
 }
 
 function walletHref(wallet: UnifiedWalletView) {
+  const perkText = wallet.lifetimePercent > 0 ? ` + ${wallet.lifetimePercent}% Lifetime Partner Discount` : ''
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    `Hey Studio, I want to redeem my ₹${wallet.rupeeCredit} Store Credit (${wallet.passCode}) on my next piece`
+    `Hey Studio, I want to use my Studio Pass (${wallet.passCode}) — ₹${wallet.rupeeCredit} Store Credit${perkText} on my next piece.`
   )}`
 }
 
@@ -45,15 +48,19 @@ function profileToUnifiedWallet(profile: CustomerProfile): UnifiedWalletView {
   const earned = Number(profile.discount_earned ?? 0)
   const used = Number(profile.discount_used ?? 0)
   const balance = Math.max(0, earned - used)
+  const referrals = Number(profile.referral_count ?? 0)
+  const ordersCompleted = Number(profile.total_orders ?? 0)
   return {
     memberName: profile.full_name,
     phone: profile.phone || '',
     passCode,
     coins: balance * 10,
     rupeeCredit: balance,
-    referrals: Number(profile.referral_count ?? 0),
-    ordersCompleted: Number(profile.total_orders ?? 0),
+    referrals,
+    ordersCompleted,
     redemptions: used,
+    isPartnerUnlocked: ordersCompleted >= 1,
+    lifetimePercent: Math.floor(referrals / 10),
   }
 }
 
@@ -68,6 +75,8 @@ function legacyToUnifiedWallet(legacy: LegacyStudioWallet): UnifiedWalletView {
     referrals: legacy.referrals,
     ordersCompleted: legacy.ordersCompleted,
     redemptions: legacy.redemptions,
+    isPartnerUnlocked: legacy.ordersCompleted >= 1,
+    lifetimePercent: Math.floor(legacy.referrals / 10),
   }
 }
 
@@ -110,7 +119,6 @@ export function StudioWallet() {
     setLoading(true)
     setError('')
 
-    // 1. Check active session & local Atelier Pass ledger
     const active = getStoredCustomerSession()
     const allLocalMembers = [...(active ? [active] : []), ...getLocalMembersLedger()]
     const localMemberMatch = allLocalMembers.find((m) => {
@@ -125,7 +133,6 @@ export function StudioWallet() {
       return
     }
 
-    // 2. Check legacy Studio Wallet ledger
     const legacyMatch = readWalletLedger().find(
       (item) =>
         (digitsOnly && item.phone.endsWith(last10Phone)) ||
@@ -137,7 +144,6 @@ export function StudioWallet() {
       return
     }
 
-    // 3. Check Supabase customers table
     const supabase = getBrowserSupabaseClient()
     if (supabase) {
       try {
@@ -161,7 +167,7 @@ export function StudioWallet() {
     }
 
     setWallet(null)
-    setError('No Atelier Pass / Studio Wallet found for that number or code. Click the profile icon at the top to activate your Atelier Pass first.')
+    setError('No Atelier Pass / Studio Wallet found for that number or code. Activate your Atelier Pass from the top header first.')
     setLoading(false)
   }
 
@@ -201,21 +207,33 @@ export function StudioWallet() {
         <div className="studio-wallet-card" role="status">
           <div className="studio-wallet-card-top">
             <div>
-              <p>Kainchi Studio Vault Wallet · {wallet.passCode}</p>
+              <p>
+                {wallet.isPartnerUnlocked
+                  ? `Official Studio Partner Pass · ${wallet.passCode}`
+                  : `Atelier Member Pass · ${wallet.passCode} (Complete 1st order to unlock Partner Pass)`}
+              </p>
               <strong>{wallet.memberName}</strong>
               <span>{maskPhone(wallet.phone)}</span>
             </div>
-            <span className="studio-wallet-seal">VAULT<br />ACTIVE</span>
+            <span className="studio-wallet-seal">
+              {wallet.isPartnerUnlocked ? <>PARTNER<br />ACTIVE</> : <>STEP 01<br />PENDING</>}
+            </span>
           </div>
           <div className="studio-wallet-balance">
-            <span>Current Balance</span>
-            <strong>₹{wallet.rupeeCredit.toLocaleString('en-IN')} Store Credit</strong>
-            <em>{wallet.coins.toLocaleString()} Studio Coins · Code: {wallet.passCode}</em>
+            <span>Lifetime Stacked Privilege &amp; Credit</span>
+            <strong>
+              +{wallet.lifetimePercent}% Lifetime Discount · ₹{wallet.rupeeCredit.toLocaleString('en-IN')} Credit
+            </strong>
+            <em>
+              {wallet.referrals % 10 === 0 && wallet.referrals > 0
+                ? `Unlocked +${wallet.lifetimePercent}% lifetime discount (${wallet.referrals} referrals)`
+                : `${10 - (wallet.referrals % 10)} more referrals to unlock +${wallet.lifetimePercent + 1}% lifetime discount`}
+            </em>
           </div>
           <div className="studio-wallet-stats">
-            <span><b>{wallet.referrals}</b> Friends invited</span>
+            <span><b>{wallet.referrals}</b> Qualified referrals</span>
+            <span><b>+{wallet.lifetimePercent}%</b> Lifetime tier</span>
             <span><b>{wallet.ordersCompleted}</b> Orders completed</span>
-            <span><b>₹{wallet.redemptions}</b> Credit redeemed</span>
           </div>
           <div className="studio-wallet-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             <button
@@ -239,7 +257,7 @@ export function StudioWallet() {
           </div>
         </div>
       )}
-      <p className="studio-wallet-note">New to the Studio? Activate your free Atelier Pass from the top header to unlock your Wallet &amp; Referral Code.</p>
+      <p className="studio-wallet-note">Step 1: Your 1st order activates your Official Studio Partner Pass. Every 10 referrals adds +1% lifetime stacked discount (10 = +1%, 20 = +2%, 100 = +10%).</p>
     </section>
   )
 }
