@@ -2,17 +2,58 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const GATEWAY_CLOUD_SETTINGS_KEY = 'kainchi-store-gateway-cloud-v1'
 export const CUSTOMER_SESSION_KEY = 'kainchi-member-session-v1'
+export const LOCAL_MEMBERS_LEDGER_KEY = 'kainchi-members-ledger-v1'
 
 export interface CustomerProfile {
   id: string
+  member_code?: string
   full_name: string
   email: string
   phone?: string | null
+  referred_by?: string | null
+  referral_count?: number
+  discount_earned?: number
+  discount_used?: number
   total_orders: number
   total_spent: number
   last_gift_sent?: string | null
   last_order_at?: string | null
   created_at?: string
+}
+
+export function generateMemberCode(fullName: string, phone?: string | null, sequenceHint?: number): string {
+  const cleanLetters = fullName.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4).padEnd(4, 'K')
+  const phoneDigits = (phone || '').replace(/\D/g, '').slice(-4)
+  if (phoneDigits.length === 4) {
+    return `KC-${cleanLetters}-${phoneDigits}`
+  }
+  const seq = String(sequenceHint || Math.floor(1000 + Math.random() * 9000)).padStart(4, '0')
+  return `KC-${cleanLetters}-${seq}`
+}
+
+export function saveMemberToLocalLedger(profile: CustomerProfile) {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = window.localStorage.getItem(LOCAL_MEMBERS_LEDGER_KEY)
+    const list: CustomerProfile[] = raw ? JSON.parse(raw) : []
+    const idx = list.findIndex((m) => m.email.toLowerCase() === profile.email.toLowerCase())
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...profile }
+    } else {
+      list.push({ ...profile, created_at: profile.created_at || new Date().toISOString() })
+    }
+    window.localStorage.setItem(LOCAL_MEMBERS_LEDGER_KEY, JSON.stringify(list))
+  } catch {}
+}
+
+export function getLocalMembersLedger(): CustomerProfile[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(LOCAL_MEMBERS_LEDGER_KEY)
+    return raw ? (JSON.parse(raw) as CustomerProfile[]) : []
+  } catch {
+    return []
+  }
 }
 
 export const NO_REPEAT_GIFT_TIERS = [
@@ -60,7 +101,12 @@ export function setStoredCustomerSession(profile: CustomerProfile | null) {
   if (typeof window === 'undefined') return
   try {
     if (profile) {
-      window.localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(profile))
+      const enriched: CustomerProfile = {
+        ...profile,
+        member_code: profile.member_code || generateMemberCode(profile.full_name, profile.phone),
+      }
+      window.localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(enriched))
+      saveMemberToLocalLedger(enriched)
     } else {
       window.localStorage.removeItem(CUSTOMER_SESSION_KEY)
     }
