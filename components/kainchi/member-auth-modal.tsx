@@ -5,8 +5,10 @@ import { ArrowUpRight, Check, Copy, Gift, LogOut, Sparkles, UserCheck, X } from 
 import {
   generateMemberCode,
   getBrowserSupabaseClient,
+  getLocalMembersLedger,
   logErrorOrCartEvent,
   pickNextNonRepeatGift,
+  saveMemberToLocalLedger,
   setStoredCustomerSession,
   triggerStudioNotification,
   type CustomerProfile,
@@ -80,124 +82,193 @@ export function MemberAuthModal({
       setErrorMsg('Please enter a valid email address.')
       return
     }
+    if (cleanPhone.length < 10) {
+      setErrorMsg('Please enter your 10-digit registered mobile number.')
+      return
+    }
     if (mode === 'signup' && cleanName.length < 2) {
       setErrorMsg('Please enter your full name.')
       return
     }
-    if (mode === 'signup' && cleanPhone.length < 10) {
-      setErrorMsg('Please enter a valid 10-digit mobile number.')
-      return
-    }
 
     setLoading(true)
-    const generatedCode = generateMemberCode(cleanName || cleanEmail.split('@')[0], cleanPhone)
     const supabase = getBrowserSupabaseClient()
+    const localLedger = getLocalMembersLedger()
+    const localExisting = localLedger.find(
+      (item) => item.email.toLowerCase() === cleanEmail && (!item.phone || item.phone.endsWith(cleanPhone))
+    )
 
-    try {
-      if (supabase) {
-        const { data: existing, error: fetchError } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('email', cleanEmail)
-          .maybeSingle()
-
-        if (!fetchError && existing) {
-          const profile: CustomerProfile = {
-            ...(existing as CustomerProfile),
-            member_code: (existing as CustomerProfile).member_code || generateMemberCode((existing as CustomerProfile).full_name, (existing as CustomerProfile).phone),
-          }
-          setStoredCustomerSession(profile)
-          onMemberChange(profile)
-          setLoading(false)
-          onClose()
-          return
-        }
-
-        if (!fetchError && mode === 'login') {
-          setErrorMsg('No account found with this email. Switch to "Join Club (New)" to activate your Atelier Pass.')
-          logErrorOrCartEvent({
-            eventType: 'login_error',
-            customerEmail: cleanEmail,
-            details: { reason: 'Email not found during sign-in' },
-          }).catch(() => {})
-          setLoading(false)
-          return
-        }
-
-        if (!fetchError) {
-          const { data: created, error: insertError } = await supabase
+    // EXISTING MEMBER SIGN-IN (Email + Mobile Verification)
+    if (mode === 'login') {
+      try {
+        if (supabase) {
+          const { data: existing, error: fetchError } = await supabase
             .from('customers')
-            .insert({
-              full_name: cleanName,
-              email: cleanEmail,
-              phone: cleanPhone,
-              member_code: generatedCode,
-              referred_by: cleanRef || null,
-              referral_count: 0,
-              discount_earned: 0,
-              discount_used: 0,
-              total_orders: 0,
-              total_spent: 0,
-              last_gift_sent: 'None',
-            })
             .select('*')
-            .single()
+            .eq('email', cleanEmail)
+            .maybeSingle()
 
-          if (!insertError && created) {
-            const newProfile: CustomerProfile = {
-              ...(created as CustomerProfile),
-              member_code: (created as CustomerProfile).member_code || generatedCode,
+          if (!fetchError && existing) {
+            const dbRecord = existing as CustomerProfile
+            const dbPhone = (dbRecord.phone || '').replace(/\D/g, '').slice(-10)
+            if (dbPhone && dbPhone !== cleanPhone) {
+              setErrorMsg('Mobile number does not match this email address.')
+              setLoading(false)
+              return
             }
-            setStoredCustomerSession(newProfile)
-            onMemberChange(newProfile)
-            triggerStudioNotification({
-              eventType: 'signup',
-              customerName: `${newProfile.full_name} (${newProfile.member_code})`,
-              customerEmail: newProfile.email,
-              customerPhone: newProfile.phone ?? '',
-            }).catch(() => {})
+
+            // Preserve real name if local ledger has full name
+            const resolvedName =
+              dbRecord.full_name && dbRecord.full_name !== cleanEmail.split('@')[0]
+                ? dbRecord.full_name
+                : localExisting?.full_name || dbRecord.full_name
+            const resolvedCode =
+              dbRecord.member_code && !dbRecord.member_code.startsWith('KC-ROCK-')
+                ? dbRecord.member_code
+                : localExisting?.member_code || generateMemberCode(resolvedName, cleanPhone)
+
+            const verifiedProfile: CustomerProfile = {
+              ...dbRecord,
+              full_name: resolvedName,
+              phone: dbPhone || cleanPhone,
+              member_code: resolvedCode,
+            }
+
+            // Sync corrected details back to Supabase
+            await supabase
+              .from('customers')
+              .update({ full_name: resolvedName, phone: verifiedProfile.phone, member_code: resolvedCode })
+              .eq('email', cleanEmail)
+              .catch(() => {})
+
+            setStoredCustomerSession(verifiedProfile)
+            onMemberChange(verifiedProfile)
             setLoading(false)
             onClose()
             return
           }
         }
+      } catch {}
+
+      if (localExisting) {
+        const verifiedLocal: CustomerProfile = {
+          ...localExisting,
+          phone: cleanPhone,
+          member_code: localExisting.member_code || generateMemberCode(localExisting.full_name, cleanPhone),
+        }
+        setStoredCustomerSession(verifiedLocal)
+        onMemberChange(verifiedLocal)
+        setLoading(false)
+        onClose()
+        return
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Supabase sync fallback'
+
+      setErrorMsg('No Atelier Pass found matching this Email & Mobile Number. Switch to "Join Club (New)" to create your pass.')
       logErrorOrCartEvent({
-        eventType: mode === 'signup' ? 'signup_error' : 'login_error',
+        eventType: 'login_error',
         customerEmail: cleanEmail,
-        customerName: cleanName,
         customerPhone: cleanPhone,
-        details: { message: msg },
+        details: { reason: 'Email + Phone combination not found' },
       }).catch(() => {})
+      setLoading(false)
+      return
     }
 
+    // NEW MEMBER SIGN-UP (Or Restore Existing Account with Real Name)
+    const generatedCode = generateMemberCode(cleanName, cleanPhone)
+
+    try {
+      if (supabase) {
+        const { data: existing } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('email', cleanEmail)
+          .maybeSingle()
+
+        if (existing) {
+          const updatedProfile: CustomerProfile = {
+            ...(existing as CustomerProfile),
+            full_name: cleanName,
+            phone: cleanPhone,
+            member_code: generatedCode,
+          }
+          await supabase
+            .from('customers')
+            .update({ full_name: cleanName, phone: cleanPhone, member_code: generatedCode })
+            .eq('email', cleanEmail)
+            .catch(() => {})
+
+          setStoredCustomerSession(updatedProfile)
+          onMemberChange(updatedProfile)
+          setLoading(false)
+          onClose()
+          return
+        }
+
+        const { data: created, error: insertError } = await supabase
+          .from('customers')
+          .insert({
+            full_name: cleanName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            member_code: generatedCode,
+            referred_by: cleanRef || null,
+            referral_count: 0,
+            discount_earned: 0,
+            discount_used: 0,
+            total_orders: 0,
+            total_spent: 0,
+            last_gift_sent: 'None',
+          })
+          .select('*')
+          .single()
+
+        if (!insertError && created) {
+          const newProfile: CustomerProfile = {
+            ...(created as CustomerProfile),
+            full_name: cleanName,
+            phone: cleanPhone,
+            member_code: generatedCode,
+          }
+          setStoredCustomerSession(newProfile)
+          onMemberChange(newProfile)
+          triggerStudioNotification({
+            eventType: 'signup',
+            customerName: `${newProfile.full_name} (${newProfile.member_code})`,
+            customerEmail: newProfile.email,
+            customerPhone: newProfile.phone ?? '',
+          }).catch(() => {})
+          setLoading(false)
+          onClose()
+          return
+        }
+      }
+    } catch {}
+
     const localProfile: CustomerProfile = {
-      id: `kc-${Date.now()}`,
+      id: localExisting?.id || `kc-${Date.now()}`,
       member_code: generatedCode,
-      full_name: cleanName || cleanEmail.split('@')[0],
+      full_name: cleanName,
       email: cleanEmail,
       phone: cleanPhone,
-      referred_by: cleanRef || null,
-      referral_count: 0,
-      discount_earned: 0,
-      discount_used: 0,
-      total_orders: 0,
-      total_spent: 0,
-      last_gift_sent: 'None',
-      created_at: new Date().toISOString(),
+      referred_by: cleanRef || localExisting?.referred_by || null,
+      referral_count: localExisting?.referral_count ?? 0,
+      discount_earned: localExisting?.discount_earned ?? 0,
+      discount_used: localExisting?.discount_used ?? 0,
+      total_orders: localExisting?.total_orders ?? 0,
+      total_spent: localExisting?.total_spent ?? 0,
+      last_gift_sent: localExisting?.last_gift_sent ?? 'None',
+      created_at: localExisting?.created_at || new Date().toISOString(),
     }
+    saveMemberToLocalLedger(localProfile)
     setStoredCustomerSession(localProfile)
     onMemberChange(localProfile)
-    if (mode === 'signup') {
-      triggerStudioNotification({
-        eventType: 'signup',
-        customerName: `${localProfile.full_name} (${localProfile.member_code})`,
-        customerEmail: localProfile.email,
-        customerPhone: localProfile.phone ?? '',
-      }).catch(() => {})
-    }
+    triggerStudioNotification({
+      eventType: 'signup',
+      customerName: `${localProfile.full_name} (${localProfile.member_code})`,
+      customerEmail: localProfile.email,
+      customerPhone: localProfile.phone ?? '',
+    }).catch(() => {})
     setLoading(false)
     onClose()
   }
@@ -258,7 +329,6 @@ export function MemberAuthModal({
               </div>
             </div>
 
-            {/* UNIQUE MEMBERSHIP & REFERRAL CODE CARD */}
             <div
               style={{
                 display: 'grid',
@@ -374,13 +444,18 @@ export function MemberAuthModal({
               {mode === 'signup' ? 'Join the Atelier Club' : 'Member Sign In'}
             </h2>
             <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#5c5046' }}>
-              Receive your personal Member Code, track orders, and unlock a non-repeating collector gift with every order.
+              {mode === 'signup'
+                ? 'Receive your personal Member Code, track orders, and unlock a non-repeating collector gift with every order.'
+                : 'Verify your registered email and mobile number to access your Atelier Pass.'}
             </p>
 
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
               <button
                 type="button"
-                onClick={() => setMode('signup')}
+                onClick={() => {
+                  setMode('signup')
+                  setErrorMsg('')
+                }}
                 style={{
                   flex: 1,
                   padding: '9px',
@@ -397,7 +472,10 @@ export function MemberAuthModal({
               </button>
               <button
                 type="button"
-                onClick={() => setMode('login')}
+                onClick={() => {
+                  setMode('login')
+                  setErrorMsg('')
+                }}
                 style={{
                   flex: 1,
                   padding: '9px',
@@ -441,31 +519,30 @@ export function MemberAuthModal({
                 />
               </label>
 
+              <label style={{ display: 'grid', gap: '4px', fontSize: '12px', fontWeight: 600 }}>
+                <span>Registered Mobile Number (WhatsApp) *</span>
+                <input
+                  type="tel"
+                  required
+                  maxLength={10}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="10-digit mobile number"
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.2)', background: '#fff' }}
+                />
+              </label>
+
               {mode === 'signup' && (
-                <>
-                  <label style={{ display: 'grid', gap: '4px', fontSize: '12px', fontWeight: 600 }}>
-                    <span>Mobile Number (WhatsApp) *</span>
-                    <input
-                      type="tel"
-                      required
-                      maxLength={10}
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      placeholder="10-digit mobile number"
-                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.2)', background: '#fff' }}
-                    />
-                  </label>
-                  <label style={{ display: 'grid', gap: '4px', fontSize: '12px', fontWeight: 600 }}>
-                    <span>Member Referral Code (Optional)</span>
-                    <input
-                      type="text"
-                      value={referralCodeInput}
-                      onChange={(e) => setReferralCodeInput(e.target.value.toUpperCase())}
-                      placeholder="e.g. KC-SAMR-5356"
-                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.2)', background: '#fff' }}
-                    />
-                  </label>
-                </>
+                <label style={{ display: 'grid', gap: '4px', fontSize: '12px', fontWeight: 600 }}>
+                  <span>Member Referral Code (Optional)</span>
+                  <input
+                    type="text"
+                    value={referralCodeInput}
+                    onChange={(e) => setReferralCodeInput(e.target.value.toUpperCase())}
+                    placeholder="e.g. KC-SAMR-5356"
+                    style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.2)', background: '#fff' }}
+                  />
+                </label>
               )}
 
               {errorMsg && <p style={{ color: '#b91c1c', fontSize: '12px', margin: 0 }}>{errorMsg}</p>}
@@ -489,7 +566,7 @@ export function MemberAuthModal({
                   gap: '6px',
                 }}
               >
-                <Sparkles size={15} /> {loading ? 'Verifying Pass...' : mode === 'signup' ? 'Activate Atelier Pass' : 'Sign In'}
+                <Sparkles size={15} /> {loading ? 'Verifying Pass...' : mode === 'signup' ? 'Activate Atelier Pass' : 'Verify & Sign In'}
               </button>
             </form>
           </>
