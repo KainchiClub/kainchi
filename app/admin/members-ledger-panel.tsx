@@ -38,7 +38,6 @@ export function MembersLedgerPanel() {
       if (error) throw error
 
       const cloudList = (data ?? []) as CustomerProfile[]
-      // Merge cloud + any unsynced local records
       const mergedMap = new Map<string, CustomerProfile>()
       for (const item of [...localList, ...cloudList]) {
         const key = item.email.toLowerCase()
@@ -60,7 +59,7 @@ export function MembersLedgerPanel() {
     loadMembers()
   }, [])
 
-  async function updateMemberReward(member: CustomerProfile, field: 'referral_count' | 'discount_earned' | 'discount_used', rawValue: string) {
+  async function updateMemberReward(member: CustomerProfile, field: 'referral_count' | 'discount_earned' | 'discount_used' | 'total_orders', rawValue: string) {
     const val = Math.max(0, Number(rawValue) || 0)
     const updated: CustomerProfile = { ...member, [field]: val }
     setMembers((prev) => prev.map((m) => (m.email === member.email ? updated : m)))
@@ -93,9 +92,9 @@ export function MembersLedgerPanel() {
       <div className="admin-panel-heading">
         <div>
           <h2 id="members-ledger-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Users size={18} /> Atelier Members, Codes &amp; Referral Ledger
+            <Users size={18} /> Atelier Members, Partner Pass &amp; Referral Ledger
           </h2>
-          <p>Permanent sequential directory (#1, #2, #3... ∞) with Member Codes, Referral Counts, and Discount Balances.</p>
+          <p>Step 1 (1st Order = Partner Pass Active) · Step 3 (Every 10 Referrals = +1% Lifetime Discount, 100 = +10%).</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span className="admin-count">{String(members.length).padStart(2, '0')} MEMBERS</span>
@@ -135,16 +134,19 @@ export function MembersLedgerPanel() {
                 <th scope="col">Member Name</th>
                 <th scope="col">Mobile &amp; Email</th>
                 <th scope="col">Member Code</th>
-                <th scope="col">Orders / Spend</th>
+                <th scope="col">Partner Pass (Step 1)</th>
+                <th scope="col">Orders</th>
                 <th scope="col">Referrals</th>
-                <th scope="col">Discount Earned (₹)</th>
-                <th scope="col">Discount Used (₹)</th>
-                <th scope="col">Available Bal.</th>
+                <th scope="col">Lifetime Tier (Step 3)</th>
+                <th scope="col">Credit Bal. (₹)</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((m, idx) => {
                 const code = m.member_code || generateMemberCode(m.full_name, m.phone, idx + 1)
+                const referrals = Number(m.referral_count ?? 0)
+                const orders = Number(m.total_orders ?? 0)
+                const lifetimePct = Math.floor(referrals / 10)
                 const earned = Number(m.discount_earned ?? 0)
                 const used = Number(m.discount_used ?? 0)
                 const balance = Math.max(0, earned - used)
@@ -165,40 +167,52 @@ export function MembersLedgerPanel() {
                       </code>
                     </td>
                     <td>
-                      <strong>{m.total_orders ?? 0}</strong> orders<br />
-                      <span style={{ fontSize: '12px', opacity: 0.75 }}>₹{Number(m.total_spent ?? 0).toLocaleString('en-IN')}</span>
+                      {orders >= 1 ? (
+                        <span style={{ padding: '3px 8px', borderRadius: '999px', background: '#dcfce7', color: '#15803d', fontSize: '11px', fontWeight: 700 }}>
+                          ✓ Partner Active
+                        </span>
+                      ) : (
+                        <span style={{ padding: '3px 8px', borderRadius: '999px', background: '#fef3c7', color: '#92400e', fontSize: '11px', fontWeight: 600 }}>
+                          Awaiting 1st Order
+                        </span>
+                      )}
                     </td>
                     <td>
                       <input
                         type="number"
                         min="0"
-                        value={m.referral_count ?? 0}
+                        value={orders}
+                        onChange={(e) => updateMemberReward(m, 'total_orders', e.target.value)}
+                        style={{ width: '58px', padding: '5px 8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.2)' }}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        value={referrals}
                         onChange={(e) => updateMemberReward(m, 'referral_count', e.target.value)}
                         style={{ width: '64px', padding: '5px 8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.2)' }}
                       />
                     </td>
                     <td>
-                      <input
-                        type="number"
-                        min="0"
-                        step="50"
-                        value={earned}
-                        onChange={(e) => updateMemberReward(m, 'discount_earned', e.target.value)}
-                        style={{ width: '80px', padding: '5px 8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.2)' }}
-                      />
+                      <strong style={{ color: lifetimePct > 0 ? '#8b1e24' : '#5c5046', fontSize: '13px' }}>
+                        +{lifetimePct}% Lifetime
+                      </strong>
                     </td>
                     <td>
-                      <input
-                        type="number"
-                        min="0"
-                        step="50"
-                        value={used}
-                        onChange={(e) => updateMemberReward(m, 'discount_used', e.target.value)}
-                        style={{ width: '80px', padding: '5px 8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.2)' }}
-                      />
-                    </td>
-                    <td>
-                      <strong style={{ color: balance > 0 ? '#15803d' : '#181210' }}>₹{balance}</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="number"
+                          min="0"
+                          step="50"
+                          value={earned}
+                          onChange={(e) => updateMemberReward(m, 'discount_earned', e.target.value)}
+                          title="Discount Earned"
+                          style={{ width: '72px', padding: '5px 6px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.2)' }}
+                        />
+                        <span style={{ fontSize: '11px', opacity: 0.7 }}>(Bal: ₹{balance})</span>
+                      </div>
                     </td>
                   </tr>
                 )
