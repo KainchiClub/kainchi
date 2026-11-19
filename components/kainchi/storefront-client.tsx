@@ -14,7 +14,7 @@ import { LetterboxFeedback } from './letterbox-feedback'
 import { HeroShowcase } from './hero-showcase'
 import VirtualLookbook from '../VirtualLookbook'
 import { OrderCart } from './order-cart'
-import { type CartLineDetails, type CartLineItem } from './order'
+import { FABRIC_COLORS, type CartLineDetails, type CartLineItem } from './order'
 import { PackagingShowcase } from './packaging-showcase'
 import { SiteHeader, SocialIcon } from './site-header'
 import { PolicyModals } from './policy-modals'
@@ -305,6 +305,48 @@ export function StorefrontClient() {
     setIsCartOpen(true)
   }, [updateOverlayHistory])
 
+  const quickAddProductToCart = useCallback((product: CatalogProduct) => {
+    addToCart({
+      product,
+      size: 'M',
+      color: FABRIC_COLORS[0],
+      quantity: 1,
+      includesGiftBox: premiumPackagingDefault,
+    })
+  }, [addToCart, premiumPackagingDefault])
+
+  useEffect(() => {
+    const handleQuickAddEvent = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        id: string
+        title: string
+        garment: string
+        theme: string
+        price: number
+        image: string
+        productCode: string
+      }>).detail
+      if (!detail) return
+      const existing = products.find(
+        (p) => p.id === detail.id || p.title.toLowerCase() === detail.title.toLowerCase()
+      )
+      const productToAdd: CatalogProduct = existing ?? {
+        id: detail.id,
+        productCode: detail.productCode,
+        title: detail.title,
+        garment: detail.garment,
+        theme: detail.theme,
+        price: detail.price,
+        image: detail.image,
+        stockStatus: 'in-stock',
+      }
+      quickAddProductToCart(productToAdd)
+    }
+
+    window.addEventListener('kainchi:quick-add-to-cart', handleQuickAddEvent)
+    return () => window.removeEventListener('kainchi:quick-add-to-cart', handleQuickAddEvent)
+  }, [products, quickAddProductToCart])
+
   function changeGiftBox(cartId: string, includesGiftBox: boolean) {
     setPremiumPackagingDefault(includesGiftBox)
     setCartItems((current) => current.map((item) => item.cartId === cartId ? { ...item, includesGiftBox } : item))
@@ -330,7 +372,7 @@ export function StorefrontClient() {
         <div className="canvas-band" aria-label="Made with care, worn with feeling"><span>MADE WITH CARE</span><span className="canvas-band-mark"><Scissors aria-hidden="true" /></span><span>WORN WITH FEELING</span></div>
         <FamilyCollectionBanner />
         <VirtualLookbook />
-        <ArtworkLibrary products={availableProducts} onCustomize={openProduct} />
+        <ArtworkLibrary products={availableProducts} onCustomize={openProduct} onQuickAddToCart={quickAddProductToCart} />
         <StudioAllianceProgram />
         <section className="story-section" id="story" aria-labelledby="story-title">
           <div className="story-number">K—C<br />2026</div>
