@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import { CATALOG_FILTER_EVENT, GARMENT_GROUPS, type GarmentGroup } from './storefront-events'
-import { Archive, ArrowUpRight, Search, X } from 'lucide-react'
+import { Archive, ArrowUpRight, Search, Shuffle, X } from 'lucide-react'
 import { fallbackImageOnError, isImageOptimizerSource, resolveDriveImageUrl } from '@/lib/utils'
 import { ARTWORK_THEMES, getProductGender, type CatalogProduct } from './catalog'
 
@@ -12,6 +12,17 @@ const STICKER_ARTWORK_IDS = ['drive-14', 'drive-06', 'drive-39', 'drive-22', 'dr
 
 type GenderTab = 'all' | 'men' | 'women'
 
+function smartShuffleCatalog(list: CatalogProduct[], seed: number): CatalogProduct[] {
+  const copy = [...list]
+  let s = seed || 1
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    s = (s * 9301 + 49297) % 233280
+    const j = Math.floor((s / 233280) * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
+}
+
 export function ArtworkLibrary({ products, onCustomize }: { products: CatalogProduct[]; onCustomize: (product: CatalogProduct) => void }) {
   const [activeTheme, setActiveTheme] = useState('All artwork')
   const [activeGender, setActiveGender] = useState<GenderTab>('all')
@@ -19,6 +30,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
   const [isArchiveOpen, setIsArchiveOpen] = useState(false)
   const [visibleLimit, setVisibleLimit] = useState(ARCHIVE_PAGE_SIZE)
   const [garmentGroup, setGarmentGroup] = useState<GarmentGroup>('all')
+  const [shuffleSeed, setShuffleSeed] = useState<number>(() => Math.floor(Math.random() * 100000) + 1)
   const filters = ['All artwork', ...ARTWORK_THEMES]
 
   const genderCounts = useMemo(() => {
@@ -35,7 +47,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
   const filteredProducts = useMemo(() => {
     const query = searchTerm.trim().toLocaleLowerCase()
     const garmentPattern = garmentGroup === 'all' ? null : GARMENT_GROUPS[garmentGroup].pattern
-    return products.filter((product) => {
+    const matched = products.filter((product) => {
       const gender = getProductGender(product)
       const matchesGender =
         activeGender === 'all' ||
@@ -46,7 +58,8 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
       const searchableText = `${product.title} ${product.theme} ${product.garment}`.toLocaleLowerCase()
       return matchesGender && matchesTheme && matchesGarment && (!query || searchableText.includes(query))
     })
-  }, [activeGender, activeTheme, garmentGroup, products, searchTerm])
+    return smartShuffleCatalog(matched, shuffleSeed)
+  }, [activeGender, activeTheme, garmentGroup, products, searchTerm, shuffleSeed])
 
   useEffect(() => {
     const handleFilter = (event: Event) => {
@@ -118,7 +131,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
         <div>
           <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Original artwork · Men &amp; Women</p>
           <h2 id="artwork-title">Find your <em>piece</em></h2>
-          <p className="section-intro">Crafted for both Men &amp; Women — browse all {products.length} original designs by fit, theme, or garment.</p>
+          <p className="section-intro">Crafted to order in small batches for Men &amp; Women — browse all {products.length} rotating designs by fit, theme, or garment.</p>
         </div>
         <div className="artwork-sticker-collage" role="img" aria-label={`A collage of Kainchi Club originals: ${stickerArtworks.map((artwork) => artwork.title).join(', ')}`}>
           {stickerArtworks.map((artwork, index) => <span className="artwork-sticker" data-sticker={index + 1} key={artwork.id}>
@@ -160,6 +173,16 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
           <span className="sr-only">Search the artwork archive</span>
           <input id="artwork-search" type="search" value={searchTerm} onChange={(event) => handleSearchChange(event.target.value)} placeholder="Search prints, themes, or garments" />
         </label>
+        <button
+          className="button button-outline-dark"
+          type="button"
+          onClick={() => {
+            setShuffleSeed((s) => s + Math.floor(Math.random() * 997) + 1)
+            setIsArchiveOpen(true)
+          }}
+        >
+          <Shuffle aria-hidden="true" /> Shuffle Drop
+        </button>
         <button className="button button-outline-dark artwork-archive-toggle" type="button" aria-expanded={isArchiveOpen} aria-controls="artwork-archive-results" onClick={toggleArchive}>
           {isArchiveOpen ? <X aria-hidden="true" /> : <Archive aria-hidden="true" />}
           {isArchiveOpen ? 'Close archive' : `Browse all ${products.length}`}
@@ -167,7 +190,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
       </div>
       {!isArchiveOpen && <div className="art-archive-invite">
         <span className="archive-invite-mark" aria-hidden="true">{String(products.length).padStart(2, '0')}</span>
-        <p>Every print, one place. Select Men&apos;s Edit, Women&apos;s Edit, or open the full archive to explore all designs.</p>
+        <p>Every print, dynamically rotated. Select Men&apos;s Edit, Women&apos;s Edit, or open the full archive to explore all made-to-order designs.</p>
         <span className="archive-invite-index">MEN &amp; WOMEN · {ARTWORK_THEMES.length} THEMES</span>
       </div>}
       <div id="artwork-archive-results" hidden={!isArchiveOpen}>
@@ -178,7 +201,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
             </div>
             {garmentGroup !== 'all' && <div className="garment-filter-chip-row"><button type="button" className="garment-filter-chip" onClick={() => { setGarmentGroup('all'); setVisibleLimit(ARCHIVE_PAGE_SIZE) }} aria-label={`Clear ${GARMENT_GROUPS[garmentGroup].label} filter`}>{GARMENT_GROUPS[garmentGroup].label} <X aria-hidden="true" /></button></div>}
             <p className="art-archive-count" aria-live="polite">
-              Showing {Math.min(visibleLimit, filteredProducts.length)} of {filteredProducts.length} pieces
+              Showing {Math.min(visibleLimit, filteredProducts.length)} of {filteredProducts.length} pieces (Shuffled Rotation)
               {activeGender === 'men' ? " · Men's Edit" : activeGender === 'women' ? " · Women's Edit" : ''}
             </p>
             {visibleProducts.length > 0 ? <div className="art-grid" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}>{visibleProducts.map((product) => {
@@ -187,7 +210,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
               const sectionTag = gender === 'women' ? 'WOMEN' : 'MEN'
               return <article className="art-card" key={product.id} style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
                 <button className="art-image-link" type="button" onClick={() => onCustomize(product)} aria-label={`View ${product.title}`}>
-                  <span className="art-image-wrap"><Image className="art-image" src={resolveDriveImageUrl(product.image, 500)} alt={`${product.title} — ${product.garment} in the ${product.theme} theme`} width={600} height={800} quality={75} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" loading="lazy" fetchPriority="low" decoding="async" unoptimized={!isImageOptimizerSource(resolveDriveImageUrl(product.image, 500))} draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} /><span className={`stock-badge${soldOut ? ' sold-out' : ''}`} aria-label={`Stock status: ${soldOut ? 'Sold Out' : 'In Stock'}`}>{soldOut ? 'Sold Out' : 'In Stock'}</span><span className="art-card-sticker">{sectionTag}</span><span className="art-image-arrow"><ArrowUpRight aria-hidden="true" /></span></span>
+                  <span className="art-image-wrap"><Image className="art-image" src={resolveDriveImageUrl(product.image, 500)} alt={`${product.title} — ${product.garment} in the ${product.theme} theme`} width={600} height={800} quality={75} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" loading="lazy" fetchPriority="low" decoding="async" unoptimized={!isImageOptimizerSource(resolveDriveImageUrl(product.image, 500))} draggable={false} onError={fallbackImageOnError} onContextMenu={(event) => event.preventDefault()} /><span className={`stock-badge${soldOut ? ' sold-out' : ''}`} aria-label={`Stock status: ${soldOut ? 'Sold Out' : 'Made to Order'}`}>{soldOut ? 'Sold Out' : 'Made to Order'}</span><span className="art-card-sticker">{sectionTag}</span><span className="art-image-arrow"><ArrowUpRight aria-hidden="true" /></span></span>
                 </button>
                 <div className="art-card-meta"><p className="art-theme">{product.theme} · {sectionTag}</p><h3>{product.title} <span className="product-code-label">· {product.productCode}</span></h3><span className="art-garment">{product.garment} · ₹{new Intl.NumberFormat('en-IN').format(product.price)}</span></div>
                 <button className="product-order" type="button" onClick={() => onCustomize(product)} disabled={soldOut}>{soldOut ? 'Sold Out' : 'Order on WhatsApp'}{!soldOut && <ArrowUpRight aria-hidden="true" />}</button>
@@ -197,7 +220,7 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
           </div>
         ) : null}
       </div>
-      <div className="artwork-footnote"><span>{String(products.length).padStart(2, '0')} ORIGINAL PIECES · MEN &amp; WOMEN</span><span>Good ideas deserve to be worn.</span></div>
+      <div className="artwork-footnote"><span>{String(products.length).padStart(2, '0')} ORIGINAL PIECES · MEN &amp; WOMEN</span><span>Crafted to order · Dispatched in 5–7 days.</span></div>
     </section>
   )
 }
