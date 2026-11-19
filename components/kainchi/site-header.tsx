@@ -2,8 +2,9 @@
 
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Menu, X } from 'lucide-react'
+import { ArrowUpRight, Menu, User, UserCheck, X } from 'lucide-react'
 import { filterCatalog, openSizeGuide, type GarmentGroup } from './storefront-events'
+import type { CustomerProfile } from '@/lib/kainchi-crm'
 
 const navigation = [
   { label: 'Collection', href: '#collection' },
@@ -49,7 +50,13 @@ function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-export function SiteHeader() {
+export function SiteHeader({
+  member = null,
+  onOpenMemberAuth,
+}: {
+  member?: CustomerProfile | null
+  onOpenMemberAuth?: () => void
+}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -86,6 +93,8 @@ export function SiteHeader() {
     }
   }
 
+  const memberFirstName = member?.full_name?.trim().split(/\s+/)[0]
+
   return (
     <header className="site-header">
       <button ref={toggleRef} className="mobile-menu-toggle category-menu-toggle" type="button" aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={isMenuOpen} aria-controls="category-drawer" onClick={() => setIsMenuOpen((open) => !open)}>
@@ -98,7 +107,31 @@ export function SiteHeader() {
       <nav className="main-nav" aria-label="Main navigation">
         {navigation.map((item) => <a href={item.href} key={item.label}>{item.label}</a>)}
       </nav>
-      <div className="header-actions">
+      <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {onOpenMemberAuth && (
+          <button
+            type="button"
+            onClick={onOpenMemberAuth}
+            aria-label={member ? `Atelier Pass: ${member.full_name}` : 'Member Sign In or Join Club'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 13px',
+              borderRadius: '999px',
+              border: '1px solid rgba(212, 175, 55, 0.55)',
+              background: member ? 'rgba(212, 175, 55, 0.16)' : 'rgba(24, 18, 16, 0.85)',
+              color: '#f5e29f',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {member ? <UserCheck size={14} aria-hidden="true" /> : <User size={14} aria-hidden="true" />}
+            <span>{member ? memberFirstName : 'Atelier Pass'}</span>
+          </button>
+        )}
         <a className="header-cta" href={STUDIO_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
           <span>Talk to the studio</span>
           <span className="header-cta-status"><span className="header-cta-status-dot" aria-hidden="true" />Studio Active</span>
@@ -113,6 +146,25 @@ export function SiteHeader() {
           <button ref={closeRef} type="button" className="size-guide-close" aria-label="Close menu" onClick={closeMenu}><X aria-hidden="true" /></button>
         </div>
         <ul className="category-drawer-list">
+          {onOpenMemberAuth && (
+            <li>
+              <button
+                className="category-drawer-item"
+                type="button"
+                onClick={() => {
+                  closeMenu()
+                  onOpenMemberAuth()
+                }}
+              >
+                <span className="category-drawer-index" aria-hidden="true">00</span>
+                <span className="category-drawer-text">
+                  <strong>{member ? `${member.full_name} · Atelier Pass` : 'Member Sign In / Join Club'}</strong>
+                  <small>{member ? `Orders: #${String(member.total_orders).padStart(2, '0')} · View unlocked gift` : 'Track orders & unlock collector gifts'}</small>
+                </span>
+                <ArrowUpRight aria-hidden="true" />
+              </button>
+            </li>
+          )}
           {drawerCategories.map((category, index) => (
             <li key={category.label}>
               {category.kind === 'whatsapp' ? (
