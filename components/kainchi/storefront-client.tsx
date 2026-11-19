@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
-import { AtelierLuxuryLayer } from './atelier-luxury-layer'
 import { BespokeFitConciergeModal, VaultInteractiveUnboxer } from './luxury-atelier-suite'
 import { getFeaturedProducts, type CatalogProduct } from './catalog'
 import { useCatalogProducts } from './catalog-store'
@@ -115,6 +114,7 @@ export function StorefrontClient() {
       if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle)
     }
   }, [availableProducts, featuredProducts])
+
   const [storyFilter, setStoryFilter] = useState<StoryFilter>('all')
   const collectionProducts = useMemo(
     () => storyFilter === 'all' ? essentials : availableProducts.filter((product) => matchesStoryFilter(product, storyFilter)),
@@ -322,7 +322,6 @@ export function StorefrontClient() {
 
   return (
     <>
-      <AtelierLuxuryLayer />
       <SiteHeader />
       <main>
         <HeroShowcase products={availableProducts} />
@@ -330,7 +329,6 @@ export function StorefrontClient() {
         <div className="canvas-band" aria-label="Made with care, worn with feeling"><span>MADE WITH CARE</span><span className="canvas-band-mark"><Scissors aria-hidden="true" /></span><span>WORN WITH FEELING</span></div>
         <FamilyCollectionBanner />
         <VirtualLookbook />
-        <LetterboxFeedback />
         <ArtworkLibrary products={availableProducts} onCustomize={openProduct} />
         <StudioAllianceProgram />
         <section className="story-section" id="story" aria-labelledby="story-title">
@@ -343,6 +341,7 @@ export function StorefrontClient() {
         <div className="px-4 pb-10">
           <VaultInteractiveUnboxer products={availableProducts} onSelectProduct={openProduct} />
         </div>
+        <LetterboxFeedback />
         <FAQSection />
       </main>
       <footer className="site-footer"><a className="wordmark footer-wordmark" href="#top" aria-label="Kainchi Club home"><Image className="wordmark-logo" src={brandLogo} alt="" width={96} height={96} loading="lazy" decoding="async" /><span>KAINCHI <span className="wordmark-light">CLUB</span></span></a><p>Wear your own art. © 2026 Kainchi Club</p><div className="footer-socials" aria-label="Social media"><a id="social-instagram" href="#" aria-label="Instagram"><SocialIcon network="instagram" /></a><a id="social-facebook" href="#" aria-label="Facebook"><SocialIcon network="facebook" /></a><a id="social-x" href="#" aria-label="X / Twitter"><SocialIcon network="x" /></a></div><div className="footer-links"><a href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club" aria-label="Contact Kainchi Club on WhatsApp">WhatsApp <ArrowUpRight aria-hidden="true" /></a><a href="#top" aria-label="Back to top">Back to top <ArrowUpRight aria-hidden="true" /></a><Link href="/admin" prefetch={false}>Admin Portal <ArrowUpRight aria-hidden="true" /></Link><PolicyModals /></div></footer>
