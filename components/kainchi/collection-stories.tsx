@@ -38,7 +38,8 @@ export function CollectionStories({ products, activeFilter, onFilterChange }: {
       return
     }
     onFilterChange(id)
-    requestAnimationFrame(() => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    window.dispatchEvent(new CustomEvent('kainchi:story-filter', { detail: id }))
+    requestAnimationFrame(() => document.getElementById('artwork')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
 
   return (
