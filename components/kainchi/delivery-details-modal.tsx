@@ -4,6 +4,13 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { ArrowUpRight, Check, Copy, QrCode, Smartphone, X } from 'lucide-react'
 import { formatRupees } from './catalog'
 import { GIFT_BOX_PRICE, WHATSAPP_PHONE, getCartLineTotal, getCartTotal, type CartLineItem } from './order'
+import {
+  getBrowserSupabaseClient,
+  getStoredCustomerSession,
+  pickNextNonRepeatGift,
+  setStoredCustomerSession,
+  triggerStudioNotification,
+} from '@/lib/kainchi-crm'
 
 const GATEWAY_CLOUD_SETTINGS_KEY = 'kainchi-store-gateway-cloud-v1'
 
@@ -144,7 +151,7 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
     window.setTimeout(() => setCopiedUpi(false), 2000)
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!items?.length) return
     const nextErrors = validate(fields)
@@ -154,7 +161,57 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
       dialogRef.current?.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)?.focus()
       return
     }
+
     const message = createDeliveryOrderMessage(items, fields, configuredBrand)
+    const member = getStoredCustomerSession()
+    const nextOrderSequence = (member?.total_orders ?? 0) + 1
+    const assignedGift = pickNextNonRepeatGift(nextOrderSequence, member?.last_gift_sent)
+    const supabase = getBrowserSupabaseClient()
+
+    if (supabase) {
+      try {
+        if (member) {
+          const updatedOrders = nextOrderSequence
+          const updatedSpent = Number(member.total_spent || 0) + total
+          await supabase
+            .from('customers')
+            .update({
+              total_orders: updatedOrders,
+              total_spent: updatedSpent,
+              last_gift_sent: assignedGift,
+              last_order_at: new Date().toISOString(),
+            })
+            .eq('email', member.email)
+
+          setStoredCustomerSession({
+            ...member,
+            total_orders: updatedOrders,
+            total_spent: updatedSpent,
+            last_gift_sent: assignedGift,
+          })
+        }
+
+        await supabase.from('orders').insert({
+          customer_email: member?.email ?? null,
+          customer_phone: member?.phone ?? null,
+          order_sequence: nextOrderSequence,
+          gift_assigned: assignedGift,
+          delivery_status: 'Processing',
+        })
+      } catch {}
+    }
+
+    await triggerStudioNotification({
+      eventType: 'order_placed',
+      customerName: fields.fullName.trim(),
+      customerEmail: member?.email ?? '',
+      customerPhone: member?.phone ?? '',
+      orderSummary: message,
+      orderTotal: total,
+      orderSequence: nextOrderSequence,
+      giftAssigned: assignedGift,
+    })
+
     openWhatsApp(`https://wa.me/${configuredWhatsapp}?text=${encodeURIComponent(message)}`)
     onClose()
   }
@@ -195,7 +252,6 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
           </ul>
         )}
 
-        {/* DIRECT BANK UPI / QR EXPRESS CHECKOUT (Activated when UPI ID is saved in Admin) */}
         {configuredUpiId && total > 0 && (
           <div
             style={{
