@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { Check, Copy, Gift, LogOut, MessageCircle, Sparkles, UserCheck, X } from 'lucide-react'
+import { ArrowUpRight, Check, Copy, Gift, LogOut, Sparkles, UserCheck, X } from 'lucide-react'
 import {
   generateMemberCode,
   getBrowserSupabaseClient,
@@ -14,16 +14,15 @@ import {
 
 export function buildWhatsAppReferralUrl(memberCode: string, memberName?: string) {
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://kainchi-iota.vercel.app'
-  const sender = memberName?.trim().split(/\s+/)[0] || 'Your friend'
+  const sender = memberName?.trim().split(/\s+/)[0] || 'A member'
   const message = [
-    `Hey! ${sender} here — you HAVE to check out *Kainchi Club* once! 👀✨`,
+    `Hey! ${sender} here — thought you’d appreciate *Kainchi Club*.`,
     ``,
-    `They make limited-edition, custom wearable art (heavyweight hoodies, oversized tees, embroidered shirts & denim) that looks straight out of a luxury studio — not mass-market stuff.`,
+    `They craft small-batch wearable art — heavyweight hoodies, oversized tees, embroidered shirts & denim with studio-grade detailing.`,
     ``,
-    `🎁 *Your Welcome Benefit:*`,
-    `Sign up with my VIP Member Code *${memberCode}* to unlock *₹200 instant welcome credit* + a *free surprise collector gift* on your first order!`,
+    `If you ever pick something up, use my private member pass *${memberCode}* when you join — it unlocks an archival welcome gift on your first piece and counts toward our Studio Alliance privileges.`,
     ``,
-    `Take a 30-second look at the collection here 👇`,
+    `Have a look at the collection:`,
     `${siteUrl}`,
   ].join('\n')
 
@@ -135,7 +134,7 @@ export function MemberAuthModal({
               member_code: generatedCode,
               referred_by: cleanRef || null,
               referral_count: 0,
-              discount_earned: cleanRef ? 200 : 0,
+              discount_earned: 0,
               discount_used: 0,
               total_orders: 0,
               total_spent: 0,
@@ -182,7 +181,7 @@ export function MemberAuthModal({
       phone: cleanPhone,
       referred_by: cleanRef || null,
       referral_count: 0,
-      discount_earned: cleanRef ? 200 : 0,
+      discount_earned: 0,
       discount_used: 0,
       total_orders: 0,
       total_spent: 0,
@@ -267,14 +266,14 @@ export function MemberAuthModal({
                 padding: '13px 14px',
                 borderRadius: '14px',
                 background: 'linear-gradient(135deg, #241916 0%, #140e0c 100%)',
-                border: '1px solid rgba(212, 175, 55, 0.55)',
+                border: '1px solid rgba(212, 175, 55, 0.45)',
                 color: '#f5efe6',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
                 <div>
                   <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#d4af37', display: 'block' }}>
-                    OFFICIAL MEMBER &amp; REFERRAL CODE
+                    OFFICIAL MEMBER &amp; ALLIANCE CODE
                   </span>
                   <strong style={{ fontSize: '17px', letterSpacing: '0.08em', color: '#fff', fontFamily: 'monospace' }}>
                     {activeMemberCode}
@@ -289,8 +288,8 @@ export function MemberAuthModal({
                     gap: '5px',
                     padding: '7px 12px',
                     borderRadius: '999px',
-                    border: '1px solid rgba(212, 175, 55, 0.55)',
-                    background: 'rgba(212, 175, 55, 0.16)',
+                    border: '1px solid rgba(212, 175, 55, 0.45)',
+                    background: 'rgba(212, 175, 55, 0.12)',
                     color: '#f5e29f',
                     fontSize: '11px',
                     fontWeight: 600,
@@ -310,18 +309,20 @@ export function MemberAuthModal({
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '7px',
-                  padding: '10px 14px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: '#25D366',
-                  color: '#0b1f12',
-                  fontSize: '12.5px',
-                  fontWeight: 700,
+                  gap: '6px',
+                  padding: '9px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(212, 175, 55, 0.5)',
+                  background: 'rgba(245, 230, 200, 0.1)',
+                  color: '#f5e6c8',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  letterSpacing: '0.03em',
                   cursor: 'pointer',
                 }}
               >
-                <MessageCircle size={15} /> Refer a Friend on WhatsApp (Earn ₹200)
+                <span>Extend a Private Studio Invite</span>
+                <ArrowUpRight size={14} />
               </button>
             </div>
 
@@ -331,12 +332,12 @@ export function MemberAuthModal({
                 <strong style={{ fontSize: '17px', color: '#f5e29f' }}>#{String(member.total_orders).padStart(2, '0')}</strong>
               </div>
               <div>
-                <span style={{ fontSize: '10px', color: '#a89b8c', display: 'block' }}>REFERRALS</span>
+                <span style={{ fontSize: '10px', color: '#a89b8c', display: 'block' }}>ALLIANCE REFS</span>
                 <strong style={{ fontSize: '17px', color: '#f5e29f' }}>{member.referral_count ?? 0}</strong>
               </div>
               <div>
-                <span style={{ fontSize: '10px', color: '#a89b8c', display: 'block' }}>DISCOUNT BAL.</span>
-                <strong style={{ fontSize: '17px', color: '#f5e29f' }}>₹{Math.max(0, (member.discount_earned ?? 0) - (member.discount_used ?? 0))}</strong>
+                <span style={{ fontSize: '10px', color: '#a89b8c', display: 'block' }}>LIFETIME TIER</span>
+                <strong style={{ fontSize: '17px', color: '#f5e29f' }}>+{Math.floor((member.referral_count ?? 0) / 10)}%</strong>
               </div>
             </div>
 
@@ -373,7 +374,7 @@ export function MemberAuthModal({
               {mode === 'signup' ? 'Join the Atelier Club' : 'Member Sign In'}
             </h2>
             <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#5c5046' }}>
-              Get your unique Member Code, track orders, and unlock a non-repeating collector gift with every order.
+              Receive your personal Member Code, track orders, and unlock a non-repeating collector gift with every order.
             </p>
 
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
@@ -455,7 +456,7 @@ export function MemberAuthModal({
                     />
                   </label>
                   <label style={{ display: 'grid', gap: '4px', fontSize: '12px', fontWeight: 600 }}>
-                    <span>Friend&apos;s Referral Code (Optional)</span>
+                    <span>Member Referral Code (Optional)</span>
                     <input
                       type="text"
                       value={referralCodeInput}
