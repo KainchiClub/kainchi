@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { Check, Copy, Gift, LogOut, Sparkles, UserCheck, X } from 'lucide-react'
+import { Check, Copy, Gift, LogOut, MessageCircle, Sparkles, UserCheck, X } from 'lucide-react'
 import {
   generateMemberCode,
   getBrowserSupabaseClient,
@@ -11,6 +11,24 @@ import {
   triggerStudioNotification,
   type CustomerProfile,
 } from '@/lib/kainchi-crm'
+
+export function buildWhatsAppReferralUrl(memberCode: string, memberName?: string) {
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://kainchi-iota.vercel.app'
+  const sender = memberName?.trim().split(/\s+/)[0] || 'Your friend'
+  const message = [
+    `Hey! ${sender} here — you HAVE to check out *Kainchi Club* once! 👀✨`,
+    ``,
+    `They make limited-edition, custom wearable art (heavyweight hoodies, oversized tees, embroidered shirts & denim) that looks straight out of a luxury studio — not mass-market stuff.`,
+    ``,
+    `🎁 *Your Welcome Benefit:*`,
+    `Sign up with my VIP Member Code *${memberCode}* to unlock *₹200 instant welcome credit* + a *free surprise collector gift* on your first order!`,
+    ``,
+    `Take a 30-second look at the collection here 👇`,
+    `${siteUrl}`,
+  ].join('\n')
+
+  return `https://wa.me/?text=${encodeURIComponent(message)}`
+}
 
 export function MemberAuthModal({
   isOpen,
@@ -43,6 +61,12 @@ export function MemberAuthModal({
     navigator.clipboard?.writeText(activeMemberCode).catch(() => {})
     setCopiedCode(true)
     window.setTimeout(() => setCopiedCode(false), 2000)
+  }
+
+  function handleWhatsAppRefer() {
+    if (!activeMemberCode) return
+    const url = buildWhatsAppReferralUrl(activeMemberCode, member?.full_name)
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -238,44 +262,66 @@ export function MemberAuthModal({
             {/* UNIQUE MEMBERSHIP & REFERRAL CODE CARD */}
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                display: 'grid',
                 gap: '10px',
-                padding: '12px 14px',
+                padding: '13px 14px',
                 borderRadius: '14px',
                 background: 'linear-gradient(135deg, #241916 0%, #140e0c 100%)',
                 border: '1px solid rgba(212, 175, 55, 0.55)',
                 color: '#f5efe6',
               }}
             >
-              <div>
-                <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#d4af37', display: 'block' }}>
-                  OFFICIAL MEMBER &amp; REFERRAL CODE
-                </span>
-                <strong style={{ fontSize: '17px', letterSpacing: '0.08em', color: '#fff', fontFamily: 'monospace' }}>
-                  {activeMemberCode}
-                </strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                <div>
+                  <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#d4af37', display: 'block' }}>
+                    OFFICIAL MEMBER &amp; REFERRAL CODE
+                  </span>
+                  <strong style={{ fontSize: '17px', letterSpacing: '0.08em', color: '#fff', fontFamily: 'monospace' }}>
+                    {activeMemberCode}
+                  </strong>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyCode}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '7px 12px',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(212, 175, 55, 0.55)',
+                    background: 'rgba(212, 175, 55, 0.16)',
+                    color: '#f5e29f',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {copiedCode ? <Check size={13} /> : <Copy size={13} />}
+                  {copiedCode ? 'Copied' : 'Copy'}
+                </button>
               </div>
+
               <button
                 type="button"
-                onClick={handleCopyCode}
+                onClick={handleWhatsAppRefer}
                 style={{
+                  width: '100%',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '5px',
-                  padding: '7px 12px',
-                  borderRadius: '999px',
-                  border: '1px solid rgba(212, 175, 55, 0.55)',
-                  background: 'rgba(212, 175, 55, 0.16)',
-                  color: '#f5e29f',
-                  fontSize: '11px',
-                  fontWeight: 600,
+                  justifyContent: 'center',
+                  gap: '7px',
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: '#25D366',
+                  color: '#0b1f12',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
                   cursor: 'pointer',
                 }}
               >
-                {copiedCode ? <Check size={13} /> : <Copy size={13} />}
-                {copiedCode ? 'Copied' : 'Copy Code'}
+                <MessageCircle size={15} /> Refer a Friend on WhatsApp (Earn ₹200)
               </button>
             </div>
 
