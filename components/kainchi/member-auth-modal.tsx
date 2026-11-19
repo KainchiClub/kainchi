@@ -56,13 +56,13 @@ export function MemberAuthModal({
 
     try {
       if (supabase) {
-        const { data: existing } = await supabase
+        const { data: existing, error: fetchError } = await supabase
           .from('customers')
           .select('*')
           .eq('email', cleanEmail)
           .maybeSingle()
 
-        if (existing) {
+        if (!fetchError && existing) {
           const profile = existing as CustomerProfile
           setStoredCustomerSession(profile)
           onMemberChange(profile)
@@ -71,77 +71,80 @@ export function MemberAuthModal({
           return
         }
 
-        if (mode === 'login') {
-          setErrorMsg('No account found with this email. Switch to "Join Club" to create your member pass.')
+        if (!fetchError && mode === 'login') {
+          setErrorMsg('No account found with this email. Switch to "Join Club (New)" to activate your Atelier Pass.')
           await logErrorOrCartEvent({
             eventType: 'login_error',
             customerEmail: cleanEmail,
             details: { reason: 'Email not found during sign-in' },
-          })
+          }).catch(() => {})
           setLoading(false)
           return
         }
 
-        const { data: created, error: insertError } = await supabase
-          .from('customers')
-          .insert({
-            full_name: cleanName,
-            email: cleanEmail,
-            phone: cleanPhone,
-            total_orders: 0,
-            total_spent: 0,
-            last_gift_sent: 'None',
-          })
-          .select('*')
-          .single()
+        if (!fetchError) {
+          const { data: created, error: insertError } = await supabase
+            .from('customers')
+            .insert({
+              full_name: cleanName,
+              email: cleanEmail,
+              phone: cleanPhone,
+              total_orders: 0,
+              total_spent: 0,
+              last_gift_sent: 'None',
+            })
+            .select('*')
+            .single()
 
-        if (insertError) throw insertError
-
-        const newProfile = created as CustomerProfile
-        setStoredCustomerSession(newProfile)
-        onMemberChange(newProfile)
-        await triggerStudioNotification({
-          eventType: 'signup',
-          customerName: newProfile.full_name,
-          customerEmail: newProfile.email,
-          customerPhone: newProfile.phone ?? '',
-        })
-        setLoading(false)
-        onClose()
-        return
+          if (!insertError && created) {
+            const newProfile = created as CustomerProfile
+            setStoredCustomerSession(newProfile)
+            onMemberChange(newProfile)
+            triggerStudioNotification({
+              eventType: 'signup',
+              customerName: newProfile.full_name,
+              customerEmail: newProfile.email,
+              customerPhone: newProfile.phone ?? '',
+            }).catch(() => {})
+            setLoading(false)
+            onClose()
+            return
+          }
+        }
       }
-
-      const localProfile: CustomerProfile = {
-        id: `local-${Date.now()}`,
-        full_name: cleanName || cleanEmail.split('@')[0],
-        email: cleanEmail,
-        phone: cleanPhone,
-        total_orders: 0,
-        total_spent: 0,
-        last_gift_sent: 'None',
-      }
-      setStoredCustomerSession(localProfile)
-      onMemberChange(localProfile)
-      await triggerStudioNotification({
-        eventType: 'signup',
-        customerName: localProfile.full_name,
-        customerEmail: localProfile.email,
-        customerPhone: localProfile.phone ?? '',
-      })
-      setLoading(false)
-      onClose()
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unable to sign in right now.'
-      setErrorMsg(msg)
-      await logErrorOrCartEvent({
+      const msg = err instanceof Error ? err.message : 'Supabase sync fallback'
+      logErrorOrCartEvent({
         eventType: mode === 'signup' ? 'signup_error' : 'login_error',
         customerEmail: cleanEmail,
         customerName: cleanName,
         customerPhone: cleanPhone,
         details: { message: msg },
-      })
-      setLoading(false)
+      }).catch(() => {})
     }
+
+    // Fallback: Activate Atelier Pass locally so customer is never blocked
+    const localProfile: CustomerProfile = {
+      id: `kc-${Date.now()}`,
+      full_name: cleanName || cleanEmail.split('@')[0],
+      email: cleanEmail,
+      phone: cleanPhone,
+      total_orders: 0,
+      total_spent: 0,
+      last_gift_sent: 'None',
+    }
+    setStoredCustomerSession(localProfile)
+    onMemberChange(localProfile)
+    if (mode === 'signup') {
+      triggerStudioNotification({
+        eventType: 'signup',
+        customerName: localProfile.full_name,
+        customerEmail: localProfile.email,
+        customerPhone: localProfile.phone ?? '',
+      }).catch(() => {})
+    }
+    setLoading(false)
+    onClose()
   }
 
   function handleSignOut() {
@@ -185,7 +188,7 @@ export function MemberAuthModal({
           <span style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#8b1e24', fontWeight: 700 }}>
             KAINCHI CLUB · ATELIER PASS
           </span>
-          <button type="button" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+          <button type="button" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px' }}>
             <X size={18} />
           </button>
         </div>
@@ -253,7 +256,7 @@ export function MemberAuthModal({
                 onClick={() => setMode('signup')}
                 style={{
                   flex: 1,
-                  padding: '8px',
+                  padding: '9px',
                   borderRadius: '999px',
                   border: 'none',
                   cursor: 'pointer',
@@ -270,7 +273,7 @@ export function MemberAuthModal({
                 onClick={() => setMode('login')}
                 style={{
                   flex: 1,
-                  padding: '8px',
+                  padding: '9px',
                   borderRadius: '999px',
                   border: 'none',
                   cursor: 'pointer',
