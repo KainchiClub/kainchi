@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, type FormEvent } from 'react'
-import { Check, Copy, MessageCircle, WalletCards } from 'lucide-react'
+import { ArrowUpRight, Check, Copy, WalletCards } from 'lucide-react'
 import { readWalletLedger, readWalletSettings, type StudioWallet as LegacyStudioWallet } from './studio-wallet-store'
 import {
   generateMemberCode,
@@ -240,13 +240,13 @@ export function StudioWallet() {
               type="button"
               onClick={shareOnWhatsApp}
               style={{
-                background: '#25D366',
-                color: '#0b1f12',
-                borderColor: '#25D366',
-                fontWeight: 700,
+                borderColor: 'rgba(212, 175, 55, 0.5)',
+                color: '#f5e29f',
+                background: 'rgba(212, 175, 55, 0.12)',
               }}
             >
-              <MessageCircle aria-hidden="true" /> Refer on WhatsApp
+              <span>Share Private Invite</span>
+              <ArrowUpRight aria-hidden="true" />
             </button>
             <button type="button" onClick={copyReferral}>
               {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />} {copied ? 'Copied' : `Copy ${wallet.passCode}`}
