@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
-import { BespokeFitConciergeModal, VaultInteractiveUnboxer } from './luxury-atelier-suite'
+import { BespokeFitConciergeModal } from './luxury-atelier-suite'
 import { getFeaturedProducts, type CatalogProduct } from './catalog'
 import { useCatalogProducts } from './catalog-store'
 import { LetterboxFeedback } from './letterbox-feedback'
@@ -337,10 +337,12 @@ export function StorefrontClient() {
           <div className="story-aside"><p>We believe the things we wear can say the things we don&apos;t. Kainchi Club is a home for independent art, honest craft, and pieces that feel like they were always yours.</p><a href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club%2C%20tell%20me%20about%20your%20studio." className="story-link">A note to the studio <ArrowUpRight aria-hidden="true" /></a></div>
           <div className="story-texture" aria-hidden="true" />
         </section>
-        <PackagingShowcase premiumPackagingSelected={premiumPackagingSelected} onPremiumPackagingChange={changePremiumPackaging} />
-        <div className="px-4 pb-10">
-          <VaultInteractiveUnboxer products={availableProducts} onSelectProduct={openProduct} />
-        </div>
+        <PackagingShowcase
+          premiumPackagingSelected={premiumPackagingSelected}
+          onPremiumPackagingChange={changePremiumPackaging}
+          products={availableProducts}
+          onSelectProduct={openProduct}
+        />
         <LetterboxFeedback />
         <FAQSection />
       </main>
