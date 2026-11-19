@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, RotateCw, MessageCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, RotateCw, MessageCircle, ShoppingBag } from "lucide-react";
 
 interface LookbookItem {
   id: string;
@@ -373,6 +373,23 @@ export default function VirtualLookbook() {
     window.open(`https://wa.me/918863075356?text=${msg}`, "_blank");
   };
 
+  const handleAddToCartClick = (item: LookbookItem) => {
+    const numericPrice = Number(item.price.replace(/[^0-9]/g, "")) || 1999;
+    window.dispatchEvent(
+      new CustomEvent("kainchi:quick-add-to-cart", {
+        detail: {
+          id: item.id,
+          title: item.name,
+          garment: item.category,
+          theme: item.viewBadge,
+          price: numericPrice,
+          image: item.image,
+          productCode: item.id.toUpperCase(),
+        },
+      })
+    );
+  };
+
   const scrollToCatalog = () => {
     window.dispatchEvent(new CustomEvent("kainchi:open-archive"));
     const target = document.getElementById("artwork") || document.querySelector("main");
@@ -501,7 +518,7 @@ export default function VirtualLookbook() {
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
               </div>
 
-              <div className="relative z-30 -mt-16 mx-3 mb-3 p-3.5 rounded-2xl bg-[#141414]/95 border border-[#D4AF37]/40 flex items-center justify-between gap-3">
+              <div className="relative z-30 -mt-16 mx-3 mb-3 p-3.5 rounded-2xl bg-[#141414]/95 border border-[#D4AF37]/40 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-wider text-neutral-400">
                     {currentItem.category}
@@ -512,13 +529,23 @@ export default function VirtualLookbook() {
                   <p className="text-sm font-bold text-[#D4AF37] mt-0.5">{currentItem.price}</p>
                 </div>
 
-                <button
-                  onClick={() => handleOrderClick(currentItem)}
-                  className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#D4AF37] text-black font-semibold text-xs hover:bg-[#e5c158] transition cursor-pointer"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  Order
-                </button>
+                <div className="shrink-0 flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleAddToCartClick(currentItem)}
+                    aria-label={`Add ${currentItem.name} to cart`}
+                    className="inline-flex items-center gap-1 px-2.5 py-2.5 rounded-xl border border-[#D4AF37]/60 bg-white/5 text-[#D4AF37] font-semibold text-xs hover:bg-[#D4AF37]/15 transition cursor-pointer"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    Add to Cart
+                  </button>
+                  <button
+                    onClick={() => handleOrderClick(currentItem)}
+                    className="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl bg-[#D4AF37] text-black font-semibold text-xs hover:bg-[#e5c158] transition cursor-pointer"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Order
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
