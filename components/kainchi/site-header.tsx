@@ -100,29 +100,45 @@ export function SiteHeader({
       <button ref={toggleRef} className="mobile-menu-toggle category-menu-toggle" type="button" aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={isMenuOpen} aria-controls="category-drawer" onClick={() => setIsMenuOpen((open) => !open)}>
         {isMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
       </button>
-      <a className="wordmark min-w-0" href="#top" aria-label="Kainchi Club home">
+      <a className="wordmark" href="#top" aria-label="Kainchi Club home" style={{ flexShrink: 0 }}>
         <Image className="wordmark-logo shrink-0" src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg" alt="" width={96} height={96} loading="eager" decoding="async" />
-        <span className="truncate">KAINCHI <span className="wordmark-light">CLUB</span></span>
+        <span>KAINCHI <span className="wordmark-light">CLUB</span></span>
       </a>
       <nav className="main-nav" aria-label="Main navigation">
         {navigation.map((item) => <a href={item.href} key={item.label}>{item.label}</a>)}
       </nav>
-      <div className="header-actions flex items-center gap-2 shrink-0">
+      <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
         {onOpenMemberAuth && (
           <button
             type="button"
             onClick={onOpenMemberAuth}
             aria-label={member ? `Atelier Pass: ${member.full_name}` : 'Member Sign In or Join Club'}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-[#D4AF37]/60 text-[#f5e29f] text-[11px] sm:text-xs font-semibold cursor-pointer whitespace-nowrap min-h-[38px]"
             style={{
-              background: member ? 'rgba(212, 175, 55, 0.16)' : '#181210',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              minWidth: '38px',
+              height: '38px',
+              padding: '0 12px',
+              borderRadius: '999px',
+              border: '1.5px solid #8b1e24',
+              background: member ? '#f5e6c8' : '#faf4e8',
+              color: '#181210',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 8px rgba(24, 18, 16, 0.08)',
             }}
           >
-            {member ? <UserCheck size={14} aria-hidden="true" /> : <User size={14} aria-hidden="true" />}
-            <span>{member ? memberFirstName : 'Atelier Pass'}</span>
+            {member ? <UserCheck size={15} color="#8b1e24" aria-hidden="true" /> : <User size={15} color="#8b1e24" aria-hidden="true" />}
+            <span className="hidden sm:inline" style={{ color: '#181210' }}>
+              {member ? memberFirstName : 'Atelier Pass'}
+            </span>
           </button>
         )}
-        <a className="header-cta hidden sm:inline-flex" href={STUDIO_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+        <a className="header-cta hidden md:inline-flex" href={STUDIO_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
           <span>Talk to the studio</span>
           <span className="header-cta-status"><span className="header-cta-status-dot" aria-hidden="true" />Studio Active</span>
           <ArrowUpRight aria-hidden="true" />
