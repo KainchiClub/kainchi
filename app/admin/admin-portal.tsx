@@ -17,6 +17,7 @@ import { SmartPricingEngine } from './smart-pricing-engine'
 import { IMAGE_FALLBACK, fallbackImageOnError, resolveDriveImageUrl } from '@/lib/utils'
 import { BannerSlidesPanel } from './banner-slides-panel'
 import { CustomInquiriesPanel } from './custom-inquiries-panel'
+import { MembersLedgerPanel } from './members-ledger-panel'
 
 const initialLoginState = { error: '' }
 const RETIRED_SKU_KEY = 'kainchi-retired-sku-vault-v1'
@@ -24,6 +25,7 @@ const GATEWAY_CLOUD_SETTINGS_KEY = 'kainchi-store-gateway-cloud-v1'
 
 const ADMIN_TABS = [
   { id: 'catalog', label: 'Artwork' },
+  { id: 'members', label: 'Members & Referrals' },
   { id: 'inventory', label: 'Bulk Inventory & Artwork Manager' },
   { id: 'payments-cloud', label: 'Payments & Cloud' },
   { id: 'feedback', label: 'Feedback' },
@@ -122,7 +124,6 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
   const [productCodeDrafts, setProductCodeDrafts] = useState<Record<string, string>>({})
   const [productCodeErrors, setProductCodeErrors] = useState<Record<string, string>>({})
 
-  // Multi-Photo Product Creation State
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState<(typeof ARTWORK_THEMES)[number]>(ARTWORK_THEMES[0])
   const [garmentType, setGarmentType] = useState<string>(GARMENT_OPTIONS[0])
@@ -131,7 +132,6 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
   const [addError, setAddError] = useState('')
   const [addSuccess, setAddSuccess] = useState('')
 
-  // Payments & Cloud Settings State
   const [gatewaySettings, setGatewaySettings] = useState<StoreGatewaySettings>(DEFAULT_GATEWAY_SETTINGS)
   const [settingsSavedMsg, setSettingsSavedMsg] = useState('')
 
@@ -322,7 +322,7 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
           <div>
             <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Owner access</p>
             <h1 id="admin-page-title">Admin Portal</h1>
-            <p>Manage the artwork catalog, multi-photo uploads, payments, feedback, FAQs, and studio leads.</p>
+            <p>Manage the artwork catalog, Atelier Pass members, referrals, payments, feedback, FAQs, and studio leads.</p>
           </div>
           <div className="admin-dashboard-actions">
             <Link className="button button-outline-dark" href="/#collection">View storefront <ArrowUpRight aria-hidden="true" /></Link>
@@ -420,6 +420,10 @@ export function AdminPortal({ isUnlocked }: { isUnlocked: boolean }) {
             {addSuccess && <p style={{ color: '#15803d', fontSize: '13px', marginTop: '8px', fontWeight: 500 }} role="status">{addSuccess}</p>}
             <p className="admin-storage-note">Uploaded photos are automatically compressed and saved to the storefront catalog immediately.</p>
           </section>
+        </div>
+
+        <div className="admin-tab-panel" id="admin-panel-members" role="tabpanel" aria-labelledby="admin-tab-members" tabIndex={0} hidden={activeAdminTab !== 'members'}>
+          <MembersLedgerPanel />
         </div>
 
         <div className="admin-tab-panel" id="admin-panel-inventory" role="tabpanel" aria-labelledby="admin-tab-inventory" tabIndex={0} hidden={activeAdminTab !== 'inventory'}>
