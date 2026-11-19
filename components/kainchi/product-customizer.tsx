@@ -364,57 +364,126 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
               </div>
             ))}
           </div>
+        </div>
 
-          {/* SINGLE ITEM SIDE PREVIEW POP-UP */}
-          {activeInspectedPiece && (
+        {/* LARGE CENTER POPUP MODAL FOR SINGLE STYLIST PIECE (50%+ SCREEN) */}
+        {activeInspectedPiece && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={activeInspectedPiece.name}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 150,
+              background: 'rgba(12, 9, 8, 0.84)',
+              backdropFilter: 'blur(6px)',
+              display: 'grid',
+              placeItems: 'center',
+              padding: '20px',
+            }}
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setActiveInspectedPiece(null)
+            }}
+          >
             <div
               style={{
-                marginTop: '12px',
-                padding: '14px',
-                borderRadius: '12px',
-                background: '#241b18',
-                border: '1px solid rgba(212, 175, 55, 0.5)',
+                width: 'min(92vw, 520px)',
+                minHeight: '54vh',
+                background: '#181210',
+                color: '#f5efe6',
+                borderRadius: '22px',
+                padding: '24px',
+                border: '1px solid rgba(212, 175, 55, 0.6)',
+                boxShadow: '0 28px 70px rgba(0,0,0,0.65)',
                 display: 'flex',
+                flexDirection: 'column',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '12px',
+                gap: '18px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#d4af37', fontWeight: 700 }}>
+                  {activeInspectedPiece.slot} · {activeInspectedPiece.estPrice}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveInspectedPiece(null)}
+                  aria-label="Close preview"
                   style={{
-                    width: '52px',
-                    height: '52px',
-                    borderRadius: '12px',
-                    background: activeInspectedPiece.swatchColor,
-                    border: `1px solid ${activeInspectedPiece.accentHex}`,
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '999px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(212, 175, 55, 0.4)',
+                    color: '#f5efe6',
                     display: 'grid',
                     placeItems: 'center',
-                    fontSize: '24px',
-                    flexShrink: 0,
+                    cursor: 'pointer',
                   }}
                 >
-                  {activeInspectedPiece.iconGlyph}
-                </div>
-                <div>
-                  <span style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#d4af37' }}>
-                    {activeInspectedPiece.slot} · {activeInspectedPiece.estPrice}
-                  </span>
-                  <h4 style={{ margin: '2px 0', fontSize: '15px', color: '#fff' }}>{activeInspectedPiece.name}</h4>
-                  <p style={{ margin: 0, fontSize: '12px', color: '#cfc5b8' }}>{activeInspectedPiece.note}</p>
-                </div>
+                  <X size={18} />
+                </button>
               </div>
+
+              <div
+                style={{
+                  width: '100%',
+                  minHeight: '240px',
+                  borderRadius: '18px',
+                  background: activeInspectedPiece.swatchColor,
+                  border: `2px solid ${activeInspectedPiece.accentHex}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  padding: '24px',
+                  boxShadow: 'inset 0 0 40px rgba(0,0,0,0.28)',
+                }}
+              >
+                <span style={{ fontSize: '96px', lineHeight: 1 }}>{activeInspectedPiece.iconGlyph}</span>
+                <span
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: '999px',
+                    background: 'rgba(24, 18, 16, 0.78)',
+                    color: '#f5e29f',
+                    fontSize: '11px',
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                  }}
+                >
+                  {activeInspectedPiece.slot} Pairing Preview
+                </span>
+              </div>
+
+              <div>
+                <h3 style={{ margin: '0 0 6px', fontSize: '20px', color: '#fff' }}>{activeInspectedPiece.name}</h3>
+                <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#cfc5b8' }}>{activeInspectedPiece.note}</p>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setActiveInspectedPiece(null)}
-                aria-label="Close preview"
-                style={{ background: 'none', border: 'none', color: '#f5efe6', cursor: 'pointer', padding: '4px' }}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(212, 175, 55, 0.5)',
+                  background: 'rgba(212, 175, 55, 0.16)',
+                  color: '#f5e29f',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
               >
-                <X size={16} />
+                Close Preview
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* FULL 4-LAYER OUTFIT LOOKBOARD MODAL */}
         {isFullLookOpen && (
