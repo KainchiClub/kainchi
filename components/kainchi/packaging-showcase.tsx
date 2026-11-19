@@ -1,10 +1,7 @@
-'use client'
-
 import Image from 'next/image'
 import { ArrowUpRight, Box, Check, Crown, Package, Recycle, ScrollText } from 'lucide-react'
-import { formatRupees, type CatalogProduct } from './catalog'
+import { formatRupees } from './catalog'
 import { GIFT_BOX_PRICE } from './order'
-import { VaultInteractiveUnboxer } from './luxury-atelier-suite'
 
 const packagingImage = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Gemini_Generated_Image_5kl0775kl0775kl0.png-hPQJW5RzGUOvJenVxL6HVXJW8qYQar.jpeg'
 const premiumPackagingImage = '/packaging/collector-vault-concept.png'
@@ -19,16 +16,9 @@ const packaging = [
 type PackagingShowcaseProps = {
   premiumPackagingSelected: boolean
   onPremiumPackagingChange: (isSelected: boolean) => void
-  products?: CatalogProduct[]
-  onSelectProduct?: (product: CatalogProduct) => void
 }
 
-export function PackagingShowcase({
-  premiumPackagingSelected,
-  onPremiumPackagingChange,
-  products = [],
-  onSelectProduct,
-}: PackagingShowcaseProps) {
+export function PackagingShowcase({ premiumPackagingSelected, onPremiumPackagingChange }: PackagingShowcaseProps) {
   return (
     <section className="packaging-section" id="unboxing" aria-labelledby="packaging-title">
       <div className="packaging-copy">
@@ -45,38 +35,7 @@ export function PackagingShowcase({
         </div>
         <a className="packaging-link" href="https://wa.me/918863075356?text=Hi%20Kainchi%20Club%2C%20tell%20me%20about%20your%20gift%20packaging.">Add the little extra <ArrowUpRight aria-hidden="true" /></a>
       </div>
-
-      {/* RIGHT COLUMN: ALIGNED HIGHER + INTERACTIVE UNBOXER DIRECTLY BELOW */}
-      <figure
-        className="packaging-figure"
-        aria-label="Four complete Kainchi Club standard packaging formats and interactive mystery unboxer"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '16px',
-          alignSelf: 'start',
-          marginTop: '0',
-        }}
-      >
-        <Image
-          className="packaging-visual-banner"
-          src={packagingImage}
-          alt="Kainchi Club's standard packaging presentation: The Experience Box, The Eco-Mailer, The Utility Tube, and Drawstring Pouch."
-          width={1200}
-          height={900}
-          sizes="(max-width: 700px) 94vw, 48vw"
-          loading="lazy"
-          decoding="async"
-        />
-
-        {products.length > 0 && (
-          <div style={{ width: '100%', maxWidth: '360px' }}>
-            <VaultInteractiveUnboxer products={products} onSelectProduct={onSelectProduct} />
-          </div>
-        )}
-      </figure>
-
+      <figure className="packaging-figure" aria-label="Four complete Kainchi Club standard packaging formats"><Image className="packaging-visual-banner" src={packagingImage} alt="Kainchi Club's standard packaging presentation: The Experience Box, The Eco-Mailer, The Utility Tube, and Drawstring Pouch." width={1200} height={900} sizes="(max-width: 700px) 94vw, 48vw" loading="lazy" decoding="async" /></figure>
       <section className="collector-vault" aria-labelledby="collector-vault-title">
         <div className="collector-vault-copy">
           <p className="collector-vault-badge"><Crown aria-hidden="true" /> Limited numbered edition <span>+{formatRupees(GIFT_BOX_PRICE)} / item</span></p>
