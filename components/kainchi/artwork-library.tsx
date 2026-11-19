@@ -30,8 +30,12 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
   const [isArchiveOpen, setIsArchiveOpen] = useState(false)
   const [visibleLimit, setVisibleLimit] = useState(ARCHIVE_PAGE_SIZE)
   const [garmentGroup, setGarmentGroup] = useState<GarmentGroup>('all')
-  const [shuffleSeed, setShuffleSeed] = useState<number>(() => Math.floor(Math.random() * 100000) + 1)
+  const [shuffleSeed, setShuffleSeed] = useState<number>(1)
   const filters = ['All artwork', ...ARTWORK_THEMES]
+
+  useEffect(() => {
+    setShuffleSeed(Math.floor(Math.random() * 100000) + 1)
+  }, [])
 
   const genderCounts = useMemo(() => {
     let men = 0
@@ -132,7 +136,34 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
           <p className="eyebrow eyebrow-dark"><span className="eyebrow-dot" /> Original artwork · Men &amp; Women</p>
           <h2 id="artwork-title">Find your <em>piece</em></h2>
           <p className="section-intro">Crafted to order in small batches for Men &amp; Women — browse all {products.length} rotating designs by fit, theme, or garment.</p>
+
+          {/* BROWSE ALL BUTTON SHIFTED DIRECTLY UNDER "FIND YOUR PIECE" ON THE LEFT */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '14px' }}>
+            <button
+              className="button button-crimson"
+              type="button"
+              aria-expanded={isArchiveOpen}
+              aria-controls="artwork-archive-results"
+              onClick={toggleArchive}
+              style={{ padding: '12px 22px', fontSize: '13px', fontWeight: 700 }}
+            >
+              {isArchiveOpen ? <X aria-hidden="true" /> : <Archive aria-hidden="true" />}
+              {isArchiveOpen ? 'Close Archive' : `Browse All ${products.length} Pieces`}
+            </button>
+            <button
+              className="button button-outline-dark"
+              type="button"
+              onClick={() => {
+                setShuffleSeed((s) => s + Math.floor(Math.random() * 997) + 1)
+                setIsArchiveOpen(true)
+              }}
+              style={{ padding: '12px 18px', fontSize: '13px' }}
+            >
+              <Shuffle aria-hidden="true" /> Shuffle Drop
+            </button>
+          </div>
         </div>
+
         <div className="artwork-sticker-collage" role="img" aria-label={`A collage of Kainchi Club originals: ${stickerArtworks.map((artwork) => artwork.title).join(', ')}`}>
           {stickerArtworks.map((artwork, index) => <span className="artwork-sticker" data-sticker={index + 1} key={artwork.id}>
             <Image src={resolveDriveImageUrl(artwork.image, 320)} alt="" aria-hidden="true" width={500} height={500} sizes="(max-width: 620px) 28vw, 160px" loading="lazy" fetchPriority="low" decoding="async" unoptimized={!isImageOptimizerSource(resolveDriveImageUrl(artwork.image, 320))} draggable={false} onError={fallbackImageOnError} />
@@ -140,59 +171,65 @@ export function ArtworkLibrary({ products, onCustomize }: { products: CatalogPro
         </div>
       </div>
 
-      <div className="art-filters" role="group" aria-label="Shop by Men or Women" style={{ marginBottom: '0.85rem' }}>
-        <button
-          type="button"
-          className={`filter-pill${activeGender === 'all' ? ' active' : ''}`}
-          aria-pressed={activeGender === 'all'}
-          onClick={() => selectGender('all')}
-        >
-          All Pieces ({genderCounts.all})
-        </button>
-        <button
-          type="button"
-          className={`filter-pill${activeGender === 'men' ? ' active' : ''}`}
-          aria-pressed={activeGender === 'men'}
-          onClick={() => selectGender('men')}
-        >
-          Men&apos;s Edit ({genderCounts.men})
-        </button>
-        <button
-          type="button"
-          className={`filter-pill${activeGender === 'women' ? ' active' : ''}`}
-          aria-pressed={activeGender === 'women'}
-          onClick={() => selectGender('women')}
-        >
-          Women&apos;s Edit ({genderCounts.women})
-        </button>
+      {/* PROMINENT HIGHLIGHTED ALL / MEN'S EDIT / WOMEN'S EDIT TABS */}
+      <div
+        role="group"
+        aria-label="Shop by Men or Women"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '10px',
+          margin: '1.1rem 0 1.1rem',
+        }}
+      >
+        {(
+          [
+            { id: 'all', label: `All Pieces (${genderCounts.all})` },
+            { id: 'men', label: `Men's Edit (${genderCounts.men})` },
+            { id: 'women', label: `Women's Edit (${genderCounts.women})` },
+          ] as const
+        ).map((tab) => {
+          const isActive = activeGender === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => selectGender(tab.id)}
+              style={{
+                padding: '12px 22px',
+                borderRadius: '999px',
+                border: isActive ? '2px solid #8b1e24' : '1.5px solid rgba(24, 18, 16, 0.25)',
+                background: isActive ? '#181210' : '#fff',
+                color: isActive ? '#f5e29f' : '#181210',
+                fontSize: '14px',
+                fontWeight: 700,
+                letterSpacing: '0.03em',
+                cursor: 'pointer',
+                boxShadow: isActive ? '0 8px 20px rgba(24, 18, 16, 0.2)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
       </div>
 
       <div className="artwork-tools">
-        <label className="artwork-search" htmlFor="artwork-search">
+        <label className="artwork-search" htmlFor="artwork-search" style={{ width: '100%' }}>
           <Search aria-hidden="true" />
           <span className="sr-only">Search the artwork archive</span>
           <input id="artwork-search" type="search" value={searchTerm} onChange={(event) => handleSearchChange(event.target.value)} placeholder="Search prints, themes, or garments" />
         </label>
-        <button
-          className="button button-outline-dark"
-          type="button"
-          onClick={() => {
-            setShuffleSeed((s) => s + Math.floor(Math.random() * 997) + 1)
-            setIsArchiveOpen(true)
-          }}
-        >
-          <Shuffle aria-hidden="true" /> Shuffle Drop
-        </button>
-        <button className="button button-outline-dark artwork-archive-toggle" type="button" aria-expanded={isArchiveOpen} aria-controls="artwork-archive-results" onClick={toggleArchive}>
-          {isArchiveOpen ? <X aria-hidden="true" /> : <Archive aria-hidden="true" />}
-          {isArchiveOpen ? 'Close archive' : `Browse all ${products.length}`}
-        </button>
       </div>
+
       {!isArchiveOpen && <div className="art-archive-invite">
         <span className="archive-invite-mark" aria-hidden="true">{String(products.length).padStart(2, '0')}</span>
-        <p>Every print, dynamically rotated. Select Men&apos;s Edit, Women&apos;s Edit, or open the full archive to explore all made-to-order designs.</p>
+        <p>Every print, dynamically rotated. Select Men&apos;s Edit, Women&apos;s Edit, or tap Browse All above to explore all made-to-order designs.</p>
         <span className="archive-invite-index">MEN &amp; WOMEN · {ARTWORK_THEMES.length} THEMES</span>
       </div>}
+
       <div id="artwork-archive-results" hidden={!isArchiveOpen}>
         {isArchiveOpen ? (
           <div>
