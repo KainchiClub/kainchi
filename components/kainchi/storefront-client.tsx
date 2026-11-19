@@ -6,27 +6,28 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, Scissors } from 'lucide-react'
 import { ArtworkLibrary } from './artwork-library'
-import { AtelierLuxuryLayer } from './atelier-luxury-layer'
-import { BespokeFitConciergeModal, VaultInteractiveUnboxer } from './luxury-atelier-suite'
 import { getFeaturedProducts, type CatalogProduct } from './catalog'
 import { useCatalogProducts } from './catalog-store'
-import { LetterboxFeedback } from './letterbox-feedback'
 import { HeroShowcase } from './hero-showcase'
-import VirtualLookbook from '../VirtualLookbook'
 import { OrderCart } from './order-cart'
 import { FABRIC_COLORS, type CartLineDetails, type CartLineItem } from './order'
-import { PackagingShowcase } from './packaging-showcase'
 import { SiteHeader, SocialIcon } from './site-header'
-import { PolicyModals } from './policy-modals'
-import { FAQSection } from './faq-section'
 import { FamilyCollectionBanner } from './family-collection-banner'
-import { DeliveryDetailsModal } from './delivery-details-modal'
-import { StudioIntakeModal } from './studio-intake-modal'
-import { StudioAllianceProgram } from './studio-alliance-program'
 import { CollectionStories, matchesStoryFilter, type StoryFilter } from './collection-stories'
-import { MemberAuthModal } from './member-auth-modal'
 import { getStoredCustomerSession, type CustomerProfile } from '@/lib/kainchi-crm'
 
+const VirtualLookbook = dynamic(() => import('../VirtualLookbook'), { ssr: false })
+const AtelierLuxuryLayer = dynamic(() => import('./atelier-luxury-layer').then((m) => m.AtelierLuxuryLayer), { ssr: false })
+const BespokeFitConciergeModal = dynamic(() => import('./luxury-atelier-suite').then((m) => m.BespokeFitConciergeModal), { ssr: false })
+const VaultInteractiveUnboxer = dynamic(() => import('./luxury-atelier-suite').then((m) => m.VaultInteractiveUnboxer), { ssr: false })
+const PackagingShowcase = dynamic(() => import('./packaging-showcase').then((m) => m.PackagingShowcase), { ssr: false })
+const StudioAllianceProgram = dynamic(() => import('./studio-alliance-program').then((m) => m.StudioAllianceProgram), { ssr: false })
+const FAQSection = dynamic(() => import('./faq-section').then((m) => m.FAQSection), { ssr: false })
+const LetterboxFeedback = dynamic(() => import('./letterbox-feedback').then((m) => m.LetterboxFeedback), { ssr: false })
+const PolicyModals = dynamic(() => import('./policy-modals').then((m) => m.PolicyModals), { ssr: false })
+const DeliveryDetailsModal = dynamic(() => import('./delivery-details-modal').then((m) => m.DeliveryDetailsModal), { ssr: false })
+const StudioIntakeModal = dynamic(() => import('./studio-intake-modal').then((m) => m.StudioIntakeModal), { ssr: false })
+const MemberAuthModal = dynamic(() => import('./member-auth-modal').then((m) => m.MemberAuthModal), { ssr: false })
 const ProductCustomizer = dynamic(() => import('./product-customizer').then((module) => module.ProductCustomizer), { ssr: false })
 const SizeGuideModal = dynamic(() => import('./size-guide-modal').then((module) => module.SizeGuideModal), { ssr: false })
 
@@ -371,7 +372,7 @@ export function StorefrontClient() {
   }
 
   return (
-    <>
+    <div className="overflow-x-hidden w-full">
       <AtelierLuxuryLayer />
       <SiteHeader member={member} onOpenMemberAuth={() => setIsMemberAuthOpen(true)} />
       <main>
@@ -428,6 +429,6 @@ export function StorefrontClient() {
         onAddToCart={addToCart}
         onOrderNow={orderCurrentProduct}
       />}
-    </>
+    </div>
   )
 }
