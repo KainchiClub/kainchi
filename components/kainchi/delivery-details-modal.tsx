@@ -94,6 +94,10 @@ export function DeliveryDetailsModal({ items, onClose }: DeliveryDetailsModalPro
 
   useEffect(() => {
     if (!isOpen) return
+    const member = getStoredCustomerSession()
+    if (member?.full_name) {
+      setFields((current) => (current.fullName.trim() ? current : { ...current, fullName: member.full_name }))
+    }
     try {
       const raw = window.localStorage.getItem(GATEWAY_CLOUD_SETTINGS_KEY)
       if (raw) {
