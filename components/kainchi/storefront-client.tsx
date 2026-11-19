@@ -24,6 +24,8 @@ import { DeliveryDetailsModal } from './delivery-details-modal'
 import { StudioIntakeModal } from './studio-intake-modal'
 import { StudioAllianceProgram } from './studio-alliance-program'
 import { CollectionStories, matchesStoryFilter, type StoryFilter } from './collection-stories'
+import { MemberAuthModal } from './member-auth-modal'
+import { getStoredCustomerSession, type CustomerProfile } from '@/lib/kainchi-crm'
 
 const ProductCustomizer = dynamic(() => import('./product-customizer').then((module) => module.ProductCustomizer), { ssr: false })
 const SizeGuideModal = dynamic(() => import('./size-guide-modal').then((module) => module.SizeGuideModal), { ssr: false })
@@ -125,12 +127,18 @@ export function StorefrontClient() {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [checkoutItems, setCheckoutItems] = useState<CartLineItem[] | null>(null)
   const [premiumPackagingDefault, setPremiumPackagingDefault] = useState(false)
+  const [member, setMember] = useState<CustomerProfile | null>(null)
+  const [isMemberAuthOpen, setIsMemberAuthOpen] = useState(false)
   const overlayHistoryRef = useRef<StorefrontOverlayHistoryEntry | null>(null)
   const overlayScrollPositionRef = useRef(0)
   const overlayReturnFocusRef = useRef<HTMLElement | null>(null)
   const premiumPackagingSelected = cartItems.length > 0
     ? cartItems.every((item) => item.includesGiftBox)
     : premiumPackagingDefault
+
+  useEffect(() => {
+    setMember(getStoredCustomerSession())
+  }, [])
 
   useEffect(() => {
     const blockInspectionShortcuts = (event: KeyboardEvent) => {
@@ -365,7 +373,7 @@ export function StorefrontClient() {
   return (
     <>
       <AtelierLuxuryLayer />
-      <SiteHeader />
+      <SiteHeader member={member} onOpenMemberAuth={() => setIsMemberAuthOpen(true)} />
       <main>
         <HeroShowcase products={availableProducts} />
         <CollectionStories products={availableProducts} activeFilter={storyFilter} onFilterChange={setStoryFilter} />
@@ -399,8 +407,20 @@ export function StorefrontClient() {
       />
       <SizeGuideModal />
       <BespokeFitConciergeModal />
-      <DeliveryDetailsModal items={checkoutItems} onClose={() => setCheckoutItems(null)} />
+      <DeliveryDetailsModal
+        items={checkoutItems}
+        onClose={() => {
+          setCheckoutItems(null)
+          setMember(getStoredCustomerSession())
+        }}
+      />
       <StudioIntakeModal products={products} />
+      <MemberAuthModal
+        isOpen={isMemberAuthOpen}
+        onClose={() => setIsMemberAuthOpen(false)}
+        member={member}
+        onMemberChange={setMember}
+      />
       {selectedProduct && <ProductCustomizer
         product={selectedProduct}
         defaultIncludesGiftBox={premiumPackagingDefault}
