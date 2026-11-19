@@ -2,7 +2,23 @@
 
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowUpRight, Check, Clock, Eye, Layers, Minus, Plus, Ruler, ShoppingBag, Sparkles, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Eye,
+  Layers,
+  Minus,
+  Pause,
+  Play,
+  Ruler,
+  ShoppingBag,
+  Sparkles,
+  X,
+} from 'lucide-react'
 import { fallbackImageOnError, isImageOptimizerSource, resolveDriveImageUrl } from '@/lib/utils'
 import { formatRupees, type CatalogProduct } from './catalog'
 import { openSizeGuide } from './storefront-events'
@@ -10,17 +26,21 @@ import { FABRIC_COLORS, GIFT_BOX_PRICE, MAX_ORDER_QUANTITY, type CartLineDetails
 
 const sizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL']
 
-type StylistPiece = {
-  slot: 'Bottoms' | 'Footwear' | 'Accent'
+type StylistVariant = {
   name: string
-  note: string
-  estPrice: string
-  swatchColor: string
-  accentHex: string
-  iconGlyph: string
+  fabricNote: string
+  fitTip: string
+  imageUrl: string
+  swatchHex: string
 }
 
-function getSmartOutfitPairing(product: CatalogProduct): StylistPiece[] {
+type StylistCategory = {
+  slot: 'Bottoms' | 'Footwear' | 'Accent'
+  primaryLabel: string
+  variants: StylistVariant[]
+}
+
+function getSmartOutfitCategories(product: CatalogProduct): StylistCategory[] {
   const g = product.garment.toLowerCase()
   const t = product.theme.toLowerCase()
 
@@ -28,30 +48,84 @@ function getSmartOutfitPairing(product: CatalogProduct): StylistPiece[] {
     return [
       {
         slot: 'Bottoms',
-        name: 'Straight-Fit Vintage Washed Denim',
-        note: '14 oz raw selvedge silhouette to balance structured outerwear',
-        estPrice: 'Studio Pairing',
-        swatchColor: '#1f2937',
-        accentHex: '#93c5fd',
-        iconGlyph: '👖',
+        primaryLabel: 'Selvedge Denim & Tailored Trousers',
+        variants: [
+          {
+            name: '14 oz Raw Indigo Straight Denim',
+            fabricNote: 'Heavyweight Japanese-weave selvedge denim',
+            fitTip: 'Creates a crisp structured silhouette under cropped outerwear.',
+            imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#1e293b',
+          },
+          {
+            name: 'Charcoal Pleated Wide-Leg Trousers',
+            fabricNote: 'Brushed wool-blend twill drape',
+            fitTip: 'Elevates casual jackets into a sharp evening atelier look.',
+            imageUrl: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#27272a',
+          },
+          {
+            name: 'Vintage Washed Black Carpenter Pants',
+            fabricNote: 'Enzyme-washed 12 oz duck canvas',
+            fitTip: 'Adds utilitarian streetwear attitude with relaxed ankle stack.',
+            imageUrl: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#18181b',
+          },
+        ],
       },
       {
         slot: 'Footwear',
-        name: 'Distressed Leather Chelsea Boots',
-        note: 'Stacked heel dark espresso or matte black leather',
-        estPrice: 'Studio Pairing',
-        swatchColor: '#291d18',
-        accentHex: '#d4af37',
-        iconGlyph: '🥾',
+        primaryLabel: 'Leather Boots & Heritage Trainers',
+        variants: [
+          {
+            name: 'Espresso Leather Chelsea Boots',
+            fabricNote: 'Full-grain calfskin with stacked leather sole',
+            fitTip: 'Clean ankle line that pairs effortlessly with straight denim.',
+            imageUrl: 'https://images.unsplash.com/photo-1638247025967-b4e38f787b76?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#3b2314',
+          },
+          {
+            name: 'Matte Black Chunky Derby Shoes',
+            fabricNote: 'Brushed box leather with lugged sole',
+            fitTip: 'Brings modern runway weight to structured jackets.',
+            imageUrl: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#111111',
+          },
+          {
+            name: 'Off-White Vintage Court Sneakers',
+            fabricNote: 'Tumbled leather with suede toe cap',
+            fitTip: 'Lightens dark outerwear for effortless daytime wear.',
+            imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#f5efe6',
+          },
+        ],
       },
       {
         slot: 'Accent',
-        name: 'Oxidized Silver Cuff + Crossbody Sling',
-        note: 'Hand-brushed sterling finish with matte hardware',
-        estPrice: 'Studio Pairing',
-        swatchColor: '#18181b',
-        accentHex: '#e4e4e7',
-        iconGlyph: '⛓️',
+        primaryLabel: 'Atelier Hardware & Eyewear',
+        variants: [
+          {
+            name: 'Brushed Silver Cuff & Signet Ring',
+            fabricNote: '925 sterling-finish oxidized metal',
+            fitTip: 'Subtle metallic gleam at the wrist without overpowering artwork.',
+            imageUrl: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#a1a1aa',
+          },
+          {
+            name: 'Structured Crossbody Leather Sling',
+            fabricNote: 'Pebbled full-grain leather with matte clasp',
+            fitTip: 'Keeps daily essentials secure while layering.',
+            imageUrl: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#1c1917',
+          },
+          {
+            name: 'Architectural Acetate Sunglasses',
+            fabricNote: 'Hand-polished tortoiseshell frame with UV400 tint',
+            fitTip: 'Sharpens the neckline and frames the collar.',
+            imageUrl: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#451a03',
+          },
+        ],
       },
     ]
   }
@@ -60,61 +134,170 @@ function getSmartOutfitPairing(product: CatalogProduct): StylistPiece[] {
     return [
       {
         slot: 'Bottoms',
-        name: 'Pleated Off-White Linen Trousers',
-        note: 'Relaxed tailored drape for breathable luxury contrast',
-        estPrice: 'Studio Pairing',
-        swatchColor: '#f3ede2',
-        accentHex: '#8b1e24',
-        iconGlyph: '👖',
+        primaryLabel: 'Pleated Linen & Tailored Denim',
+        variants: [
+          {
+            name: 'Pleated Off-White Linen Trousers',
+            fabricNote: 'Breathable 220 GSM European flax-linen blend',
+            fitTip: 'Creates high-contrast resort luxury with dark or embroidered shirts.',
+            imageUrl: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#f3ede2',
+          },
+          {
+            name: 'Tailored Jet-Black Straight Denim',
+            fabricNote: '13 oz structured cotton denim, clean hem',
+            fitTip: 'Keeps the focus entirely on the shirt’s chest & back artwork.',
+            imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#18181b',
+          },
+          {
+            name: 'Sandstone Relaxed Chino Trousers',
+            fabricNote: 'Peached organic cotton twill',
+            fitTip: 'Warm earthy tone that complements embroidery threads.',
+            imageUrl: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#d6c7b2',
+          },
+        ],
       },
       {
         slot: 'Footwear',
-        name: 'Suede Penny Loafers',
-        note: 'Hand-stitched sand or mocha suede low-profile sole',
-        estPrice: 'Studio Pairing',
-        swatchColor: '#5c4033',
-        accentHex: '#f5e29f',
-        iconGlyph: '👞',
+        primaryLabel: 'Suede Loafers & Minimal Sneakers',
+        variants: [
+          {
+            name: 'Mocha Suede Penny Loafers',
+            fabricNote: 'Hand-stitched velvet suede with leather welt',
+            fitTip: 'Refined smart-casual finish for dinner or gallery evenings.',
+            imageUrl: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#5c4033',
+          },
+          {
+            name: 'Minimalist Ivory Leather Sneakers',
+            fabricNote: 'Full-grain calfskin low-top silhouette',
+            fitTip: 'Crisp, clean proportions for all-day comfort.',
+            imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#faf7f2',
+          },
+          {
+            name: 'Woven Tan Leather Fisherman Sandals',
+            fabricNote: 'Vegetable-tanned artisanal leather straps',
+            fitTip: 'Ideal for relaxed summer & vacation resort styling.',
+            imageUrl: 'https://images.unsplash.com/photo-1603487742131-4160ec999306?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#92400e',
+          },
+        ],
       },
       {
         slot: 'Accent',
-        name: 'Tortoiseshell Frames + Signet Ring',
-        note: 'Warm acetate frame with engraved atelier signet',
-        estPrice: 'Studio Pairing',
-        swatchColor: '#3b2314',
-        accentHex: '#d4af37',
-        iconGlyph: '🕶️',
+        primaryLabel: 'Sunglasses, Signet & Timepiece',
+        variants: [
+          {
+            name: 'Tortoiseshell Frames + Engraved Signet',
+            fabricNote: 'Hand-cured acetate & brushed gold-tone brass',
+            fitTip: 'Adds vintage editorial character to open-collar shirts.',
+            imageUrl: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#451a03',
+          },
+          {
+            name: 'Classic Leather-Strap Dress Watch',
+            fabricNote: 'Slim champagne dial with stitched espresso strap',
+            fitTip: 'Timeless wrist detail when sleeves are rolled once.',
+            imageUrl: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#291d18',
+          },
+          {
+            name: 'Braided Leather & Silver Cuff Stack',
+            fabricNote: 'Hand-woven Nappa leather with sterling clasp',
+            fitTip: 'Textural contrast against smooth cotton-linen weaves.',
+            imageUrl: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=800&q=80',
+            swatchHex: '#71717a',
+          },
+        ],
       },
     ]
   }
 
+  // Default for Heavyweight Oversized Tees, Hoodies & Sweatshirts
   return [
     {
       slot: 'Bottoms',
-      name: t.includes('brahmand') ? 'Baggy Parachute Cargo Pants' : 'Heavyweight Stacked Sweatpants',
-      note: '420 GSM relaxed streetwear drape with ankle toggle',
-      estPrice: 'Studio Pairing',
-      swatchColor: '#141414',
-      accentHex: '#d4af37',
-      iconGlyph: '👖',
+      primaryLabel: t.includes('brahmand') ? 'Parachute Cargos & Stacked Fleece' : 'Streetwear Cargos & Wide Denim',
+      variants: [
+        {
+          name: 'Heavyweight Charcoal Parachute Cargos',
+          fabricNote: '320 GSM cotton-nylon ripstop with ankle toggles',
+          fitTip: 'Balances oversized drop-shoulder tees & hoodies effortlessly.',
+          imageUrl: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          swatchHex: '#18181b',
+        },
+        {
+          name: 'Vintage Stone-Washed Baggy Denim',
+          fabricNote: '13.5 oz wide-leg street silhouette',
+          fitTip: 'Classic skate & street proportion with bold back prints.',
+          imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=800&q=80',
+          swatchHex: '#334155',
+        },
+        {
+          name: '430 GSM French Terry Stacked Sweatpants',
+          fabricNote: 'Matching studio-grade combed loopback cotton',
+          fitTip: 'Coordinated monochrome lounge-to-street luxury.',
+          imageUrl: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80',
+          swatchHex: '#27272a',
+        },
+      ],
     },
     {
       slot: 'Footwear',
-      name: 'Chunky Studio Suede Trainers',
-      note: 'Cream midsole with tonal charcoal suede overlays',
-      estPrice: 'Studio Pairing',
-      swatchColor: '#27272a',
-      accentHex: '#f5efe6',
-      iconGlyph: '👟',
+      primaryLabel: 'Chunky Suede Trainers & High-Tops',
+      variants: [
+        {
+          name: 'Cream & Charcoal Suede Studio Trainers',
+          fabricNote: 'Layered suede panels with cushioned vintage sole',
+          fitTip: 'Anchors wide-leg cargos and oversized silhouettes.',
+          imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80',
+          swatchHex: '#e7e5e4',
+        },
+        {
+          name: 'Retro Monochrome High-Top Sneakers',
+          fabricNote: 'Full-grain leather upper with padded collar',
+          fitTip: 'Adds clean vertical structure beneath cuffed hems.',
+          imageUrl: 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=800&q=80',
+          swatchHex: '#18181b',
+        },
+        {
+          name: 'Suede Mule Clogs with Cork Footbed',
+          fabricNote: 'Brushed taupe suede with ergonomic contour',
+          fitTip: 'Effortless off-duty studio aesthetic.',
+          imageUrl: 'https://images.unsplash.com/photo-1603487742131-4160ec999306?auto=format&fit=crop&w=800&q=80',
+          swatchHex: '#78716c',
+        },
+      ],
     },
     {
       slot: 'Accent',
-      name: 'Layered Silver Chain + Ribbed Crew Socks',
-      note: 'Minimalist studio hardware & combed cotton socks',
-      estPrice: 'Studio Pairing',
-      swatchColor: '#1c1917',
-      accentHex: '#e5e7eb',
-      iconGlyph: '🧦',
+      primaryLabel: 'Layered Chains, Caps & Totes',
+      variants: [
+        {
+          name: 'Layered Curb Chain + Ribbed Crew Socks',
+          fabricNote: 'Tarnish-resistant stainless steel + combed cotton',
+          fitTip: 'Adds crisp metallic highlight at the crew neckline.',
+          imageUrl: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=800&q=80',
+          swatchHex: '#d4d4d8',
+        },
+        {
+          name: 'Heavy Canvas Atelier Studio Tote',
+          fabricNote: '16 oz unbleached cotton duck with reinforced straps',
+          fitTip: 'Practical everyday carry with raw editorial texture.',
+          imageUrl: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=800&q=80',
+          swatchHex: '#f5efe6',
+        },
+        {
+          name: 'Tinted Rectangular Street Frames',
+          fabricNote: 'Lightweight acetate with amber studio lenses',
+          fitTip: 'Completes the look with unmistakable character.',
+          imageUrl: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=800&q=80',
+          swatchHex: '#292524',
+        },
+      ],
     },
   ]
 }
@@ -146,7 +329,11 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
   const [color, setColor] = useState<FabricColor>(FABRIC_COLORS[0])
   const [quantity, setQuantity] = useState(1)
   const [includesGiftBox, setIncludesGiftBox] = useState(defaultIncludesGiftBox)
-  const [activeInspectedPiece, setActiveInspectedPiece] = useState<StylistPiece | null>(null)
+
+  // Centered Visual Modal State (with 3-option auto-slider)
+  const [inspectedCategory, setInspectedCategory] = useState<StylistCategory | null>(null)
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0)
+  const [isAutoSlidePlaying, setIsAutoSlidePlaying] = useState(true)
   const [isFullLookOpen, setIsFullLookOpen] = useState(false)
   const [tiltStyle, setTiltStyle] = useState({ transform: 'perspective(900px) rotateX(0deg) rotateY(0deg)' })
 
@@ -155,8 +342,17 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
   const soldOut = product.stockStatus === 'sold-out'
   const orderDetails: CartLineDetails = { product, size, color, quantity, includesGiftBox }
 
-  const stylistPieces = useMemo(() => getSmartOutfitPairing(product), [product])
+  const stylistCategories = useMemo(() => getSmartOutfitCategories(product), [product])
   const techSpec = useMemo(() => getFabricTechSpec(product.garment), [product.garment])
+
+  // Auto-slide every 3.5 seconds when the Visual Pairing Modal is open
+  useEffect(() => {
+    if (!inspectedCategory || !isAutoSlidePlaying || inspectedCategory.variants.length <= 1) return
+    const timer = window.setInterval(() => {
+      setActiveSlideIndex((prev) => (prev + 1) % inspectedCategory.variants.length)
+    }, 3500)
+    return () => window.clearInterval(timer)
+  }, [inspectedCategory, isAutoSlidePlaying])
 
   useEffect(() => {
     closeButtonRef.current?.focus()
@@ -167,11 +363,21 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
           setIsFullLookOpen(false)
           return
         }
-        if (activeInspectedPiece) {
-          setActiveInspectedPiece(null)
+        if (inspectedCategory) {
+          setInspectedCategory(null)
           return
         }
         onClose()
+        return
+      }
+      if (inspectedCategory && (event.key === 'ArrowRight' || event.key === 'ArrowLeft')) {
+        event.preventDefault()
+        setIsAutoSlidePlaying(false)
+        setActiveSlideIndex((prev) =>
+          event.key === 'ArrowRight'
+            ? (prev + 1) % inspectedCategory.variants.length
+            : (prev - 1 + inspectedCategory.variants.length) % inspectedCategory.variants.length,
+        )
         return
       }
       if (event.key !== 'Tab') return
@@ -190,7 +396,13 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
     }
     window.addEventListener('keydown', keepFocusInDialog)
     return () => window.removeEventListener('keydown', keepFocusInDialog)
-  }, [onClose, isFullLookOpen, activeInspectedPiece])
+  }, [onClose, isFullLookOpen, inspectedCategory])
+
+  function openCategoryPreview(category: StylistCategory) {
+    setActiveSlideIndex(0)
+    setIsAutoSlidePlaying(true)
+    setInspectedCategory(category)
+  }
 
   function handleVisualMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -204,6 +416,8 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
   function handleVisualMouseLeave() {
     setTiltStyle({ transform: 'perspective(900px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)' })
   }
+
+  const activeVariant = inspectedCategory ? inspectedCategory.variants[activeSlideIndex] ?? inspectedCategory.variants[0] : null
 
   return (
     <div className="customizer-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
@@ -285,7 +499,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
           </div>
         </div>
 
-        {/* INTERACTIVE AI ATELIER STYLIST WITH EYE VIEW + ARRANGE ALL OUTFITS TOGETHER */}
+        {/* INTERACTIVE AI ATELIER STYLIST WITH LARGE VISUAL SLIDER POPUP */}
         <div
           style={{
             marginTop: '18px',
@@ -297,9 +511,14 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
-            <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#d4af37', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <Sparkles size={13} /> AI ATELIER STYLIST · COMPLETE THE LOOK
-            </span>
+            <div>
+              <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#d4af37', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Sparkles size={13} /> AI ATELIER STYLIST · VISUAL LOOKBOOK
+              </span>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#a89b8c' }}>
+                Tap &ldquo;View 3 Looks&rdquo; on any row to preview large auto-sliding styling options.
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => setIsFullLookOpen(true)}
@@ -307,10 +526,10 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '6px 12px',
+                padding: '7px 14px',
                 borderRadius: '999px',
                 border: '1px solid rgba(212, 175, 55, 0.55)',
-                background: 'rgba(212, 175, 55, 0.14)',
+                background: 'rgba(212, 175, 55, 0.16)',
                 color: '#f5e29f',
                 fontSize: '11px',
                 fontWeight: 600,
@@ -322,99 +541,303 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
           </div>
 
           <div style={{ display: 'grid', gap: '8px' }}>
-            {stylistPieces.map((piece) => (
+            {stylistCategories.map((cat) => (
               <div
-                key={piece.slot}
+                key={cat.slot}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   gap: '10px',
-                  padding: '8px 12px',
-                  borderRadius: '10px',
+                  padding: '10px 12px',
+                  borderRadius: '12px',
                   background: 'rgba(255,255,255,0.05)',
                   fontSize: '13px',
                 }}
               >
-                <div>
-                  <strong style={{ color: '#d4af37', marginRight: '6px' }}>{piece.slot}:</strong>
-                  <span>{piece.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                  <img
+                    src={cat.variants[0].imageUrl}
+                    alt={cat.variants[0].name}
+                    width={38}
+                    height={38}
+                    style={{ borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(212,175,55,0.4)', flexShrink: 0 }}
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ color: '#d4af37', marginRight: '6px' }}>{cat.slot}:</strong>
+                    <span>{cat.variants[0].name}</span>
+                    <small style={{ display: 'block', fontSize: '11px', color: '#a89b8c' }}>
+                      +{cat.variants.length - 1} more curated options inside
+                    </small>
+                  </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setActiveInspectedPiece(piece)}
-                  aria-label={`View ${piece.name}`}
+                  onClick={() => openCategoryPreview(cat)}
+                  aria-label={`Preview ${cat.slot} styling options`}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '5px',
-                    padding: '5px 10px',
+                    gap: '6px',
+                    padding: '7px 13px',
                     borderRadius: '999px',
-                    border: '1px solid rgba(245, 226, 159, 0.4)',
-                    background: 'rgba(245, 226, 159, 0.1)',
+                    border: '1px solid rgba(245, 226, 159, 0.5)',
+                    background: 'rgba(245, 226, 159, 0.14)',
                     color: '#f5e29f',
                     fontSize: '11px',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: 'pointer',
                     flexShrink: 0,
                   }}
                 >
-                  <Eye size={13} /> View
+                  <Eye size={14} /> View ({cat.variants.length})
                 </button>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* SINGLE ITEM SIDE PREVIEW POP-UP */}
-          {activeInspectedPiece && (
+        {/* LARGE CENTERED VISUAL PAIRING POPUP WITH 3-OPTION AUTO-SLIDER */}
+        {inspectedCategory && activeVariant && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${inspectedCategory.slot} Visual Lookbook`}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 145,
+              background: 'rgba(10, 8, 7, 0.84)',
+              backdropFilter: 'blur(8px)',
+              display: 'grid',
+              placeItems: 'center',
+              padding: '16px',
+            }}
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setInspectedCategory(null)
+            }}
+          >
             <div
               style={{
-                marginTop: '12px',
-                padding: '14px',
-                borderRadius: '12px',
-                background: '#241b18',
-                border: '1px solid rgba(212, 175, 55, 0.5)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '12px',
+                width: '100%',
+                maxWidth: '460px',
+                background: '#faf7f2',
+                color: '#181210',
+                borderRadius: '22px',
+                overflow: 'hidden',
+                border: '1px solid rgba(212, 175, 55, 0.6)',
+                boxShadow: '0 28px 70px rgba(0,0,0,0.55)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div
-                  style={{
-                    width: '52px',
-                    height: '52px',
-                    borderRadius: '12px',
-                    background: activeInspectedPiece.swatchColor,
-                    border: `1px solid ${activeInspectedPiece.accentHex}`,
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontSize: '24px',
-                    flexShrink: 0,
-                  }}
-                >
-                  {activeInspectedPiece.iconGlyph}
-                </div>
+              {/* Top Bar */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', background: '#181210', color: '#f5efe6' }}>
                 <div>
-                  <span style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#d4af37' }}>
-                    {activeInspectedPiece.slot} · {activeInspectedPiece.estPrice}
+                  <span style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#d4af37', fontWeight: 700, display: 'block' }}>
+                    PAIRING FOR {product.title.toUpperCase()}
                   </span>
-                  <h4 style={{ margin: '2px 0', fontSize: '15px', color: '#fff' }}>{activeInspectedPiece.name}</h4>
-                  <p style={{ margin: 0, fontSize: '12px', color: '#cfc5b8' }}>{activeInspectedPiece.note}</p>
+                  <strong style={{ fontSize: '14px' }}>
+                    {inspectedCategory.slot} · Look 0{activeSlideIndex + 1} of 0{inspectedCategory.variants.length}
+                  </strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsAutoSlidePlaying((p) => !p)}
+                    title={isAutoSlidePlaying ? 'Pause auto-slide' : 'Resume auto-slide'}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '5px 10px',
+                      borderRadius: '999px',
+                      border: '1px solid rgba(212,175,55,0.45)',
+                      background: 'rgba(255,255,255,0.08)',
+                      color: '#f5e29f',
+                      fontSize: '10px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {isAutoSlidePlaying ? <Pause size={11} /> : <Play size={11} />}
+                    {isAutoSlidePlaying ? 'Auto' : 'Paused'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInspectedCategory(null)}
+                    aria-label="Close styling popup"
+                    style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '999px', color: '#fff', width: '30px', height: '30px', display: 'grid', placeItems: 'center', cursor: 'pointer' }}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveInspectedPiece(null)}
-                aria-label="Close preview"
-                style={{ background: 'none', border: 'none', color: '#f5efe6', cursor: 'pointer', padding: '4px' }}
-              >
-                <X size={16} />
-              </button>
+
+              {/* Large 4:5 Editorial Image Container */}
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 4.2', background: '#1c1614', overflow: 'hidden' }}>
+                <img
+                  src={activeVariant.imageUrl}
+                  alt={activeVariant.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'opacity 0.35s ease' }}
+                />
+
+                {/* Mini Picture-in-Picture of User's Selected Kainchi Piece for Direct Comparison */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 10px 6px 6px',
+                    borderRadius: '12px',
+                    background: 'rgba(24, 18, 16, 0.86)',
+                    backdropFilter: 'blur(6px)',
+                    border: '1px solid rgba(212, 175, 55, 0.5)',
+                    color: '#f5efe6',
+                  }}
+                >
+                  <img
+                    src={resolveDriveImageUrl(product.image, 160)}
+                    alt={product.title}
+                    width={36}
+                    height={36}
+                    style={{ borderRadius: '8px', objectFit: 'cover' }}
+                  />
+                  <div style={{ fontSize: '10px', lineHeight: 1.25 }}>
+                    <span style={{ color: '#d4af37', display: 'block', fontWeight: 700 }}>YOUR PIECE</span>
+                    <span>{product.title}</span>
+                  </div>
+                </div>
+
+                {/* Prev / Next Controls */}
+                <button
+                  type="button"
+                  aria-label="Previous look"
+                  onClick={() => {
+                    setIsAutoSlidePlaying(false)
+                    setActiveSlideIndex((prev) => (prev - 1 + inspectedCategory.variants.length) % inspectedCategory.variants.length)
+                  }}
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    background: 'rgba(24, 18, 16, 0.78)',
+                    color: '#fff',
+                    display: 'grid',
+                    placeItems: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next look"
+                  onClick={() => {
+                    setIsAutoSlidePlaying(false)
+                    setActiveSlideIndex((prev) => (prev + 1) % inspectedCategory.variants.length)
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    background: 'rgba(24, 18, 16, 0.78)',
+                    color: '#fff',
+                    display: 'grid',
+                    placeItems: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+
+                {/* Slide Indicator Dots */}
+                <div style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px', padding: '5px 10px', borderRadius: '999px', background: 'rgba(0,0,0,0.55)' }}>
+                  {inspectedCategory.variants.map((v, idx) => (
+                    <button
+                      key={v.name}
+                      type="button"
+                      aria-label={`Show option ${idx + 1}: ${v.name}`}
+                      onClick={() => {
+                        setIsAutoSlidePlaying(false)
+                        setActiveSlideIndex(idx)
+                      }}
+                      style={{
+                        width: idx === activeSlideIndex ? '20px' : '8px',
+                        height: '8px',
+                        borderRadius: '999px',
+                        border: 'none',
+                        background: idx === activeSlideIndex ? '#f5e29f' : 'rgba(255,255,255,0.45)',
+                        cursor: 'pointer',
+                        transition: 'all 0.25s ease',
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Editorial Styling Caption */}
+              <div style={{ padding: '16px 18px', display: 'grid', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ width: '12px', height: '12px', borderRadius: '999px', background: activeVariant.swatchHex, border: '1px solid rgba(0,0,0,0.25)', flexShrink: 0 }} />
+                  <h3 style={{ margin: 0, fontSize: '17px', color: '#181210' }}>{activeVariant.name}</h3>
+                </div>
+                <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#8b1e24' }}>{activeVariant.fabricNote}</p>
+                <p style={{ margin: 0, fontSize: '13px', color: '#4a4038', lineHeight: 1.5 }}>{activeVariant.fitTip}</p>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAutoSlidePlaying(false)
+                      setActiveSlideIndex((prev) => (prev + 1) % inspectedCategory.variants.length)
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '999px',
+                      border: '1px solid rgba(24,18,16,0.25)',
+                      background: '#fff',
+                      color: '#181210',
+                      fontWeight: 600,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Next Option ({((activeSlideIndex + 1) % inspectedCategory.variants.length) + 1}/{inspectedCategory.variants.length}) →
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInspectedCategory(null)}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '999px',
+                      border: 'none',
+                      background: '#181210',
+                      color: '#f5e29f',
+                      fontWeight: 600,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Done Previewing
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* FULL 4-LAYER OUTFIT LOOKBOARD MODAL */}
         {isFullLookOpen && (
@@ -425,9 +848,9 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
             style={{
               position: 'fixed',
               inset: 0,
-              zIndex: 140,
-              background: 'rgba(12, 9, 8, 0.82)',
-              backdropFilter: 'blur(6px)',
+              zIndex: 145,
+              background: 'rgba(12, 9, 8, 0.84)',
+              backdropFilter: 'blur(8px)',
               display: 'grid',
               placeItems: 'center',
               padding: '16px',
@@ -439,10 +862,10 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
             <div
               style={{
                 width: '100%',
-                maxWidth: '520px',
+                maxWidth: '540px',
                 background: '#faf7f2',
                 color: '#181210',
-                borderRadius: '20px',
+                borderRadius: '22px',
                 padding: '22px',
                 border: '1px solid rgba(212, 175, 55, 0.55)',
                 boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
@@ -457,13 +880,13 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
                 </button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'stretch' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px', alignItems: 'stretch' }}>
                 <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', alignItems: 'center', padding: '12px', borderRadius: '14px', background: '#181210', color: '#f5efe6' }}>
                   <img
                     src={resolveDriveImageUrl(product.image, 320)}
                     alt={product.title}
-                    width={72}
-                    height={72}
+                    width={76}
+                    height={76}
                     style={{ borderRadius: '10px', objectFit: 'cover', border: '1px solid rgba(212,175,55,0.5)' }}
                   />
                   <div>
@@ -473,25 +896,29 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
                   </div>
                 </div>
 
-                {stylistPieces.map((piece, idx) => (
+                {stylistCategories.map((cat, idx) => (
                   <div
-                    key={piece.slot}
+                    key={cat.slot}
                     style={{
-                      padding: '12px',
+                      padding: '10px',
                       borderRadius: '14px',
                       background: '#fff',
                       border: '1px solid rgba(0,0,0,0.12)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '4px',
+                      gap: '6px',
                     }}
                   >
-                    <span style={{ fontSize: '20px' }}>{piece.iconGlyph}</span>
+                    <img
+                      src={cat.variants[0].imageUrl}
+                      alt={cat.variants[0].name}
+                      style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '10px' }}
+                    />
                     <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b1e24', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                      0{idx + 2} · {piece.slot}
+                      0{idx + 2} · {cat.slot}
                     </span>
-                    <strong style={{ fontSize: '13px' }}>{piece.name}</strong>
-                    <span style={{ fontSize: '11px', color: '#5c5046' }}>{piece.note}</span>
+                    <strong style={{ fontSize: '13px' }}>{cat.variants[0].name}</strong>
+                    <span style={{ fontSize: '11px', color: '#5c5046' }}>{cat.variants[0].fabricNote}</span>
                   </div>
                 ))}
               </div>
