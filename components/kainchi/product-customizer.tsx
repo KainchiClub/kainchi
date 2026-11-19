@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowUpRight, Check, Clock, Eye, Layers, Minus, Plus, Ruler, ShoppingBag, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Check, Clock, Layers, Minus, Plus, Ruler, ShoppingBag, Sparkles, X } from 'lucide-react'
 import { fallbackImageOnError, isImageOptimizerSource, resolveDriveImageUrl } from '@/lib/utils'
 import { formatRupees, type CatalogProduct } from './catalog'
 import { openSizeGuide } from './storefront-events'
@@ -146,7 +146,6 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
   const [color, setColor] = useState<FabricColor>(FABRIC_COLORS[0])
   const [quantity, setQuantity] = useState(1)
   const [includesGiftBox, setIncludesGiftBox] = useState(defaultIncludesGiftBox)
-  const [activeInspectedPiece, setActiveInspectedPiece] = useState<StylistPiece | null>(null)
   const [isFullLookOpen, setIsFullLookOpen] = useState(false)
   const [tiltStyle, setTiltStyle] = useState({ transform: 'perspective(900px) rotateX(0deg) rotateY(0deg)' })
 
@@ -165,10 +164,6 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
       if (event.key === 'Escape') {
         if (isFullLookOpen) {
           setIsFullLookOpen(false)
-          return
-        }
-        if (activeInspectedPiece) {
-          setActiveInspectedPiece(null)
           return
         }
         onClose()
@@ -190,7 +185,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
     }
     window.addEventListener('keydown', keepFocusInDialog)
     return () => window.removeEventListener('keydown', keepFocusInDialog)
-  }, [onClose, isFullLookOpen, activeInspectedPiece])
+  }, [onClose, isFullLookOpen])
 
   function handleVisualMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -285,7 +280,7 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
           </div>
         </div>
 
-        {/* INTERACTIVE AI ATELIER STYLIST WITH EYE VIEW + ARRANGE ALL OUTFITS TOGETHER */}
+        {/* AI ATELIER STYLIST · CLEAN TEXT PAIRING */}
         <div
           style={{
             marginTop: '18px',
@@ -326,164 +321,18 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
               <div
                 key={piece.slot}
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '10px',
                   padding: '8px 12px',
                   borderRadius: '10px',
                   background: 'rgba(255,255,255,0.05)',
                   fontSize: '13px',
                 }}
               >
-                <div>
-                  <strong style={{ color: '#d4af37', marginRight: '6px' }}>{piece.slot}:</strong>
-                  <span>{piece.name}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveInspectedPiece(piece)}
-                  aria-label={`View ${piece.name}`}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    padding: '5px 10px',
-                    borderRadius: '999px',
-                    border: '1px solid rgba(245, 226, 159, 0.4)',
-                    background: 'rgba(245, 226, 159, 0.1)',
-                    color: '#f5e29f',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Eye size={13} /> View
-                </button>
+                <strong style={{ color: '#d4af37', marginRight: '6px' }}>{piece.slot}:</strong>
+                <span>{piece.name}</span>
               </div>
             ))}
           </div>
         </div>
-
-        {/* LARGE CENTER POPUP MODAL FOR SINGLE STYLIST PIECE (50%+ SCREEN) */}
-        {activeInspectedPiece && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={activeInspectedPiece.name}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 150,
-              background: 'rgba(12, 9, 8, 0.84)',
-              backdropFilter: 'blur(6px)',
-              display: 'grid',
-              placeItems: 'center',
-              padding: '20px',
-            }}
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) setActiveInspectedPiece(null)
-            }}
-          >
-            <div
-              style={{
-                width: 'min(92vw, 520px)',
-                minHeight: '54vh',
-                background: '#181210',
-                color: '#f5efe6',
-                borderRadius: '22px',
-                padding: '24px',
-                border: '1px solid rgba(212, 175, 55, 0.6)',
-                boxShadow: '0 28px 70px rgba(0,0,0,0.65)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '18px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#d4af37', fontWeight: 700 }}>
-                  {activeInspectedPiece.slot} · {activeInspectedPiece.estPrice}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setActiveInspectedPiece(null)}
-                  aria-label="Close preview"
-                  style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '999px',
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(212, 175, 55, 0.4)',
-                    color: '#f5efe6',
-                    display: 'grid',
-                    placeItems: 'center',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div
-                style={{
-                  width: '100%',
-                  minHeight: '240px',
-                  borderRadius: '18px',
-                  background: activeInspectedPiece.swatchColor,
-                  border: `2px solid ${activeInspectedPiece.accentHex}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '12px',
-                  padding: '24px',
-                  boxShadow: 'inset 0 0 40px rgba(0,0,0,0.28)',
-                }}
-              >
-                <span style={{ fontSize: '96px', lineHeight: 1 }}>{activeInspectedPiece.iconGlyph}</span>
-                <span
-                  style={{
-                    padding: '4px 12px',
-                    borderRadius: '999px',
-                    background: 'rgba(24, 18, 16, 0.78)',
-                    color: '#f5e29f',
-                    fontSize: '11px',
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    fontWeight: 600,
-                  }}
-                >
-                  {activeInspectedPiece.slot} Pairing Preview
-                </span>
-              </div>
-
-              <div>
-                <h3 style={{ margin: '0 0 6px', fontSize: '20px', color: '#fff' }}>{activeInspectedPiece.name}</h3>
-                <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#cfc5b8' }}>{activeInspectedPiece.note}</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setActiveInspectedPiece(null)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '999px',
-                  border: '1px solid rgba(212, 175, 55, 0.5)',
-                  background: 'rgba(212, 175, 55, 0.16)',
-                  color: '#f5e29f',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                }}
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* FULL 4-LAYER OUTFIT LOOKBOARD MODAL */}
         {isFullLookOpen && (
@@ -555,7 +404,6 @@ export function ProductCustomizer({ product, defaultIncludesGiftBox, onClose, on
                       gap: '4px',
                     }}
                   >
-                    <span style={{ fontSize: '20px' }}>{piece.iconGlyph}</span>
                     <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b1e24', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                       0{idx + 2} · {piece.slot}
                     </span>
