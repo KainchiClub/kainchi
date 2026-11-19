@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { Gift, LogOut, Sparkles, UserCheck, X } from 'lucide-react'
+import { Check, Copy, Gift, LogOut, Sparkles, UserCheck, X } from 'lucide-react'
 import {
+  generateMemberCode,
   getBrowserSupabaseClient,
   logErrorOrCartEvent,
   pickNextNonRepeatGift,
@@ -26,10 +27,23 @@ export function MemberAuthModal({
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [referralCodeInput, setReferralCodeInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [copiedCode, setCopiedCode] = useState(false)
 
   if (!isOpen) return null
+
+  const activeMemberCode = member
+    ? member.member_code || generateMemberCode(member.full_name, member.phone)
+    : ''
+
+  function handleCopyCode() {
+    if (!activeMemberCode) return
+    navigator.clipboard?.writeText(activeMemberCode).catch(() => {})
+    setCopiedCode(true)
+    window.setTimeout(() => setCopiedCode(false), 2000)
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -37,6 +51,7 @@ export function MemberAuthModal({
     const cleanEmail = email.trim().toLowerCase()
     const cleanPhone = phone.replace(/\D/g, '').slice(-10)
     const cleanName = fullName.trim()
+    const cleanRef = referralCodeInput.trim().toUpperCase()
 
     if (!cleanEmail.includes('@')) {
       setErrorMsg('Please enter a valid email address.')
@@ -52,6 +67,7 @@ export function MemberAuthModal({
     }
 
     setLoading(true)
+    const generatedCode = generateMemberCode(cleanName || cleanEmail.split('@')[0], cleanPhone)
     const supabase = getBrowserSupabaseClient()
 
     try {
@@ -63,7 +79,10 @@ export function MemberAuthModal({
           .maybeSingle()
 
         if (!fetchError && existing) {
-          const profile = existing as CustomerProfile
+          const profile: CustomerProfile = {
+            ...(existing as CustomerProfile),
+            member_code: (existing as CustomerProfile).member_code || generateMemberCode((existing as CustomerProfile).full_name, (existing as CustomerProfile).phone),
+          }
           setStoredCustomerSession(profile)
           onMemberChange(profile)
           setLoading(false)
@@ -73,7 +92,7 @@ export function MemberAuthModal({
 
         if (!fetchError && mode === 'login') {
           setErrorMsg('No account found with this email. Switch to "Join Club (New)" to activate your Atelier Pass.')
-          await logErrorOrCartEvent({
+          logErrorOrCartEvent({
             eventType: 'login_error',
             customerEmail: cleanEmail,
             details: { reason: 'Email not found during sign-in' },
@@ -89,6 +108,11 @@ export function MemberAuthModal({
               full_name: cleanName,
               email: cleanEmail,
               phone: cleanPhone,
+              member_code: generatedCode,
+              referred_by: cleanRef || null,
+              referral_count: 0,
+              discount_earned: cleanRef ? 200 : 0,
+              discount_used: 0,
               total_orders: 0,
               total_spent: 0,
               last_gift_sent: 'None',
@@ -97,12 +121,15 @@ export function MemberAuthModal({
             .single()
 
           if (!insertError && created) {
-            const newProfile = created as CustomerProfile
+            const newProfile: CustomerProfile = {
+              ...(created as CustomerProfile),
+              member_code: (created as CustomerProfile).member_code || generatedCode,
+            }
             setStoredCustomerSession(newProfile)
             onMemberChange(newProfile)
             triggerStudioNotification({
               eventType: 'signup',
-              customerName: newProfile.full_name,
+              customerName: `${newProfile.full_name} (${newProfile.member_code})`,
               customerEmail: newProfile.email,
               customerPhone: newProfile.phone ?? '',
             }).catch(() => {})
@@ -123,22 +150,27 @@ export function MemberAuthModal({
       }).catch(() => {})
     }
 
-    // Fallback: Activate Atelier Pass locally so customer is never blocked
     const localProfile: CustomerProfile = {
       id: `kc-${Date.now()}`,
+      member_code: generatedCode,
       full_name: cleanName || cleanEmail.split('@')[0],
       email: cleanEmail,
       phone: cleanPhone,
+      referred_by: cleanRef || null,
+      referral_count: 0,
+      discount_earned: cleanRef ? 200 : 0,
+      discount_used: 0,
       total_orders: 0,
       total_spent: 0,
       last_gift_sent: 'None',
+      created_at: new Date().toISOString(),
     }
     setStoredCustomerSession(localProfile)
     onMemberChange(localProfile)
     if (mode === 'signup') {
       triggerStudioNotification({
         eventType: 'signup',
-        customerName: localProfile.full_name,
+        customerName: `${localProfile.full_name} (${localProfile.member_code})`,
         customerEmail: localProfile.email,
         customerPhone: localProfile.phone ?? '',
       }).catch(() => {})
@@ -194,7 +226,7 @@ export function MemberAuthModal({
         </div>
 
         {member ? (
-          <div style={{ display: 'grid', gap: '14px' }}>
+          <div style={{ display: 'grid', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <UserCheck size={22} color="#8b1e24" />
               <div>
@@ -203,14 +235,62 @@ export function MemberAuthModal({
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', background: '#181210', color: '#f5efe6', padding: '14px', borderRadius: '14px' }}>
+            {/* UNIQUE MEMBERSHIP & REFERRAL CODE CARD */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, #241916 0%, #140e0c 100%)',
+                border: '1px solid rgba(212, 175, 55, 0.55)',
+                color: '#f5efe6',
+              }}
+            >
               <div>
-                <span style={{ fontSize: '11px', color: '#a89b8c', display: 'block' }}>ORDERS COMPLETED</span>
-                <strong style={{ fontSize: '20px', color: '#f5e29f' }}>#{String(member.total_orders).padStart(2, '0')}</strong>
+                <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#d4af37', display: 'block' }}>
+                  OFFICIAL MEMBER &amp; REFERRAL CODE
+                </span>
+                <strong style={{ fontSize: '17px', letterSpacing: '0.08em', color: '#fff', fontFamily: 'monospace' }}>
+                  {activeMemberCode}
+                </strong>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopyCode}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '7px 12px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(212, 175, 55, 0.55)',
+                  background: 'rgba(212, 175, 55, 0.16)',
+                  color: '#f5e29f',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {copiedCode ? <Check size={13} /> : <Copy size={13} />}
+                {copiedCode ? 'Copied' : 'Copy Code'}
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', background: '#181210', color: '#f5efe6', padding: '12px', borderRadius: '14px' }}>
+              <div>
+                <span style={{ fontSize: '10px', color: '#a89b8c', display: 'block' }}>ORDERS</span>
+                <strong style={{ fontSize: '17px', color: '#f5e29f' }}>#{String(member.total_orders).padStart(2, '0')}</strong>
               </div>
               <div>
-                <span style={{ fontSize: '11px', color: '#a89b8c', display: 'block' }}>LIFETIME SPEND</span>
-                <strong style={{ fontSize: '20px', color: '#f5e29f' }}>₹{Number(member.total_spent || 0).toLocaleString('en-IN')}</strong>
+                <span style={{ fontSize: '10px', color: '#a89b8c', display: 'block' }}>REFERRALS</span>
+                <strong style={{ fontSize: '17px', color: '#f5e29f' }}>{member.referral_count ?? 0}</strong>
+              </div>
+              <div>
+                <span style={{ fontSize: '10px', color: '#a89b8c', display: 'block' }}>DISCOUNT BAL.</span>
+                <strong style={{ fontSize: '17px', color: '#f5e29f' }}>₹{Math.max(0, (member.discount_earned ?? 0) - (member.discount_used ?? 0))}</strong>
               </div>
             </div>
 
@@ -247,7 +327,7 @@ export function MemberAuthModal({
               {mode === 'signup' ? 'Join the Atelier Club' : 'Member Sign In'}
             </h2>
             <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#5c5046' }}>
-              Track your orders and unlock a new non-repeating collector gift with every order.
+              Get your unique Member Code, track orders, and unlock a non-repeating collector gift with every order.
             </p>
 
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
@@ -315,18 +395,30 @@ export function MemberAuthModal({
               </label>
 
               {mode === 'signup' && (
-                <label style={{ display: 'grid', gap: '4px', fontSize: '12px', fontWeight: 600 }}>
-                  <span>Mobile Number (WhatsApp) *</span>
-                  <input
-                    type="tel"
-                    required
-                    maxLength={10}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="10-digit mobile number"
-                    style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.2)', background: '#fff' }}
-                  />
-                </label>
+                <>
+                  <label style={{ display: 'grid', gap: '4px', fontSize: '12px', fontWeight: 600 }}>
+                    <span>Mobile Number (WhatsApp) *</span>
+                    <input
+                      type="tel"
+                      required
+                      maxLength={10}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="10-digit mobile number"
+                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.2)', background: '#fff' }}
+                    />
+                  </label>
+                  <label style={{ display: 'grid', gap: '4px', fontSize: '12px', fontWeight: 600 }}>
+                    <span>Friend&apos;s Referral Code (Optional)</span>
+                    <input
+                      type="text"
+                      value={referralCodeInput}
+                      onChange={(e) => setReferralCodeInput(e.target.value.toUpperCase())}
+                      placeholder="e.g. KC-SAMR-5356"
+                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.2)', background: '#fff' }}
+                    />
+                  </label>
+                </>
               )}
 
               {errorMsg && <p style={{ color: '#b91c1c', fontSize: '12px', margin: 0 }}>{errorMsg}</p>}
