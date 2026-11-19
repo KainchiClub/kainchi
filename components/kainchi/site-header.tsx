@@ -96,43 +96,33 @@ export function SiteHeader({
   const memberFirstName = member?.full_name?.trim().split(/\s+/)[0]
 
   return (
-    <header className="site-header">
+    <header className="site-header" style={{ maxWidth: '100vw' }}>
       <button ref={toggleRef} className="mobile-menu-toggle category-menu-toggle" type="button" aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={isMenuOpen} aria-controls="category-drawer" onClick={() => setIsMenuOpen((open) => !open)}>
         {isMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
       </button>
-      <a className="wordmark" href="#top" aria-label="Kainchi Club home">
-        <Image className="wordmark-logo" src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg" alt="" width={96} height={96} loading="lazy" decoding="async" />
-        <span>KAINCHI <span className="wordmark-light">CLUB</span></span>
+      <a className="wordmark min-w-0" href="#top" aria-label="Kainchi Club home">
+        <Image className="wordmark-logo shrink-0" src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1793199520083.png-jf1N3sU3CUwrqFKo13EIdHxMVXa7FI.jpeg" alt="" width={96} height={96} loading="eager" decoding="async" />
+        <span className="truncate">KAINCHI <span className="wordmark-light">CLUB</span></span>
       </a>
       <nav className="main-nav" aria-label="Main navigation">
         {navigation.map((item) => <a href={item.href} key={item.label}>{item.label}</a>)}
       </nav>
-      <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="header-actions flex items-center gap-2 shrink-0">
         {onOpenMemberAuth && (
           <button
             type="button"
             onClick={onOpenMemberAuth}
             aria-label={member ? `Atelier Pass: ${member.full_name}` : 'Member Sign In or Join Club'}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-[#D4AF37]/60 text-[#f5e29f] text-[11px] sm:text-xs font-semibold cursor-pointer whitespace-nowrap min-h-[38px]"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 13px',
-              borderRadius: '999px',
-              border: '1px solid rgba(212, 175, 55, 0.55)',
-              background: member ? 'rgba(212, 175, 55, 0.16)' : 'rgba(24, 18, 16, 0.85)',
-              color: '#f5e29f',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
+              background: member ? 'rgba(212, 175, 55, 0.16)' : '#181210',
             }}
           >
             {member ? <UserCheck size={14} aria-hidden="true" /> : <User size={14} aria-hidden="true" />}
             <span>{member ? memberFirstName : 'Atelier Pass'}</span>
           </button>
         )}
-        <a className="header-cta" href={STUDIO_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+        <a className="header-cta hidden sm:inline-flex" href={STUDIO_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
           <span>Talk to the studio</span>
           <span className="header-cta-status"><span className="header-cta-status-dot" aria-hidden="true" />Studio Active</span>
           <ArrowUpRight aria-hidden="true" />
