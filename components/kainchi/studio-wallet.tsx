@@ -5,12 +5,12 @@ import { ArrowUpRight, Check, Copy, WalletCards } from 'lucide-react'
 import { readWalletLedger, readWalletSettings, type StudioWallet as LegacyStudioWallet } from './studio-wallet-store'
 import {
   generateMemberCode,
-  getBrowserSupabaseClient,
   getLocalMembersLedger,
   getStoredCustomerSession,
   type CustomerProfile,
 } from '@/lib/kainchi-crm'
 import { buildWhatsAppReferralUrl } from './member-auth-modal'
+import { lookupMemberPassSecure } from '@/app/actions/member-sync'
 
 const WHATSAPP_NUMBER = '918863075356'
 
@@ -144,26 +144,15 @@ export function StudioWallet() {
       return
     }
 
-    const supabase = getBrowserSupabaseClient()
-    if (supabase) {
-      try {
-        const { data } = await supabase
-          .from('customers')
-          .select('*')
-          .or(
-            last10Phone.length === 10
-              ? `member_code.ilike.${upperCode},phone.ilike.%${last10Phone}`
-              : `member_code.ilike.${upperCode}`
-          )
-          .limit(1)
-          .maybeSingle()
+    const cloudProfile = await lookupMemberPassSecure({
+      memberCode: upperCode,
+      phone: last10Phone.length === 10 ? last10Phone : undefined,
+    })
 
-        if (data) {
-          setWallet(profileToUnifiedWallet(data as CustomerProfile))
-          setLoading(false)
-          return
-        }
-      } catch {}
+    if (cloudProfile) {
+      setWallet(profileToUnifiedWallet(cloudProfile))
+      setLoading(false)
+      return
     }
 
     setWallet(null)
@@ -194,7 +183,7 @@ export function StudioWallet() {
             id="studio-wallet-access"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="e.g. 8863075356 or KC-SAMR-5356"
+            placeholder="+91 88630 75356 or KC-SAMR-5356"
             required
           />
           <button type="submit" disabled={loading}>
