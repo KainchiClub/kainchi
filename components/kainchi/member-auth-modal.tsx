@@ -4,7 +4,6 @@ import { useState, type FormEvent } from 'react'
 import { ArrowUpRight, Check, Copy, Gift, LogOut, Sparkles, UserCheck, X } from 'lucide-react'
 import {
   generateMemberCode,
-  getBrowserSupabaseClient,
   getLocalMembersLedger,
   logErrorOrCartEvent,
   pickNextNonRepeatGift,
@@ -13,6 +12,7 @@ import {
   triggerStudioNotification,
   type CustomerProfile,
 } from '@/lib/kainchi-crm'
+import { lookupMemberPassSecure, upsertMemberPassSecure } from '@/app/actions/member-sync'
 
 export function buildWhatsAppReferralUrl(memberCode: string, memberName?: string) {
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://kainchi-iota.vercel.app'
@@ -92,63 +92,28 @@ export function MemberAuthModal({
     }
 
     setLoading(true)
-    const supabase = getBrowserSupabaseClient()
     const localLedger = getLocalMembersLedger()
     const localExisting = localLedger.find(
-      (item) => item.email.toLowerCase() === cleanEmail && (!item.phone || item.phone.endsWith(cleanPhone))
+      (item) => item.email.toLowerCase() === cleanEmail && (!item.phone || item.phone.endsWith(cleanPhone)),
     )
 
-    // EXISTING MEMBER SIGN-IN (Email + Mobile Verification)
     if (mode === 'login') {
-      try {
-        if (supabase) {
-          const { data: existing, error: fetchError } = await supabase
-            .from('customers')
-            .select('*')
-            .eq('email', cleanEmail)
-            .maybeSingle()
-
-          if (!fetchError && existing) {
-            const dbRecord = existing as CustomerProfile
-            const dbPhone = (dbRecord.phone || '').replace(/\D/g, '').slice(-10)
-            if (dbPhone && dbPhone !== cleanPhone) {
-              setErrorMsg('Mobile number does not match this email address.')
-              setLoading(false)
-              return
-            }
-
-            // Preserve real name if local ledger has full name
-            const resolvedName =
-              dbRecord.full_name && dbRecord.full_name !== cleanEmail.split('@')[0]
-                ? dbRecord.full_name
-                : localExisting?.full_name || dbRecord.full_name
-            const resolvedCode =
-              dbRecord.member_code && !dbRecord.member_code.startsWith('KC-ROCK-')
-                ? dbRecord.member_code
-                : localExisting?.member_code || generateMemberCode(resolvedName, cleanPhone)
-
-            const verifiedProfile: CustomerProfile = {
-              ...dbRecord,
-              full_name: resolvedName,
-              phone: dbPhone || cleanPhone,
-              member_code: resolvedCode,
-            }
-
-            // Sync corrected details back to Supabase
-            await supabase
-              .from('customers')
-              .update({ full_name: resolvedName, phone: verifiedProfile.phone, member_code: resolvedCode })
-              .eq('email', cleanEmail)
-              .catch(() => {})
-
-            setStoredCustomerSession(verifiedProfile)
-            onMemberChange(verifiedProfile)
-            setLoading(false)
-            onClose()
-            return
-          }
+      const serverProfile = await lookupMemberPassSecure({ email: cleanEmail, phone: cleanPhone })
+      if (serverProfile) {
+        const verifiedProfile: CustomerProfile = {
+          ...serverProfile,
+          phone: serverProfile.phone || cleanPhone,
+          member_code:
+            serverProfile.member_code ||
+            localExisting?.member_code ||
+            generateMemberCode(serverProfile.full_name, cleanPhone),
         }
-      } catch {}
+        setStoredCustomerSession(verifiedProfile)
+        onMemberChange(verifiedProfile)
+        setLoading(false)
+        onClose()
+        return
+      }
 
       if (localExisting) {
         const verifiedLocal: CustomerProfile = {
@@ -174,100 +139,46 @@ export function MemberAuthModal({
       return
     }
 
-    // NEW MEMBER SIGN-UP (Or Restore Existing Account with Real Name)
     const generatedCode = generateMemberCode(cleanName, cleanPhone)
-
-    try {
-      if (supabase) {
-        const { data: existing } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('email', cleanEmail)
-          .maybeSingle()
-
-        if (existing) {
-          const updatedProfile: CustomerProfile = {
-            ...(existing as CustomerProfile),
-            full_name: cleanName,
-            phone: cleanPhone,
-            member_code: generatedCode,
-          }
-          await supabase
-            .from('customers')
-            .update({ full_name: cleanName, phone: cleanPhone, member_code: generatedCode })
-            .eq('email', cleanEmail)
-            .catch(() => {})
-
-          setStoredCustomerSession(updatedProfile)
-          onMemberChange(updatedProfile)
-          setLoading(false)
-          onClose()
-          return
-        }
-
-        const { data: created, error: insertError } = await supabase
-          .from('customers')
-          .insert({
-            full_name: cleanName,
-            email: cleanEmail,
-            phone: cleanPhone,
-            member_code: generatedCode,
-            referred_by: cleanRef || null,
-            referral_count: 0,
-            discount_earned: 0,
-            discount_used: 0,
-            total_orders: 0,
-            total_spent: 0,
-            last_gift_sent: 'None',
-          })
-          .select('*')
-          .single()
-
-        if (!insertError && created) {
-          const newProfile: CustomerProfile = {
-            ...(created as CustomerProfile),
-            full_name: cleanName,
-            phone: cleanPhone,
-            member_code: generatedCode,
-          }
-          setStoredCustomerSession(newProfile)
-          onMemberChange(newProfile)
-          triggerStudioNotification({
-            eventType: 'signup',
-            customerName: `${newProfile.full_name} (${newProfile.member_code})`,
-            customerEmail: newProfile.email,
-            customerPhone: newProfile.phone ?? '',
-          }).catch(() => {})
-          setLoading(false)
-          onClose()
-          return
-        }
-      }
-    } catch {}
-
-    const localProfile: CustomerProfile = {
-      id: localExisting?.id || `kc-${Date.now()}`,
-      member_code: generatedCode,
+    const savedProfile = await upsertMemberPassSecure({
       full_name: cleanName,
       email: cleanEmail,
       phone: cleanPhone,
-      referred_by: cleanRef || localExisting?.referred_by || null,
-      referral_count: localExisting?.referral_count ?? 0,
-      discount_earned: localExisting?.discount_earned ?? 0,
-      discount_used: localExisting?.discount_used ?? 0,
-      total_orders: localExisting?.total_orders ?? 0,
-      total_spent: localExisting?.total_spent ?? 0,
-      last_gift_sent: localExisting?.last_gift_sent ?? 'None',
-      created_at: localExisting?.created_at || new Date().toISOString(),
-    }
-    saveMemberToLocalLedger(localProfile)
-    setStoredCustomerSession(localProfile)
-    onMemberChange(localProfile)
+      member_code: generatedCode,
+      referred_by: cleanRef || null,
+    })
+
+    const finalProfile: CustomerProfile = savedProfile
+      ? {
+          ...savedProfile,
+          full_name: cleanName,
+          phone: cleanPhone,
+          member_code: savedProfile.member_code || generatedCode,
+        }
+      : {
+          id: localExisting?.id || `kc-${Date.now()}`,
+          member_code: generatedCode,
+          full_name: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          referred_by: cleanRef || localExisting?.referred_by || null,
+          referral_count: localExisting?.referral_count ?? 0,
+          discount_earned: localExisting?.discount_earned ?? 0,
+          discount_used: localExisting?.discount_used ?? 0,
+          total_orders: localExisting?.total_orders ?? 0,
+          total_spent: localExisting?.total_spent ?? 0,
+          last_gift_sent: localExisting?.last_gift_sent ?? 'None',
+          created_at: localExisting?.created_at || new Date().toISOString(),
+        }
+
+    saveMemberToLocalLedger(finalProfile)
+    setStoredCustomerSession(finalProfile)
+    onMemberChange(finalProfile)
     triggerStudioNotification({
       eventType: 'signup',
-      customerName: `${localProfile.full_name} (${localProfile.member_code})`,
-      customerEmail: localProfile.email,
-      customerPhone: localProfile.phone ?? '',
+      customerName: `${finalProfile.full_name} (${finalProfile.member_code})`,
+      customerEmail: finalProfile.email,
+      customerPhone: finalProfile.phone ?? '',
     }).catch(() => {})
     setLoading(false)
     onClose()
