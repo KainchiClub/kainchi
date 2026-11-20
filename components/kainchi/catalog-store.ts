@@ -9,10 +9,10 @@ import {
   initialProducts,
   type ArtworkTheme,
   type CatalogProduct,
-  type GarmentType,
 } from './catalog'
 import { getSupabaseClient, uploadProductImageToSupabase } from '@/lib/supabase'
 import { getBrowserSupabaseClient } from '@/lib/kainchi-crm'
+import { syncSecureCatalogCloudState } from '@/app/admin/actions'
 
 const STORAGE_KEY = 'kainchi-catalog-v1'
 const CATALOG_MIGRATION_KEY = 'kainchi-catalog-shirt-series-v1'
@@ -130,19 +130,6 @@ function mapRowToCatalogProduct(row: DbProductRow): CatalogProduct | null {
   return isCatalogProduct(candidate) ? candidate : null
 }
 
-function mapCatalogProductToRow(product: CatalogProduct): DbProductRow {
-  return {
-    id: product.id,
-    product_code: product.productCode ?? null,
-    title: product.title,
-    garment: product.garment,
-    theme: product.theme,
-    price: Math.round(product.price),
-    image: product.image,
-    stock_status: product.stockStatus ?? 'in-stock',
-  }
-}
-
 export function useCatalogProducts() {
   const [products, setProductsState] = useState<CatalogProduct[]>(initialProducts)
   const isSyncingRef = useRef(false)
@@ -167,7 +154,6 @@ export function useCatalogProducts() {
       if (!supabase) return
 
       try {
-        // 1. Check store_cloud_state first (preserves gallery arrays & exact admin edits across devices)
         const { data: cloudSnapshot } = await supabase
           .from('store_cloud_state')
           .select('payload')
@@ -183,35 +169,23 @@ export function useCatalogProducts() {
           }
         }
 
-        // 2. Fallback to products table sync
         const { data, error } = await supabase
           .from('products')
           .select('*')
           .order('created_at', { ascending: true })
 
-        if (!error && Array.isArray(data)) {
-          if (data.length > 0) {
-            const mapped = data
-              .map((row) => mapRowToCatalogProduct(row as DbProductRow))
-              .filter((item): item is CatalogProduct => item !== null)
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const mapped = data
+            .map((row) => mapRowToCatalogProduct(row as DbProductRow))
+            .filter((item): item is CatalogProduct => item !== null)
 
-            if (mapped.length > 0 && active) {
-              const normalized = assignCategoryProductCodes(mapped)
-              setProductsState(normalized)
-              window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
-            }
-          } else {
-            const rowsToSeed = localProducts.map(mapCatalogProductToRow)
-            await supabase.from('products').upsert(rowsToSeed, { onConflict: 'id' })
-            await supabase.from('store_cloud_state').upsert(
-              { state_key: CLOUD_CATALOG_STATE_KEY, payload: localProducts, updated_at: new Date().toISOString() },
-              { onConflict: 'state_key' },
-            )
+          if (mapped.length > 0 && active) {
+            const normalized = assignCategoryProductCodes(mapped)
+            setProductsState(normalized)
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
           }
         }
-      } catch {
-        // Keep local products silently on offline fallback
-      }
+      } catch {}
     }
 
     void initCatalog()
@@ -259,56 +233,34 @@ export function useCatalogProducts() {
       const next = typeof updater === 'function' ? updater(prev) : updater
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
 
-      const supabase = getActiveSupabaseClient()
-      if (supabase) {
-        void (async () => {
-          isSyncingRef.current = true
-          try {
-            const cloudReadyProducts = await Promise.all(
-              next.map(async (item) => {
-                if (item.image.startsWith('data:image/')) {
-                  const publicUrl = await uploadProductImageToSupabase(item.image, item.id)
-                  if (publicUrl) {
-                    return { ...item, image: publicUrl }
-                  }
+      void (async () => {
+        isSyncingRef.current = true
+        try {
+          const cloudReadyProducts = await Promise.all(
+            next.map(async (item) => {
+              if (item.image.startsWith('data:image/')) {
+                const publicUrl = await uploadProductImageToSupabase(item.image, item.id)
+                if (publicUrl) {
+                  return { ...item, image: publicUrl }
                 }
-                return item
-              }),
-            )
+              }
+              return item
+            }),
+          )
 
-            const hasNewUrls = cloudReadyProducts.some((item, idx) => item.image !== next[idx]?.image)
-            if (hasNewUrls) {
-              setProductsState(cloudReadyProducts)
-              window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudReadyProducts))
-            }
-
-            // Save full snapshot (including multi-photo galleries & stock status) to store_cloud_state
-            await supabase.from('store_cloud_state').upsert(
-              {
-                state_key: CLOUD_CATALOG_STATE_KEY,
-                payload: cloudReadyProducts,
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: 'state_key' },
-            )
-
-            const nextIds = new Set(cloudReadyProducts.map((p) => p.id))
-            const deletedIds = prev.filter((p) => !nextIds.has(p.id)).map((p) => p.id)
-            if (deletedIds.length > 0) {
-              await supabase.from('products').delete().in('id', deletedIds)
-            }
-
-            const rows = cloudReadyProducts.map(mapCatalogProductToRow)
-            if (rows.length > 0) {
-              await supabase.from('products').upsert(rows, { onConflict: 'id' })
-            }
-          } catch {
-            // Non-blocking cloud sync
-          } finally {
-            isSyncingRef.current = false
+          const hasNewUrls = cloudReadyProducts.some((item, idx) => item.image !== next[idx]?.image)
+          if (hasNewUrls) {
+            setProductsState(cloudReadyProducts)
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudReadyProducts))
           }
-        })()
-      }
+
+          await syncSecureCatalogCloudState(cloudReadyProducts)
+        } catch {
+          // Non-blocking sync
+        } finally {
+          isSyncingRef.current = false
+        }
+      })()
 
       return next
     })
